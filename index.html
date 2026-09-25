@@ -241,7 +241,8 @@ async function rappelsCCF(s){const box=$("#rappels");box.hidden=true;
   let r;try{r=await api("/rest/v1/rpc/rappels_ccf",{method:"POST",body:{},token:s.access_token})||[];}catch(e){return;}
   if(!r.length)return;
   const cl={BTSAAP1:"BTSA AP 1",BTSAAP2:"BTSA AP 2"},jr=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
-  box.innerHTML=`<b>Rappel CCF : convocations à faire</b><ul style="margin:6px 0 8px;padding-left:18px">`+r.map(x=>`<li>${esc(x.code)} · ${esc(cl[x.classe]||("promotion "+x.promo))} · ${x.prevu?"période prévue à partir du "+esc(jr(x.jour))+" (date exacte à fixer)":"CCF le "+esc(jr(x.jour))} · ${x.jours===0?"aujourd'hui":"dans "+x.jours+" jour"+(x.jours>1?"s":"")}</li>`).join("")+`</ul><a href="/CCF/?vue=cal">Ouvrir le calendrier des CCF →</a>`;
+  const G=[];for(const x of r){const g=!x.prevu&&G.find(y=>!y.prevu&&y.promo===x.promo&&y.jour===x.jour);if(g)g.code+=", "+x.code;else G.push({...x});}r=G;
+  box.innerHTML=`<b>Rappel CCF : convocations à faire</b><ul style="margin:6px 0 8px;padding-left:18px">`+r.map(x=>`<li>${esc(x.code)}${x.code.includes(",")?" (une convocation pour la journée)":""} · ${esc(cl[x.classe]||("promotion "+x.promo))} · ${x.prevu?"période prévue à partir du "+esc(jr(x.jour))+" (date exacte à fixer)":"CCF le "+esc(jr(x.jour))} · ${x.jours===0?"aujourd'hui":"dans "+x.jours+" jour"+(x.jours>1?"s":"")}</li>`).join("")+`</ul><a href="/CCF/?vue=cal">Ouvrir le calendrier des CCF →</a>`;
   box.hidden=false;}
 function signOutLocal(s){if(s)fetch(SB+"/auth/v1/logout",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+s.access_token}}).catch(()=>{});ls.set(null);setCookie(null);}
 /* ---- Catalogue des outils par formation ---- */
