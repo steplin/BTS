@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Administration · Outils Kerplouz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#F4F6F3;--surface:#FFFFFF;--line:#DCE2D9;--ink:#18241E;--ink-2:#4A5A51;--ink-3:#76857C;--accent:#2E6A4B;--accent-soft:#DCEBDF;--danger:#A8412F;--danger-soft:#F6DED8;--warn:#7A5410;--warn-soft:#FFF6E5;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 var(--body);padding-inline:16px}
+main{max-width:1120px;margin:0 auto;padding-block:26px 60px;display:flex;flex-direction:column;gap:20px}
+a{color:var(--accent)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:13.5px}
+.top a{text-decoration:none;font-weight:500}
+h1{font:700 30px/1.15 var(--display);margin:4px 0 0;letter-spacing:-.01em}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{font:500 13.5px var(--body);background:var(--surface);color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tab .n{font-size:11.5px;opacity:.7;margin-left:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.bar .sp{flex:1}
+input,select{font:14px var(--body);color:var(--ink);background:#F8FAF7;border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);padding:0}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:600 13.5px var(--body);border:0;border-radius:8px;padding:8px 13px;background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:none;color:var(--ink-2);border:1px solid var(--line);font-weight:500}
+button.danger{background:none;color:var(--danger);border:1px solid var(--danger-soft);font-weight:500}
+button.danger.sure{background:var(--danger);color:#fff}
+button.small{padding:5px 10px;font-size:12.5px}
+button:disabled{opacity:.55;cursor:wait}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:11.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);background:#F8FAF7;white-space:nowrap}
+td .sub{display:block;font-size:12px;color:var(--ink-3)}
+tr.off td{background:#FAFAF8;color:var(--ink-3)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.chip{font-size:12px;font-weight:500;border-radius:99px;padding:2px 9px;border:1px solid var(--line);background:#fff;white-space:nowrap}
+.chip.capa{border-color:#6E9A3A;color:#4F7424}.chip.bpa{border-color:#3F8A70;color:#2E6A55}.chip.bp{border-color:#2E6A4B;color:#2E6A4B}
+.chip.btsa{border-color:#D1683F;color:#A84D29}.chip.cs{border-color:#8A6A3B;color:#6D522A}.chip.autre{border-color:#76857C;color:#4A5A51}
+.none{font-size:12.5px;color:var(--ink-3)}
+.badge{font-size:11.5px;font-weight:600;border-radius:99px;padding:2px 8px;white-space:nowrap}
+.b-on{background:var(--accent-soft);color:var(--accent)}.b-off{background:var(--danger-soft);color:var(--danger)}.b-wait{background:var(--warn-soft);color:var(--warn)}
+.pick{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FBFCFA;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 14px}
+.pick h4{grid-column:1/-1;margin:6px 0 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.pick h4:first-child{margin-top:0}
+.pick label{display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer}
+.switch{display:inline-flex;gap:7px;align-items:center;font-size:13px;cursor:pointer}
+.msg{font-size:13.5px;border-radius:8px;padding:9px 12px}
+.msg.err{background:var(--danger-soft);color:var(--danger)}.msg.ok{background:var(--accent-soft);color:var(--accent)}
+.help{font-size:13px;color:var(--ink-2);margin:0;padding:12px 14px;border-bottom:1px solid var(--line);background:#FBFCFA}
+.roles{display:flex;gap:14px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:10px;padding:9px 16px;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.err{background:var(--danger)}
+@media (max-width:640px){th,td{padding:9px 10px}h1{font-size:25px}}
+</style></head><body>
+<main>
+  <div class="top"><a href="/">← Outils pédagogiques</a><span><span id="me"></span></span></div>
+  <div><span class="eyebrow">Kerplouz LaSalle · Réservé au coordinateur</span><h1>Administration</h1></div>
+  <div class="msg err" id="err" hidden></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="comptes" aria-selected="true">Comptes<span class="n" id="nComptes"></span></button>
+    <button class="tab" role="tab" data-tab="classes" aria-selected="false">Classes<span class="n" id="nClasses"></span></button>
+    <button class="tab" role="tab" data-tab="outils" aria-selected="false">Droits des outils</button>
+  </div>
+
+  <!-- Comptes -->
+  <section id="p-comptes">
+    <div class="card">
+      <p class="help">Un compte voit les outils des formations de ses classes (plus les outils transversaux). Le <b>coordinateur</b> voit tout et accède à cette page. Vous pouvez rattacher une adresse à ses classes <b>avant</b> que la personne crée son compte : ses droits seront prêts à sa première connexion.</p>
+      <div class="bar">
+        <input type="search" id="q" placeholder="Rechercher une adresse ou une classe" aria-label="Rechercher" style="min-width:240px">
+        <select id="fRole" aria-label="Filtrer par rôle"><option value="">Tous les rôles</option><option value="formateur">Formateurs</option><option value="secretariat">Secrétariat</option><option value="coordinateur">Coordinateurs</option><option value="attente">Sans compte</option></select>
+        <span class="sp"></span>
+        <input type="email" id="newMail" placeholder="prenom.nom@kerplouz.com" aria-label="Adresse à rattacher">
+        <button type="button" id="btnAdd">Rattacher une adresse</button>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Personne</th><th>Rôle</th><th>Classes</th><th>Statut</th><th></th></tr></thead>
+        <tbody id="tComptes"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- Classes -->
+  <section id="p-classes" hidden>
+    <div class="card">
+      <p class="help">Les classes reprennent les groupes Yparéo. Le <b>niveau</b> décide des outils affichés. Une classe désactivée n'ouvre plus aucun droit, sans perdre ses rattachements.</p>
+      <div class="bar">
+        <input id="cCode" placeholder="Code (ex. BTSAAP1)" aria-label="Code" style="width:150px">
+        <input id="cLib" placeholder="Libellé (ex. BTSA AP 1)" aria-label="Libellé" style="width:190px">
+        <select id="cNiv" aria-label="Niveau"></select>
+        <button type="button" id="btnClasse">Ajouter la classe</button>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Code</th><th>Libellé</th><th>Niveau</th><th>Personnes</th><th>Active</th><th></th></tr></thead>
+        <tbody id="tClasses"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- Outils -->
+  <section id="p-outils" hidden>
+    <div class="card">
+      <p class="help">Pour chaque outil publié : les rôles qui y ont accès. L'accès est aussi limité au niveau de l'outil (un formateur CAPa ne voit pas un outil BTSA). Le coordinateur a toujours accès à tout : décochez les deux rôles pour réserver un outil au coordinateur.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Outil</th><th>Formation</th><th>Rôles autorisés</th><th>Qui y a accès</th></tr></thead>
+        <tbody id="tOutils"></tbody>
+      </table></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const SB="https://olqclfsywasktwirswpb.supabase.co", KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x", SKEY="kep.session";
+const $=s=>document.querySelector(s);
+const esc=t=>String(t==null?"":t).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const NIVEAUX={capa:"CAPa JP",bpa:"BPA OSP",bp:"BP AP",btsa:"BTSA AP",cs:"CS Arboriste",autre:"Autre",tous:"Toutes formations"};
+const ROLES={formateur:"Formateur",secretariat:"Secrétariat",coordinateur:"Coordinateur"};
+
+/* ---------- session ---------- */
+let session=null;
+const ls={get(){try{return JSON.parse(localStorage.getItem(SKEY)||"null");}catch(e){return null;}},set(v){try{v?localStorage.setItem(SKEY,JSON.stringify(v)):localStorage.removeItem(SKEY);}catch(e){}}};
+function cookie(){document.cookie=session?`kep_at=${session.access_token}; Path=/; Max-Age=${Math.max(60,session.expires_at-Math.floor(Date.now()/1000))}; Secure; SameSite=Lax`:"kep_at=; Path=/; Max-Age=0; Secure; SameSite=Lax";}
+async function raw(path,{method="GET",body,prefer,auth=true}={}){
+  const h={apikey:KEY,"Content-Type":"application/json"};if(auth&&session)h.Authorization="Bearer "+session.access_token;if(prefer)h.Prefer=prefer;
+  const r=await fetch(SB+path,{method,headers:h,body:body?JSON.stringify(body):undefined});const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){}
+  if(!r.ok){const e=new Error((d&&(d.message||d.msg||d.error_description||d.error))||("Erreur "+r.status));e.status=r.status;throw e;}return d;}
+async function frais(){if(!session)return false;if(session.expires_at-60>Date.now()/1000)return true;
+  try{const t=await raw("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:session.refresh_token},auth:false});
+    session=Object.assign(session,{access_token:t.access_token,refresh_token:t.refresh_token,expires_at:t.expires_at?+t.expires_at:Math.floor(Date.now()/1000)+(+t.expires_in||3600)});ls.set(session);cookie();return true;}
+  catch(e){session=null;ls.set(null);cookie();return false;}}
+async function api(path,opts){if(!(await frais())){location.replace("/?next=/admin/");throw new Error("session expirée");}return raw(path,opts);}
+
+/* ---------- données ---------- */
+let comptes=[],affect=[],classes=[],outils=[],ouvert=null;
+async function charger(){
+  [comptes,affect,classes,outils]=await Promise.all([
+    api("/rest/v1/rpc/admin_comptes",{method:"POST",body:{}}),
+    api("/rest/v1/affectations?select=email,classe"),
+    api("/rest/v1/classes?select=*&order=ordre,code"),
+    api("/rest/v1/outils?select=*&order=ordre,code")]);
+}
+function toast(t,err){const el=$("#toast");el.textContent=t;el.className="toast"+(err?" err":"");el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,err?5000:2200);}
+function frErr(e){const m=e.message||"";
+  if(/au moins un coordinateur/i.test(m))return "Impossible : il doit rester au moins un coordinateur actif.";
+  if(/propre compte/i.test(m))return "Vous ne pouvez pas supprimer votre propre compte.";
+  if(/duplicate key/i.test(m))return "Ce code existe déjà.";
+  if(/row-level security|Réservé/i.test(m))return "Action refusée : réservée au coordinateur.";
+  return m;}
+async function action(fn,ok){try{await fn();await charger();rendre();if(ok)toast(ok);}catch(e){toast(frErr(e),true);}}
+
+/* ---------- rendu ---------- */
+const classesDe=email=>affect.filter(a=>a.email===email).map(a=>classes.find(c=>c.code===a.classe)).filter(Boolean);
+function chips(email){const cl=classesDe(email);return cl.length?cl.map(c=>`<span class="chip ${esc(c.niveau)}" title="${esc(NIVEAUX[c.niveau])}${c.actif?"":" · classe désactivée"}" style="${c.actif?"":"opacity:.5"}">${esc(c.libelle)}</span>`).join(""):'<span class="none">Aucune classe</span>';}
+function picker(email){const mine=new Set(affect.filter(a=>a.email===email).map(a=>a.classe));
+  return `<div class="pick" data-email="${esc(email)}">`+Object.keys(NIVEAUX).filter(n=>classes.some(c=>c.niveau===n)).map(n=>
+    `<h4>${esc(NIVEAUX[n])}</h4>`+classes.filter(c=>c.niveau===n).map(c=>`<label><input type="checkbox" data-classe="${esc(c.code)}" ${mine.has(c.code)?"checked":""}>${esc(c.libelle)}</label>`).join("")).join("")+`</div>`;}
+function ligne(p){const moi=session.user&&p.id===session.user.id, attente=!p.id;
+  const quand=p.derniere_connexion?"dernière connexion le "+new Date(p.derniere_connexion).toLocaleDateString("fr-FR"):(p.confirme?"jamais connecté":"adresse non confirmée");
+  return `<tr class="${p.actif===false?"off":""}" data-email="${esc(p.email)}" data-id="${esc(p.id||"")}">
+    <td><b>${esc(p.email)}</b>${moi?' <span class="badge b-on">vous</span>':""}<span class="sub">${attente?"n'a pas encore créé son compte":esc(quand)}</span></td>
+    <td>${attente?'<span class="none">—</span>':`<select data-act="role" aria-label="Rôle de ${esc(p.email)}" ${moi?"disabled title='Vous ne pouvez pas changer votre propre rôle'":""}>${Object.keys(ROLES).map(r=>`<option value="${r}" ${p.role===r?"selected":""}>${ROLES[r]}</option>`).join("")}</select>`}</td>
+    <td><div class="chips">${chips(p.email)} <button type="button" class="ghost small" data-act="edit">${ouvert===p.email?"Fermer":"Modifier"}</button></div>${ouvert===p.email?picker(p.email):""}</td>
+    <td>${attente?'<span class="badge b-wait">En attente</span>':`<label class="switch"><input type="checkbox" data-act="actif" ${p.actif?"checked":""} ${moi?"disabled":""}>${p.actif?"Actif":"Suspendu"}</label>`}</td>
+    <td>${moi?"":`<button type="button" class="danger small" data-act="del">${attente?"Retirer":"Supprimer"}</button>`}</td></tr>`;}
+function rendre(){
+  const q=$("#q").value.trim().toLowerCase(),fr=$("#fRole").value;
+  const connus=new Set(comptes.map(c=>c.email));
+  const attente=[...new Set(affect.map(a=>a.email))].filter(e=>!connus.has(e)).map(e=>({email:e}));
+  let lignes=[...comptes,...attente].filter(p=>{
+    if(fr==="attente"?p.id:fr&&p.role!==fr)return false;
+    if(!q)return true;return p.email.includes(q)||classesDe(p.email).some(c=>(c.code+" "+c.libelle).toLowerCase().includes(q));});
+  $("#tComptes").innerHTML=lignes.map(ligne).join("")||'<tr><td colspan="5" class="none">Aucun résultat.</td></tr>';
+  $("#nComptes").textContent=comptes.length+(attente.length?" + "+attente.length:"");
+  $("#nClasses").textContent=classes.length;
+  $("#tClasses").innerHTML=classes.map(c=>{const n=affect.filter(a=>a.classe===c.code).length;return `<tr class="${c.actif?"":"off"}" data-code="${esc(c.code)}">
+    <td><code>${esc(c.code)}</code></td>
+    <td><input data-act="lib" value="${esc(c.libelle)}" aria-label="Libellé de ${esc(c.code)}" style="width:170px"></td>
+    <td><select data-act="niv" aria-label="Niveau de ${esc(c.code)}">${Object.keys(NIVEAUX).filter(k=>k!=="tous").map(k=>`<option value="${k}" ${c.niveau===k?"selected":""}>${NIVEAUX[k]}</option>`).join("")}</select></td>
+    <td>${n}</td>
+    <td><label class="switch"><input type="checkbox" data-act="cactif" ${c.actif?"checked":""}>${c.actif?"Oui":"Non"}</label></td>
+    <td><button type="button" class="danger small" data-act="cdel" title="${n?"Supprime aussi les "+n+" rattachement(s)":""}">Supprimer</button></td></tr>`;}).join("");
+  $("#tOutils").innerHTML=outils.map(o=>{
+    const qui=comptes.filter(p=>p.actif&&(p.role==="coordinateur"||((!o.roles.length||o.roles.includes(p.role))&&(o.niveau==="tous"||classesDe(p.email).some(c=>c.actif&&c.niveau===o.niveau)))));
+    return `<tr data-outil="${esc(o.code)}"><td><b>${esc(o.titre)}</b><span class="sub">${esc(o.code)}</span></td><td>${esc(NIVEAUX[o.niveau]||o.niveau)}</td>
+    <td><div class="roles">${["formateur","secretariat"].map(r=>`<label class="switch"><input type="checkbox" data-role="${r}" ${!o.roles.length||o.roles.includes(r)?"checked":""}>${ROLES[r]}</label>`).join("")}</div><span class="sub">${!o.roles.length?"tous les rôles":o.roles.every(r=>r==="coordinateur")?"réservé au coordinateur":""}</span></td>
+    <td>${qui.length} compte${qui.length>1?"s":""}<span class="sub">${esc(qui.slice(0,4).map(p=>p.email.split("@")[0]).join(", "))}${qui.length>4?"…":""}</span></td></tr>`;}).join("");
+}
+
+/* ---------- événements ---------- */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
+  ["comptes","classes","outils"].forEach(k=>$("#p-"+k).hidden=k!==t.dataset.tab);});
+$("#q").oninput=rendre;$("#fRole").onchange=rendre;
+$("#cNiv").innerHTML=Object.keys(NIVEAUX).filter(k=>k!=="tous").map(k=>`<option value="${k}">${NIVEAUX[k]}</option>`).join("");
+
+$("#btnAdd").onclick=()=>{const e=$("#newMail").value.trim().toLowerCase();
+  if(!/^[^@\s]+@kerplouz\.com$/.test(e)){toast("Saisissez une adresse @kerplouz.com.",true);return;}
+  $("#newMail").value="";ouvert=e;
+  if(!comptes.some(c=>c.email===e)&&!affect.some(a=>a.email===e)){comptes.push({email:e,__temp:true});}
+  rendre();const tr=document.querySelector(`tr[data-email="${CSS.escape(e)}"]`);if(tr)tr.scrollIntoView({block:"center"});
+  toast("Cochez ses classes : l'adresse est enregistrée dès la première classe.");};
+
+$("#tComptes").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!tr)return;const email=tr.dataset.email,id=tr.dataset.id;
+  if(e.target.dataset.classe){const code=e.target.dataset.classe;
+    action(()=>e.target.checked
+      ?api("/rest/v1/affectations",{method:"POST",prefer:"resolution=ignore-duplicates,return=minimal",body:{email,classe:code}})
+      :api(`/rest/v1/affectations?email=eq.${encodeURIComponent(email)}&classe=eq.${encodeURIComponent(code)}`,{method:"DELETE"}),"Classes enregistrées");return;}
+  const act=e.target.dataset.act;
+  if(act==="role")action(()=>api("/rest/v1/profils?id=eq."+id,{method:"PATCH",prefer:"return=minimal",body:{role:e.target.value}}),"Rôle modifié");
+  if(act==="actif")action(()=>api("/rest/v1/profils?id=eq."+id,{method:"PATCH",prefer:"return=minimal",body:{actif:e.target.checked}}),e.target.checked?"Compte réactivé":"Compte suspendu");});
+$("#tComptes").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const tr=b.closest("tr"),email=tr.dataset.email,id=tr.dataset.id;
+  if(b.dataset.act==="edit"){ouvert=ouvert===email?null:email;comptes=comptes.filter(c=>!c.__temp||c.email===ouvert);rendre();return;}
+  if(b.dataset.act==="del"){if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent="Confirmer ?";setTimeout(()=>{if(b.isConnected){b.classList.remove("sure");b.textContent=id?"Supprimer":"Retirer";}},4000);return;}
+    if(id)action(()=>api("/rest/v1/rpc/admin_supprimer_compte",{method:"POST",body:{uid:id}}),"Compte supprimé");
+    else{comptes=comptes.filter(c=>c.email!==email);action(()=>api("/rest/v1/affectations?email=eq."+encodeURIComponent(email),{method:"DELETE"}),"Adresse retirée");}}});
+
+$("#btnClasse").onclick=()=>{const code=$("#cCode").value.trim(),libelle=$("#cLib").value.trim(),niveau=$("#cNiv").value;
+  if(!/^[A-Za-z0-9_-]{2,30}$/.test(code)||!libelle){toast("Indiquez un code (lettres, chiffres, tirets) et un libellé.",true);return;}
+  const ordre=Math.max(0,...classes.map(c=>c.ordre||0))+1;
+  action(async()=>{await api("/rest/v1/classes",{method:"POST",prefer:"return=minimal",body:{code,libelle,niveau,ordre}});$("#cCode").value="";$("#cLib").value="";},"Classe ajoutée");};
+$("#tClasses").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!tr)return;const code=encodeURIComponent(tr.dataset.code),a=e.target.dataset.act;
+  const body=a==="lib"?{libelle:e.target.value.trim()}:a==="niv"?{niveau:e.target.value}:a==="cactif"?{actif:e.target.checked}:null;
+  if(!body||(a==="lib"&&!body.libelle))return;
+  action(()=>api("/rest/v1/classes?code=eq."+code,{method:"PATCH",prefer:"return=minimal",body}),"Classe modifiée");});
+$("#tClasses").addEventListener("click",e=>{const b=e.target.closest("button[data-act=cdel]");if(!b)return;
+  if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent="Confirmer ?";setTimeout(()=>{if(b.isConnected){b.classList.remove("sure");b.textContent="Supprimer";}},4000);return;}
+  action(()=>api("/rest/v1/classes?code=eq."+encodeURIComponent(b.closest("tr").dataset.code),{method:"DELETE"}),"Classe supprimée");});
+$("#tOutils").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!tr)return;
+  const roles=[...tr.querySelectorAll("[data-role]")].filter(x=>x.checked).map(x=>x.dataset.role);
+  const r=roles.length===2?[]:roles.length?roles:["coordinateur"];
+  action(()=>api("/rest/v1/outils?code=eq."+encodeURIComponent(tr.dataset.outil),{method:"PATCH",prefer:"return=minimal",body:{roles:r}}),"Droits de l'outil modifiés");});
+
+/* ---------- démarrage ---------- */
+(async()=>{
+  session=ls.get();
+  if(!(await frais())){location.replace("/?next=/admin/");return;}cookie();
+  try{const d=await raw("/rest/v1/rpc/mes_droits",{method:"POST",body:{}});
+    if(!d||!d.admin){location.replace("/?refus=droit");return;}
+    session.user=session.user||{};$("#me").textContent=d.email;
+    const u=await raw("/auth/v1/user");session.user={id:u.id,email:u.email};
+    await charger();rendre();}
+  catch(e){const m=$("#err");m.hidden=false;m.textContent="Chargement impossible : "+frErr(e);}
+})();
+</script>
+</body></html>
