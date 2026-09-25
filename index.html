@@ -177,34 +177,24 @@ const ICONS={
   suivi:'<path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/>'
 };
 const LEVELS=[
-  {id:"capa",nom:"CAPa Jardinier paysagiste",niv:"Niveau 3",c:"#6E9A3A",sub:"2 ans · apprentis souvent mineurs",tools:[
-    {t:"Livret d'alternance",d:"Livret de la classe en Word, avec publipostage par apprenant.",i:"livret"},
-    {t:"Grilles d'évaluation CCF",d:"Grilles par capacité et onglet de notes de la classe.",i:"grille"},
-    {t:"Dérogation travaux réglementés",d:"Déclarations et suivi des apprentis mineurs pour les travaux dangereux.",i:"secu"}]},
+  {id:"capa",nom:"CAPa Jardinier paysagiste",niv:"Niveau 3",c:"#6E9A3A",sub:"Certificat d'aptitude professionnelle agricole",tools:[
+    {t:"Grilles d'évaluation CCF",d:"Grilles par capacité et onglet de notes de la classe.",i:"grille"}]},
   {id:"bpa",nom:"BPA Ouvrier spécialisé en paysage",niv:"Niveau 3",c:"#3F8A70",sub:"Formation en unités capitalisables",tools:[
-    {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"},
-    {t:"Livret d'alternance",d:"Livret de la classe et publipostage par apprenant.",i:"livret"},
-    {t:"Dérogation travaux réglementés",d:"Déclarations pour les apprentis mineurs.",i:"secu"}]},
+    {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"}]},
   {id:"bp",nom:"BP Aménagements paysagers",niv:"Niveau 4",c:"#2E6A4B",sub:"Formation en unités capitalisables",tools:[
-    {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"},
-    {t:"Inscriptions aux UC",d:"Préparation des inscriptions aux épreuves et suivi des UC acquises.",i:"inscr"},
-    {t:"Livret d'alternance",d:"Livret de la classe et publipostage par apprenant.",i:"livret"}]},
+    {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"}]},
   {id:"btsa",nom:"BTSA Aménagements paysagers",niv:"Niveau 5",c:"#D1683F",sub:"Promotion 2026-2028",tools:[
     {t:"Grilles d'évaluation BTS AP",d:"Classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/"},
-    {t:"Calendrier des CCF",d:"Planning des situations d'évaluation et des intervenants sur les deux ans.",i:"calend"},
-    {t:"Livret d'alternance",d:"Livret de la promotion et publipostage par apprenant.",i:"livret"}]},
+    {t:"Calendrier des CCF",d:"Planning des situations d'évaluation et des intervenants sur les deux ans.",i:"calend"}]},
   {id:"cs",nom:"CS Arboriste élagueur",niv:"Niveau 4",c:"#8A6A3B",sub:"Certificat de spécialisation",tools:[
-    {t:"Grilles d'évaluation",d:"Grilles des capacités du CS et notes du groupe.",i:"grille"},
-    {t:"Suivi des habilitations",d:"Suivi des habilitations, EPI et prérequis sécurité en hauteur.",i:"arbre"}]},
-  {id:"tous",nom:"Tous niveaux",niv:"Transversal",c:"#4A5A51",sub:"Outils communs à toutes les formations",tools:[
-    {t:"Convention de stage",d:"Pré-remplissage de la convention à partir d'un export Ypareo.",i:"conv"},
-    {t:"Découpe des bulletins",d:"Un PDF par apprenant, nommé NOM_Prénom, à partir du publipostage.",i:"decoup"},
-    {t:"Fiches pédagogiques formateurs",d:"Répartition des heures et cadrage des référentiels par formateur.",i:"fiche"},
-    {t:"Suivi des effectifs",d:"Tableau de bord des groupes, des entrées et des ruptures.",i:"suivi"}]}
+    {t:"Grilles d'évaluation",d:"Grilles des capacités du CS et notes du groupe.",i:"grille"}]},
+  {id:"tous",nom:"Toutes formations",niv:"Transversal",c:"#4A5A51",sub:"Outils pédagogiques communs",tools:[
+    {t:"La fabrique à livret",d:"Livret d'alternance d'une classe à partir du calendrier, du ruban pédagogique et du plan d'évaluation, avec publipostage par apprenant.",i:"livret"},
+    {t:"Fiches pédagogiques formateurs",d:"Répartition des heures et cadrage des référentiels par formateur.",i:"fiche"}]}
 ];
 let filtre="all";
 function renderDash(){
-  const tabs=[{id:"all",nom:"Toutes les formations",c:"var(--ink-3)"},...LEVELS.map(l=>({id:l.id,nom:l.nom.split(" ")[0]==="Tous"?"Transversal":l.nom.split(" ")[0]+(l.id==="capa"?" JP":l.id==="bpa"?" OSP":l.id==="bp"?" AP":l.id==="btsa"?" AP":""),c:l.c}))];
+  const tabs=[{id:"all",nom:"Toutes les formations",c:"var(--ink-3)"},...LEVELS.map(l=>({id:l.id,nom:l.id==="tous"?"Transversal":l.nom.split(" ")[0]+(l.id==="capa"?" JP":l.id==="bpa"?" OSP":l.id==="bp"?" AP":l.id==="btsa"?" AP":""),c:l.c}))];
   $("#tabs").innerHTML=tabs.map(t=>`<button type="button" class="tab" aria-pressed="${filtre===t.id}" data-f="${t.id}" style="--c:${t.c}"><span class="sw"></span>${t.nom}</button>`).join("");
   $("#levels").innerHTML=LEVELS.filter(l=>filtre==="all"||filtre===l.id).map(l=>`
     <section class="level" style="--c:${l.c}" aria-labelledby="h-${l.id}">
