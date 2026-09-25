@@ -1504,7 +1504,7 @@ const Saisie=(()=>{
     }catch(e){$("#szMain").innerHTML=`<p class="hint err">Saisie indisponible : ${esc(e.message||e)}</p>`;S.loading=false;return;}
     S.loading=false;render();
   }
-  function render(){renderTop();if(S.code)renderGrille();else renderAccueil();renderCoord();}
+  function render(){renderTop();if(S.code)renderGrille();else renderAccueil();const cm=new URLSearchParams(location.search).get("vue")==="coord"&&S.coord&&!S.code;$("#szLay").hidden=cm;renderCoord();}
   function renderTop(){
     $("#szPromo").innerHTML=S.promos.map(p=>`<option ${p===S.promo?"selected":""}>${esc(p)}</option>`).join("");
     const nb=codes().length;
@@ -1788,10 +1788,11 @@ const Saisie=(()=>{
 })();
 Saisie.init();
 const MODE_CCF=/^\/CCF(\/|$)/i.test(location.pathname);
+const MODE_COORD=MODE_CCF&&new URLSearchParams(location.search).get("vue")==="coord";
 const MODE_SAISIE=MODE_CCF||new URLSearchParams(location.search).get("vue")==="saisie";
-if(MODE_SAISIE){$("#vPrep").hidden=true;$("#vSaisie").hidden=false;document.title=MODE_CCF?"Tableau de bord CCF":"Saisie des grilles BTS AP";
-  const h=document.querySelector("header.top .t");if(h){h.querySelector(".eyebrow").textContent="Kerplouz LaSalle · BTSA Aménagements paysagers";h.querySelector("h1").textContent=MODE_CCF?"Tableau de bord CCF":"Saisie des grilles BTS AP";
-    h.querySelector("p").textContent="Vos épreuves certificatives (CCF) : saisissez en ligne les grilles des capacités dont vous êtes intervenant (note de chaque indicateur, plafonnée au barème, et appréciations). L'enregistrement est automatique.";}}
+if(MODE_SAISIE){$("#vPrep").hidden=true;$("#vSaisie").hidden=false;const titre=MODE_COORD?"Coordination BTS AP":MODE_CCF?"Tableau de bord CCF":"Saisie des grilles BTS AP";document.title=titre;
+  const h=document.querySelector("header.top .t");if(h){h.querySelector(".eyebrow").textContent="Kerplouz LaSalle · BTSA Aménagements paysagers";h.querySelector("h1").textContent=titre;
+    h.querySelector("p").textContent=MODE_COORD?"Pilotage des CCF de la promotion : tableau de bord des résultats, candidats, épreuves et convocations, courriers, impression et documents. Cliquez sur une case de la carte des notes pour ouvrir la grille.":"Vos épreuves certificatives (CCF) : saisissez en ligne les grilles des capacités dont vous êtes intervenant (note de chaque indicateur, plafonnée au barème, et appréciations). L'enregistrement est automatique.";}}
 
 /* ---------- Garde-fous Excel ---------- */
 const PWKEY="grillesBTSAP1.mdp"; // mot de passe gardé sur ce poste uniquement, jamais envoyé au compte
