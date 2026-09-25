@@ -1787,10 +1787,11 @@ const Saisie=(()=>{
   return {init,load,get loaded(){return S.loaded},flush,syncDroits:async()=>{if(S.loaded&&S.coord){try{await syncDroits();}catch(e){}}},_S:S};
 })();
 Saisie.init();
-const MODE_SAISIE=new URLSearchParams(location.search).get("vue")==="saisie";
-if(MODE_SAISIE){$("#vPrep").hidden=true;$("#vSaisie").hidden=false;document.title="Saisie des grilles BTS AP";
-  const h=document.querySelector("header.top .t");if(h){h.querySelector(".eyebrow").textContent="Kerplouz LaSalle · BTSA Aménagements paysagers";h.querySelector("h1").textContent="Saisie des grilles BTS AP";
-    h.querySelector("p").textContent="Saisissez en ligne les grilles des capacités dont vous êtes intervenant : note de chaque indicateur (plafonnée au barème) et appréciations. L'enregistrement est automatique.";}}
+const MODE_CCF=/^\/CCF(\/|$)/i.test(location.pathname);
+const MODE_SAISIE=MODE_CCF||new URLSearchParams(location.search).get("vue")==="saisie";
+if(MODE_SAISIE){$("#vPrep").hidden=true;$("#vSaisie").hidden=false;document.title=MODE_CCF?"Tableau de bord CCF":"Saisie des grilles BTS AP";
+  const h=document.querySelector("header.top .t");if(h){h.querySelector(".eyebrow").textContent="Kerplouz LaSalle · BTSA Aménagements paysagers";h.querySelector("h1").textContent=MODE_CCF?"Tableau de bord CCF":"Saisie des grilles BTS AP";
+    h.querySelector("p").textContent="Vos épreuves certificatives (CCF) : saisissez en ligne les grilles des capacités dont vous êtes intervenant (note de chaque indicateur, plafonnée au barème, et appréciations). L'enregistrement est automatique.";}}
 
 /* ---------- Garde-fous Excel ---------- */
 const PWKEY="grillesBTSAP1.mdp"; // mot de passe gardé sur ce poste uniquement, jamais envoyé au compte
