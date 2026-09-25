@@ -140,7 +140,7 @@ dialog .count{font-size:13px;color:var(--ink-2)}
   <!-- Personnel -->
   <section id="p-perso">
     <div class="card">
-      <p class="help">Seules les personnes de cette liste peuvent se connecter. <b>Première connexion</b> : adresse + <b>code d'activation</b> (à leur remettre) + mot de passe choisi. Le code ne sert qu'une fois ; « Réinitialiser l'accès » en donne un nouveau (mot de passe oublié). Un formateur voit les outils des formations de ses classes ; un coordinateur de filière voit aussi sa filière ; direction, vie scolaire, secrétariat et responsable pédagogique voient toutes les formations. ★ = référent·e de la classe.</p>
+      <p class="help">Seules les personnes de cette liste peuvent se connecter. <b>Première connexion</b> : adresse + <b>code d'activation</b> (à leur remettre) + mot de passe choisi. Le code ne sert qu'une fois ; « Réinitialiser l'accès » en donne un nouveau (mot de passe oublié). Pour le transmettre : « Mail » prépare le message dans votre messagerie (vous le relisez et l'envoyez vous-même), « Fiche » en fait un PDF. Un formateur voit les outils des formations de ses classes ; un coordinateur de filière voit aussi sa filière ; direction, vie scolaire, secrétariat et responsable pédagogique voient toutes les formations. ★ = référent·e de la classe.</p>
       <div class="bar">
         <input type="search" id="q" placeholder="Rechercher un nom, une adresse, une classe" aria-label="Rechercher" style="min-width:250px">
         <select id="fRole" aria-label="Filtrer"><option value="">Tout le personnel</option></select>
@@ -283,7 +283,7 @@ function ligne(p){const self=p.email===moi,o=ouvert&&ouvert.email===p.email?ouve
     <td><div class="chips">${rl||'<span class="none">Aucun rôle</span>'} <button type="button" class="ghost small" data-act="roles">${o==="roles"?"Fermer":"Modifier"}</button></div>${o==="roles"?panneauRoles(p):""}</td>
     <td><div class="chips">${chipsClasses(p.email)} <button type="button" class="ghost small" data-act="classes">${o==="classes"?"Fermer":"Modifier"}</button></div>${o==="classes"?panneauClasses(p):""}</td>
     <td><label class="switch"><input type="checkbox" data-act="actif" ${p.actif?"checked":""} ${self?"disabled":""} aria-label="Compte actif"></label></td>
-    <td><div class="actions">${self?"":`${p.compte?'<button type="button" class="ghost small" data-act="reinit" title="Supprime le mot de passe et donne un nouveau code">Réinitialiser l\'accès</button>':'<button type="button" class="small" data-act="fiche" title="Fiche de connexion de cette personne (PDF)">Fiche</button><button type="button" class="ghost small" data-act="code">Nouveau code</button>'}
+    <td><div class="actions">${self?"":`${p.compte?'<button type="button" class="ghost small" data-act="reinit" title="Supprime le mot de passe et donne un nouveau code">Réinitialiser l\'accès</button>':'<button type="button" class="small" data-act="fiche" title="Fiche de connexion de cette personne (PDF)">Fiche</button>'+(p.code&&p.actif?'<button type="button" class="small" data-act="mail" title="Ouvre votre messagerie avec un mail prêt à envoyer à cette personne">Mail</button>':'')+'<button type="button" class="ghost small" data-act="code">Nouveau code</button>'}
       <button type="button" class="danger small" data-act="del">Supprimer</button>`}</div></td></tr>`;}
 function rendre(){
   const q=sansAccent($("#q").value.trim().toLowerCase()),fr=$("#fRole").value,fc=$("#fClasse").value;
@@ -338,10 +338,11 @@ $("#tPerso").addEventListener("click",e=>{const b=e.target.closest("button");if(
     if(!body.prenom||!body.nom){toast("Le prénom et le nom sont obligatoires.",true);return;}
     action(async()=>{await api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body});if(body.email)ouvert={email:body.email,quoi:"roles"};},"Fiche enregistrée");return;}
   if(act==="fiche")return imprimerFiches([perso.find(x=>x.email===email)],"page");
+  if(act==="mail")return ouvrirMail(perso.find(x=>x.email===email));
   if(act==="code")return action(async()=>{const c=await api("/rest/v1/rpc/nouveau_code",{method:"POST",body:{}});await api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{code:c}});return c;},c=>"Nouveau code : "+c);
   if(act==="reinit"||act==="del"){if(!b.classList.contains("sure")){const t=b.textContent;b.classList.add("sure");if(act==="reinit")b.classList.add("danger");b.textContent="Confirmer ?";
       setTimeout(()=>{if(b.isConnected){b.classList.remove("sure");if(act==="reinit")b.classList.remove("danger");b.textContent=t;}},4000);return;}
-    if(act==="reinit")return action(()=>api("/rest/v1/rpc/admin_reinitialiser",{method:"POST",body:{mail:email}}),c=>"Accès réinitialisé. Nouveau code : "+c+" — bouton « Fiche » pour l'envoyer.");
+    if(act==="reinit")return action(()=>api("/rest/v1/rpc/admin_reinitialiser",{method:"POST",body:{mail:email}}),c=>"Accès réinitialisé. Nouveau code : "+c+" — boutons « Mail » ou « Fiche » pour l'envoyer.");
     return action(()=>api("/rest/v1/rpc/admin_supprimer",{method:"POST",body:{mail:email}}),"Personne supprimée");}});
 $("#tPerso").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!tr)return;const email=tr.dataset.email,p=perso.find(x=>x.email===email);
   if(e.target.dataset.act==="actif")return action(()=>api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{actif:e.target.checked}}),e.target.checked?"Compte réactivé":"Compte suspendu");
@@ -375,6 +376,25 @@ $("#tOutils").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!
 /* ---------- fiches de connexion ---------- */
 const SITE=/^(localhost|127\.)/.test(location.hostname)||!location.host?"keprojects.pages.dev":location.host;
 const ROLES_FICHE={formateur:"formateur·rice",responsable_peda:"responsable pédagogique",secretariat:"secrétariat",direction:"direction",vie_sco:"vie scolaire"};
+/* ---- Envoi par mail : ouvre la messagerie de l'utilisateur, rien n'est envoyé par la plateforme ---- */
+function mailAcces(p){const cl=affDe(p.email).filter(c=>c.actif),me=perso.find(x=>x.email===moi);
+  const sig=me?`${me.prenom} ${me.nom}`:"";
+  const corps=[`Bonjour ${p.prenom},`,"",
+    "La plateforme pédagogique de l'UFA regroupe vos outils (grilles d'évaluation, fabrique à livret…). Voici de quoi créer votre accès :","",
+    `Site : https://${SITE}`,`Identifiant : ${p.email}`,`Code d'activation : ${p.code}`,"",
+    "Première connexion :",
+    `1. Ouvrez https://${SITE} dans votre navigateur (ordinateur, tablette ou téléphone).`,
+    "2. Cliquez sur « Première connexion : créer mon mot de passe ».",
+    "3. Saisissez votre adresse et le code d'activation ci-dessus.",
+    "4. Choisissez votre mot de passe (8 caractères minimum, avec une minuscule, une majuscule, un chiffre et un caractère spécial), saisissez-le deux fois, puis validez.","",
+    "Les fois suivantes, connectez-vous simplement avec votre adresse et votre mot de passe.",
+    ...(cl.length?["",`Vos classes : ${cl.map(c=>(c.fonction==="referent"?"★ ":"")+c.libelle).join(", ")}${cl.some(c=>c.fonction==="referent")?" (★ = classe dont vous êtes référent·e)":""}.`]:[]),"",
+    "Ce code est personnel et ne sert qu'une fois : merci de ne pas le transmettre.","",
+    "Bonne journée,",sig].join("\r\n");
+  return "mailto:"+encodeURIComponent(p.email)+"?subject="+encodeURIComponent("Votre accès aux outils pédagogiques Kerplouz")+"&body="+encodeURIComponent(corps);}
+function ouvrirMail(p){if(!p||!p.code){toast("Pas de code d'activation pour cette personne.",true);return;}
+  const a=document.createElement("a");a.href=mailAcces(p);a.style.display="none";document.body.appendChild(a);a.click();a.remove();
+  toast("Mail préparé dans votre messagerie pour "+p.prenom+" "+p.nom+" : relisez-le puis envoyez-le.");}
 function fiche(p,mep){const cl=affDe(p.email).filter(c=>c.actif);
   const roles=p.roles.map(r=>ROLES_FICHE[r]||r);if(cl.some(c=>c.fonction==="referent"))roles.push("référent·e de classe");(p.filieres||[]).forEach(f=>roles.push("coordination "+(NIVEAUX[f]||f)));
   return `<section class="fiche ${mep==="demi"?"demi":""}">
