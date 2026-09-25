@@ -150,7 +150,7 @@
 <div class="page">
   <nav class="topbar"><a href="/">← Outils pédagogiques</a><span class="qui"><span id="qui"></span><button class="lien" id="deconnexion" type="button">Se déconnecter</button></span></nav>
   <header>
-    <p class="eyebrow">CFA / UFA Kerplouz LaSalle · 2026-2027 · livrets v5</p>
+    <p class="eyebrow">CFA / UFA Kerplouz LaSalle · 2026-2027 · livrets v6 / v7</p>
     <h1>Fabrique de livrets d'alternance</h1>
     <p class="chapeau">L'export Yparéo entre, un livret Word par apprenti·e sort. Les 18 modèles validés sont rangés ici ; la page associe chaque groupe Yparéo à son modèle et remplit les livrets dans votre navigateur.</p>
   </header>
@@ -182,7 +182,7 @@
       </div>
       <details class="autres" id="autres" hidden>
         <summary id="autres-titre"></summary>
-        <p class="aide">Groupes sans livret v5 : formations courtes, formation continue, années passées. Rattachez-en un à un modèle seulement s'il doit avoir un livret.</p>
+        <p class="aide">Groupes sans livret : formations courtes, formation continue, années passées. Rattachez-en un à un modèle seulement s'il doit avoir un livret.</p>
         <div class="tableau">
           <table>
             <thead><tr><th scope="col"><span class="sr">Choix</span></th><th scope="col">Groupe Yparéo</th><th scope="col" class="n">Apprentis</th><th scope="col">Modèle</th><th scope="col">Correspondance</th></tr></thead>
@@ -216,10 +216,10 @@
     <div class="num" aria-hidden="true">·</div>
     <div>
       <h2>La bibliothèque des modèles</h2>
-      <p class="aide">Les 18 livrets v5 validés, sans aucune donnée d'apprenti, téléchargeables tels quels. Pour faire évoluer un modèle, transmettez la nouvelle version validée au responsable pédagogique : elle doit porter les jetons <code>{{NOM}}</code> et <code>{{PRENOM}}</code> et le code du livret dans son pied de page.</p>
+      <p class="aide">Les 18 livrets validés (dernière version de chaque groupe : v7 ou v6), sans aucune donnée d'apprenti, téléchargeables tels quels. Pour faire évoluer un modèle, transmettez la nouvelle version validée au responsable pédagogique : elle doit porter les jetons <code>{{NOM}}</code> et <code>{{PRENOM}}</code> et le code du livret dans son pied de page.</p>
       <div class="tableau bibli">
         <table>
-          <thead><tr><th scope="col">Code</th><th scope="col">Groupe</th><th scope="col">Fichier</th><th scope="col">Déposé le</th><th scope="col">Action</th></tr></thead>
+          <thead><tr><th scope="col">Code</th><th scope="col">Groupe</th><th scope="col">Fichier</th><th scope="col">Version</th><th scope="col">Action</th></tr></thead>
           <tbody id="corps-bibli"></tbody>
         </table>
       </div>
@@ -235,8 +235,8 @@
     le maître d'apprentissage et les dates de contrat. Supprimez l'export une fois les livrets faits.
   </p>
   <p class="note">
-    <b>Les modèles sont communs à l'établissement.</b> Ils sont publiés avec l'outil,
-    identiques pour tous les formateurs. Gardez les originaux sur votre drive.
+    <b>Les modèles sont communs à l'établissement.</b> Ils sont conservés dans un espace privé,
+    lisible seulement par les comptes autorisés à la fabrique. Gardez les originaux sur votre drive.
   </p>
 </div>
 
@@ -258,7 +258,9 @@
 
   // ------------------------------------------------------------ bibliothèque
   // Les 18 modèles validés sont publiés avec l'outil (modeles/<code>.docx).
-  const ORIGINE = "2026-09-23";
+  // Version en vigueur de chaque livret (pied de page « vN — date ») : v7 du 24/09, v6 du 23/09.
+  const VERSIONS = { "007":"v7","010":"v7","011":"v7","012":"v7","013":"v7","014":"v7","015":"v7","018":"v7" };
+  const DATES = { v6: "2026-09-23", v7: "2026-09-24" };
   const BIBLIO = [
     ["001", "CAPaJP1-A", "CAPa JP 1 - A", ["CAPAJP1A"]],
     ["002", "CAPaJP1-B", "CAPa JP 1 - B", ["CAPAJP1B"]],
@@ -279,9 +281,9 @@
     ["017", "CSAG-B", "CS AG - B", ["CSAGB", "CSAGBG1", "CSARBORISTEGRIMPEURB", "CSARBORISTEGRIMPEURBG1"]],
     ["018", "CQPCOP", "CQP COP 1 an", ["CQPCOP", "CQPCOP1AN", "CQPCOPFC1AN", "CQPCOPFC"]],
   ].map(([n, dossier, libelle, cles]) => ({
-    code: "UFA-LIV-2026-" + n, dossier, libelle, cles,
-    fichier: "Livret_alternance_" + dossier + "_2026-2027_v5.docx",
-    chemin: "modeles/UFA-LIV-2026-" + n + ".docx",
+    code: "UFA-LIV-2026-" + n, dossier, libelle, cles, version: VERSIONS[n] || "v6", date: DATES[VERSIONS[n] || "v6"],
+    fichier: "Livret_alternance_" + dossier + "_2026-2027_" + (VERSIONS[n] || "v6") + ".docx",
+    chemin: "UFA-LIV-2026-" + n + ".docx",
   }));
   const parCode = Object.fromEntries(BIBLIO.map((m) => [m.code, m]));
 
@@ -291,9 +293,7 @@
   async function modelePrepare(code) {
     if (!prepares[code]) {
       prepares[code] = (async () => {
-        const r = await fetch(parCode[code].chemin, { credentials: "same-origin" });
-        if (!r.ok) throw new Error("modèle " + code + " introuvable (" + r.status + ")");
-        return P.preparer(await r.arrayBuffer());
+        return P.preparer(await Compte.modele(parCode[code].chemin));
       })();
       prepares[code].catch(() => { delete prepares[code]; });
     }
@@ -315,9 +315,17 @@
       td(m.code, "code");
       td(m.libelle);
       td(m.fichier, "fichier");
-      td(formatDate(ORIGINE), "date");
+      td(m.version + " · " + formatDate(m.date), "date");
       const l = document.createElement("a");
-      l.href = m.chemin; l.download = m.fichier; l.textContent = "Télécharger";
+      l.href = "#"; l.textContent = "Télécharger";
+      l.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+          const url = URL.createObjectURL(new Blob([await Compte.modele(m.chemin)], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
+          const a = document.createElement("a"); a.href = url; a.download = m.fichier; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (err) { dire("journal-bibli", "Téléchargement impossible : " + err.message, "erreur"); }
+      });
       td("").appendChild(l);
       corps.appendChild(tr);
     });

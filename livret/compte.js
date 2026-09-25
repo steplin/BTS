@@ -69,5 +69,14 @@ window.Compte = (() => {
     session = null; ls.set(SKEY, null); cookie();
     if (t) fetch(SB + "/auth/v1/logout", { method: "POST", headers: { apikey: KEY, Authorization: "Bearer " + t } }).catch(() => {});
   }
-  return { init, lire, enregistrer, deconnecter, get email() { return session && session.user && session.user.email; } };
+  // Modèle de livret : espace de stockage privé « modeles » (réservé aux comptes ayant le droit « livret »)
+  async function modele(nom) {
+    if (!(await frais())) throw new Error("session expirée, reconnectez-vous");
+    const r = await fetch(SB + "/storage/v1/object/authenticated/modeles/" + encodeURIComponent(nom), {
+      headers: { apikey: KEY, Authorization: "Bearer " + session.access_token },
+    });
+    if (!r.ok) throw new Error("modèle " + nom + " introuvable (" + r.status + ")");
+    return r.arrayBuffer();
+  }
+  return { init, lire, enregistrer, deconnecter, modele, get email() { return session && session.user && session.user.email; } };
 })();
