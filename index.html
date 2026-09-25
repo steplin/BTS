@@ -86,19 +86,20 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
     <button type="submit" id="btnLogin">Se connecter</button>
     <button type="button" class="link" id="toForgot">Mot de passe oublié ?</button>
     <p class="hint">Accès réservé aux personnels de Kerplouz LaSalle.</p>
-    <button type="button" class="ghost" id="toSignup">Créer un compte</button>
+    <button type="button" class="ghost" id="toSignup">Première connexion : créer mon mot de passe</button>
   </form>
 
   <!-- Création de compte -->
   <form class="card" id="vSignup" hidden novalidate>
-    <h2>Créer un compte</h2>
-    <p class="hint">Réservé aux personnels de Kerplouz LaSalle : utilisez votre adresse <b>@kerplouz.com</b>. Un e-mail de confirmation vous sera envoyé.</p>
+    <h2>Première connexion</h2>
+    <p class="hint">Saisissez votre adresse <b>@kerplouz.com</b> et le <b>code d'activation</b> remis par le responsable pédagogique, puis choisissez votre mot de passe. Le code ne sert qu'une fois.</p>
     <div class="msg" id="signupMsg" hidden></div>
     <div class="field"><label for="semail">Adresse e-mail Kerplouz</label><input id="semail" type="email" autocomplete="username" placeholder="prenom.nom@kerplouz.com" required></div>
+    <div class="field"><label for="scode">Code d'activation</label><input id="scode" autocomplete="one-time-code" placeholder="6 caractères" maxlength="6" style="text-transform:uppercase;letter-spacing:.2em;font-family:ui-monospace,monospace" required></div>
     <div class="field"><label for="sp1">Mot de passe</label><input id="sp1" type="password" autocomplete="new-password" required></div>
     <div class="field"><label for="sp2">Confirmer le mot de passe</label><input id="sp2" type="password" autocomplete="new-password" required></div>
     <ul class="rules" id="sRules"></ul>
-    <button type="submit" id="btnSignup">Créer mon compte</button>
+    <button type="submit" id="btnSignup">Créer mon mot de passe</button>
     <button type="button" class="link" id="backLogin2">J'ai déjà un compte</button>
   </form>
 
@@ -157,15 +158,15 @@ function fr(e){const m=(e.message||"").toLowerCase();
   if(e.status===429||m.includes("rate limit"))return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
   if(m.includes("same")&&m.includes("password"))return "Le nouveau mot de passe doit être différent de l'ancien.";
   if(m.includes("password")&&(m.includes("weak")||m.includes("least")||m.includes("should contain")))return "Mot de passe trop faible : il doit respecter toutes les règles indiquées.";
-  if(m.includes("database error")||m.includes("adresse non autoris"))return "Création refusée : seules les adresses @kerplouz.com peuvent créer un compte.";
-  if(m.includes("already registered")||m.includes("already been registered"))return "Un compte existe déjà pour cette adresse. Utilisez « Mot de passe oublié » si besoin.";
+  if(m.includes("database error")||m.includes("adresse non autoris")||m.includes("code d'activation"))return "Adresse non reconnue ou code d'activation incorrect. Vérifiez-les, ou demandez un nouveau code au responsable pédagogique.";
+  if(m.includes("already registered")||m.includes("already been registered"))return "Votre compte existe déjà : connectez-vous avec votre mot de passe. En cas d'oubli, demandez une réinitialisation au responsable pédagogique.";
   if(m.includes("signups not allowed"))return "La création de compte est fermée pour le moment.";
   if(m.includes("failed to fetch"))return "Connexion au serveur impossible. Vérifiez votre accès internet.";
   return e.message||"Une erreur est survenue.";}
 async function session(){let s=ls.get();if(!s)return null;
   if(s.expires_at-60<Date.now()/1000){try{s=store(await api("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:s.refresh_token}}),s.user);}catch(e){ls.set(null);setCookie(null);return null;}}
   else setCookie(s);return s;}
-const ROLES={coordinateur:"Coordinateur",formateur:"Formateur",secretariat:"Secrétariat"};
+const ROLES={formateur:"Formateur",referent:"Référent de classe",coordinateur_filiere:"Coordinateur de filière",responsable_peda:"Responsable pédagogique",secretariat:"Secrétariat",direction:"Direction",vie_sco:"Vie scolaire"};
 const esc=t=>String(t==null?"":t).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 let droits=null;
 async function goHome(s){if(next){location.replace(next);return;}
@@ -174,11 +175,13 @@ async function goHome(s){if(next){location.replace(next);return;}
   catch(e){droits=null;}
   if(!droits){show("vLogin");msg("loginMsg","Impossible de lire vos droits d'accès. Réessayez dans un instant.");return;}
   if(!droits.actif){signOutLocal(s);show("vLogin");msg("loginMsg","Votre compte est suspendu. Contactez le responsable pédagogique.");return;}
-  $("#who").innerHTML="<b>"+esc(droits.email||email)+"</b> · "+esc(ROLES[droits.role]||droits.role||"");
+  const nomAff=droits.prenom?droits.prenom+" "+droits.nom:(droits.email||email);
+  const rl=(droits.roles||[]).map(r=>ROLES[r]||r);if(droits.admin)rl.push("Administrateur");
+  $("#who").innerHTML="<b>"+esc(nomAff)+"</b>"+(rl.length?" · "+esc(rl.join(", ")):"");
   $("#lnkAdmin").hidden=!droits.admin;
   const cl=droits.classes||[];
-  $("#mine").innerHTML=cl.length?"Vos classes :"+cl.map(c=>`<span class="chip">${esc(c.libelle)}</span>`).join("")
-    :(droits.admin?"":"<span>Aucune classe ne vous est encore attribuée : le responsable pédagogique doit vous rattacher à vos classes pour afficher leurs outils.</span>");
+  $("#mine").innerHTML=cl.length?"Vos classes :"+cl.map(c=>`<span class="chip"${c.fonction==="referent"?' title="Vous êtes référent·e de cette classe" style="border-color:var(--accent);color:var(--accent)"':""}>${c.fonction==="referent"?"★ ":""}${esc(c.libelle)}</span>`).join("")
+    :(droits.admin||(droits.niveaux||[]).length?"":"<span>Aucune classe ne vous est encore attribuée : le responsable pédagogique doit vous rattacher à vos classes pour afficher leurs outils.</span>");
   const refus=params.get("refus");
   if(refus){history.replaceState(null,"","/");const bn=$("#banner");bn.hidden=false;
     bn.textContent=refus==="suspendu"?"Votre compte est suspendu.":"Vous n'avez pas accès à cet outil. Si vous en avez besoin, demandez au responsable pédagogique de vous rattacher à la classe concernée.";}
@@ -198,8 +201,8 @@ const ICONS={
   suivi:'<path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/>'
 };
 const LEVELS=[
-  {id:"capa",nom:"CAPa Jardinier paysagiste",niv:"Niveau 3",c:"#6E9A3A",sub:"Certificat d'aptitude professionnelle agricole",tools:[
-    {t:"Grilles d'évaluation CCF",d:"Grilles par capacité et onglet de notes de la classe.",i:"grille"}]},
+  {id:"capa",nom:"CAPa Jardinier paysagiste",niv:"Niveau 3",c:"#6E9A3A",sub:"Formation en unités capitalisables",tools:[
+    {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"}]},
   {id:"bpa",nom:"BPA Ouvrier spécialisé en paysage",niv:"Niveau 3",c:"#3F8A70",sub:"Formation en unités capitalisables",tools:[
     {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"}]},
   {id:"bp",nom:"BP Aménagements paysagers",niv:"Niveau 4",c:"#2E6A4B",sub:"Formation en unités capitalisables",tools:[
@@ -262,15 +265,16 @@ const pwOk=p=>RULES.every(([,f])=>f(p));
 bindRules("sp1","sRules");bindRules("np1","rRules");
 $("#toSignup").onclick=()=>{$("#semail").value=$("#email").value;msg("signupMsg","");show("vSignup");};
 $("#backLogin2").onclick=()=>show("vLogin");
-$("#vSignup").addEventListener("submit",async e=>{e.preventDefault();const email=$("#semail").value.trim().toLowerCase(),a=$("#sp1").value,b2=$("#sp2").value;
+$("#vSignup").addEventListener("submit",async e=>{e.preventDefault();const email=$("#semail").value.trim().toLowerCase(),code=$("#scode").value.trim().toUpperCase(),a=$("#sp1").value,b2=$("#sp2").value;
   if(!/^[^@\s]+@kerplouz\.com$/.test(email)){msg("signupMsg","Utilisez votre adresse @kerplouz.com.");return;}
+  if(!/^[A-Z0-9]{6}$/.test(code)){msg("signupMsg","Le code d'activation compte 6 caractères.");return;}
   if(!pwOk(a)){msg("signupMsg","Le mot de passe ne respecte pas toutes les règles.");return;}
   if(a!==b2){msg("signupMsg","Les deux mots de passe ne sont pas identiques.");return;}
   const b=$("#btnSignup");b.disabled=true;
-  try{const r=await api("/auth/v1/signup?redirect_to="+encodeURIComponent(location.origin+"/"),{method:"POST",body:{email,password:a}});
+  try{const r=await api("/auth/v1/signup",{method:"POST",body:{email,password:a,data:{code}}});
     if(r&&r.access_token){goHome(store(r));return;}
-    if(r&&Array.isArray(r.identities)&&r.identities.length===0){msg("signupMsg","Un compte existe déjà pour cette adresse. Utilisez « Mot de passe oublié » si besoin.");return;}
-    msg("signupMsg","Compte créé. Ouvrez l'e-mail de confirmation envoyé à "+email+" et cliquez sur le lien pour activer votre compte.","ok");}
+    if(r&&Array.isArray(r.identities)&&r.identities.length===0){msg("signupMsg",fr({message:"already registered"}));return;}
+    msg("signupMsg","Mot de passe enregistré. Connectez-vous maintenant avec votre adresse et ce mot de passe.","ok");}
   catch(err){msg("signupMsg",fr(err));}finally{b.disabled=false;}});
 $("#btnOut").onclick=()=>{signOutLocal(ls.get());show("vLogin");};
 
