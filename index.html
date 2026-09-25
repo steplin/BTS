@@ -150,6 +150,8 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
         <option value="capa">CAPa JP</option><option value="bpa">BPA OSP</option><option value="bp">BP AP</option>
         <option value="btsa" selected>BTSA AP</option><option value="cs">CS Arboriste</option><option value="bprea">BPREA</option>
       </select>
+      <label for="apPers"><b>ou prendre le rôle de</b></label>
+      <select id="apPers"><option value="">une personne…</option></select>
       <span class="info" id="apInfo" hidden></span>
     </div>
     <div class="banner" id="banner" hidden></div>
@@ -208,6 +210,8 @@ function majApercu(){const role=$("#apRole").value,large=NIV_LARGE.includes(role
   $("#apInfo").textContent=apercu?`Aperçu : voici le tableau de bord d'une personne « ${lib} ». Rien n'est modifié, et les outils s'ouvrent toujours avec vos propres droits d'administrateur.`:"";
   filtre="all";renderDash();}
 $("#apRole").onchange=majApercu;$("#apNiv").onchange=majApercu;
+$("#apPers").onchange=async e=>{const v=e.target.value;if(!v)return;e.target.disabled=true;
+  try{await window.KepComme.prendre(v);location.reload();}catch(err){e.target.disabled=false;$("#apInfo").hidden=false;$("#apInfo").textContent="Impossible de prendre ce rôle : "+err.message;}};
 async function goHome(s){if(next){location.replace(next);return;}
   const email=s.user&&s.user.email||"";
   try{droits=await api("/rest/v1/rpc/mes_droits",{method:"POST",body:{},token:s.access_token});}
@@ -220,7 +224,9 @@ async function goHome(s){if(next){location.replace(next);return;}
   $("#who").innerHTML="<b>"+esc(nomAff)+"</b>"+(rl.length?" · "+esc(rl.join(", ")):"");
   $("#lnkAdmin").hidden=!droits.admin;
   $("#apercu").hidden=!droits.admin;$("#apRole").value="";apercu=null;$("#apInfo").hidden=true;$("#apercu").classList.remove("on");$("#apNiv").hidden=$("#apNivL").hidden=true;
-  if(droits.admin){try{outilsCat=await api("/rest/v1/outils?select=code,niveau,roles,ordre&order=ordre",{token:s.access_token})||[];}catch(e){outilsCat=[];$("#apercu").hidden=true;}}
+  if(droits.admin){try{outilsCat=await api("/rest/v1/outils?select=code,niveau,roles,ordre&order=ordre",{token:s.access_token})||[];}catch(e){outilsCat=[];$("#apercu").hidden=true;}
+    try{const pers=await api("/rest/v1/rpc/admin_personnel",{method:"POST",body:{},token:s.access_token})||[];
+      $("#apPers").innerHTML='<option value="">une personne…</option>'+pers.filter(p=>p.actif&&p.email!==droits.email).map(p=>`<option value="${esc(p.email)}">${esc(p.nom+" "+p.prenom)}</option>`).join("");}catch(e){}}
   const cl=droits.classes||[];
   $("#mine").innerHTML=cl.length?"Vos classes :"+cl.map(c=>`<span class="chip"${c.fonction==="referent"?' title="Vous êtes référent·e de cette classe" style="border-color:var(--accent);color:var(--accent)"':""}>${c.fonction==="referent"?"★ ":""}${esc(c.libelle)}</span>`).join("")
     :(droits.admin||(droits.niveaux||[]).length?"":"<span>Aucune classe ne vous est encore attribuée : le responsable pédagogique doit vous rattacher à vos classes pour afficher leurs outils.</span>");
@@ -334,4 +340,5 @@ $("#btnOut").onclick=()=>{signOutLocal(ls.get());show("vLogin");};
   const s=await session();if(s)goHome(s);else{show("vLogin");if(next)msg("loginMsg","Connectez-vous pour accéder à cet outil.","ok");}
 })();
 </script>
+<script src="/comme.js" defer></script>
 </body></html>
