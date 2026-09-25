@@ -30,6 +30,8 @@ button.ghost{background:none;color:var(--ink-2);border:1px solid var(--line)}
 a.tool{display:block;border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:inherit;text-decoration:none}
 a.tool:hover{border-color:var(--accent)}a.tool b{display:block;color:var(--accent)}
 .who{font-size:13.5px;color:var(--ink-2)}
+.rules{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;font-size:12.5px;color:var(--ink-3)}
+.rules li::before{content:"○ ";}.rules li.ok{color:var(--accent)}.rules li.ok::before{content:"✓ ";}
 footer{text-align:center;font-size:12px;color:var(--ink-3)}
 </style></head><body>
 <main>
@@ -43,7 +45,21 @@ footer{text-align:center;font-size:12px;color:var(--ink-3)}
     <div class="field"><label for="password">Mot de passe</label><input id="password" type="password" autocomplete="current-password" required></div>
     <button type="submit" id="btnLogin">Se connecter</button>
     <button type="button" class="link" id="toForgot">Mot de passe oublié ?</button>
-    <p class="hint">Accès réservé aux personnels de Kerplouz LaSalle. Pas encore de compte ? Demandez-le au responsable pédagogique.</p>
+    <p class="hint">Accès réservé aux personnels de Kerplouz LaSalle.</p>
+    <button type="button" class="ghost" id="toSignup">Créer un compte</button>
+  </form>
+
+  <!-- Création de compte -->
+  <form class="card" id="vSignup" hidden novalidate>
+    <h2>Créer un compte</h2>
+    <p class="hint">Réservé aux personnels de Kerplouz LaSalle : utilisez votre adresse <b>@kerplouz.com</b>. Un e-mail de confirmation vous sera envoyé.</p>
+    <div class="msg" id="signupMsg" hidden></div>
+    <div class="field"><label for="semail">Adresse e-mail Kerplouz</label><input id="semail" type="email" autocomplete="username" placeholder="prenom.nom@kerplouz.com" required></div>
+    <div class="field"><label for="sp1">Mot de passe</label><input id="sp1" type="password" autocomplete="new-password" required></div>
+    <div class="field"><label for="sp2">Confirmer le mot de passe</label><input id="sp2" type="password" autocomplete="new-password" required></div>
+    <ul class="rules" id="sRules"></ul>
+    <button type="submit" id="btnSignup">Créer mon compte</button>
+    <button type="button" class="link" id="backLogin2">J'ai déjà un compte</button>
   </form>
 
   <!-- Mot de passe oublié -->
@@ -60,9 +76,9 @@ footer{text-align:center;font-size:12px;color:var(--ink-3)}
   <form class="card" id="vReset" hidden novalidate>
     <h2>Choisir un nouveau mot de passe</h2>
     <div class="msg" id="resetMsg" hidden></div>
-    <div class="field"><label for="np1">Nouveau mot de passe</label><input id="np1" type="password" autocomplete="new-password" minlength="8" required></div>
-    <div class="field"><label for="np2">Confirmer le mot de passe</label><input id="np2" type="password" autocomplete="new-password" minlength="8" required></div>
-    <p class="hint">8 caractères minimum.</p>
+    <div class="field"><label for="np1">Nouveau mot de passe</label><input id="np1" type="password" autocomplete="new-password" required></div>
+    <div class="field"><label for="np2">Confirmer le mot de passe</label><input id="np2" type="password" autocomplete="new-password" required></div>
+    <ul class="rules" id="rRules"></ul>
     <button type="submit" id="btnReset">Enregistrer le mot de passe</button>
   </form>
 
@@ -88,14 +104,17 @@ async function api(path,{method="GET",body,token}={}){
   const h={apikey:KEY,"Content-Type":"application/json"};if(token)h.Authorization="Bearer "+token;
   const r=await fetch(SB+path,{method,headers:h,body:body?JSON.stringify(body):undefined});const txt=await r.text();let d=null;try{d=txt?JSON.parse(txt):null;}catch(e){}
   if(!r.ok){const e=new Error((d&&(d.error_description||d.msg||d.message||d.error))||("Erreur "+r.status));e.status=r.status;e.code=d&&(d.error_code||d.code);throw e;}return d;}
-function show(id){["vLogin","vForgot","vReset","vHome"].forEach(v=>$("#"+v).hidden=v!==id);const f=$("#"+id).querySelector("input");if(f)f.focus();}
+function show(id){["vLogin","vForgot","vReset","vHome","vSignup"].forEach(v=>$("#"+v).hidden=v!==id);const f=$("#"+id).querySelector("input");if(f)f.focus();}
 function msg(id,text,kind){const m=$("#"+id);m.textContent=text;m.className="msg "+(kind||"err");m.hidden=!text;}
 function fr(e){const m=(e.message||"").toLowerCase();
   if(m.includes("invalid login")||e.code==="invalid_credentials")return "Adresse ou mot de passe incorrect.";
   if(m.includes("email not confirmed"))return "Votre adresse n'est pas encore confirmée : ouvrez le mail de confirmation reçu.";
   if(e.status===429||m.includes("rate limit"))return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
   if(m.includes("same")&&m.includes("password"))return "Le nouveau mot de passe doit être différent de l'ancien.";
-  if(m.includes("password")&&(m.includes("weak")||m.includes("least")))return "Mot de passe trop faible : 8 caractères minimum.";
+  if(m.includes("password")&&(m.includes("weak")||m.includes("least")||m.includes("should contain")))return "Mot de passe trop faible : il doit respecter toutes les règles indiquées.";
+  if(m.includes("database error")||m.includes("adresse non autoris"))return "Création refusée : seules les adresses @kerplouz.com peuvent créer un compte.";
+  if(m.includes("already registered")||m.includes("already been registered"))return "Un compte existe déjà pour cette adresse. Utilisez « Mot de passe oublié » si besoin.";
+  if(m.includes("signups not allowed"))return "La création de compte est fermée pour le moment.";
   if(m.includes("failed to fetch"))return "Connexion au serveur impossible. Vérifiez votre accès internet.";
   return e.message||"Une erreur est survenue.";}
 async function session(){let s=ls.get();if(!s)return null;
@@ -118,11 +137,29 @@ $("#vForgot").addEventListener("submit",async e=>{e.preventDefault();const b=$("
   catch(err){msg("forgotMsg",fr(err));}finally{b.disabled=false;}});
 let recovery=null;
 $("#vReset").addEventListener("submit",async e=>{e.preventDefault();const a=$("#np1").value,b2=$("#np2").value;
-  if(a.length<8){msg("resetMsg","8 caractères minimum.");return;}if(a!==b2){msg("resetMsg","Les deux mots de passe ne sont pas identiques.");return;}
+  if(!pwOk(a)){msg("resetMsg","Le mot de passe ne respecte pas toutes les règles.");return;}if(a!==b2){msg("resetMsg","Les deux mots de passe ne sont pas identiques.");return;}
   const b=$("#btnReset");b.disabled=true;
   try{await api("/auth/v1/user",{method:"PUT",token:recovery.access_token,body:{password:a}});const u=await api("/auth/v1/user",{token:recovery.access_token});
     const s=store(recovery,{id:u.id,email:u.email});msg("resetMsg","");goHome(s);}
   catch(err){msg("resetMsg",fr(err));}finally{b.disabled=false;}});
+/* Règles de mot de passe (identiques à celles réglées dans Supabase) */
+const RULES=[["8 caractères minimum",p=>p.length>=8],["une minuscule",p=>/[a-z]/.test(p)],["une majuscule",p=>/[A-Z]/.test(p)],["un chiffre",p=>/[0-9]/.test(p)],["un caractère spécial",p=>/[^A-Za-z0-9]/.test(p)]];
+function bindRules(inputId,listId){const ul=$("#"+listId),inp=$("#"+inputId);
+  const draw=()=>{const p=inp.value;ul.innerHTML=RULES.map(([t,f])=>`<li class="${f(p)?"ok":""}">${t}</li>`).join("");};inp.addEventListener("input",draw);draw();}
+const pwOk=p=>RULES.every(([,f])=>f(p));
+bindRules("sp1","sRules");bindRules("np1","rRules");
+$("#toSignup").onclick=()=>{$("#semail").value=$("#email").value;msg("signupMsg","");show("vSignup");};
+$("#backLogin2").onclick=()=>show("vLogin");
+$("#vSignup").addEventListener("submit",async e=>{e.preventDefault();const email=$("#semail").value.trim().toLowerCase(),a=$("#sp1").value,b2=$("#sp2").value;
+  if(!/^[^@\s]+@kerplouz\.com$/.test(email)){msg("signupMsg","Utilisez votre adresse @kerplouz.com.");return;}
+  if(!pwOk(a)){msg("signupMsg","Le mot de passe ne respecte pas toutes les règles.");return;}
+  if(a!==b2){msg("signupMsg","Les deux mots de passe ne sont pas identiques.");return;}
+  const b=$("#btnSignup");b.disabled=true;
+  try{const r=await api("/auth/v1/signup?redirect_to="+encodeURIComponent(location.origin+"/"),{method:"POST",body:{email,password:a}});
+    if(r&&r.access_token){goHome(store(r));return;}
+    if(r&&Array.isArray(r.identities)&&r.identities.length===0){msg("signupMsg","Un compte existe déjà pour cette adresse. Utilisez « Mot de passe oublié » si besoin.");return;}
+    msg("signupMsg","Compte créé. Ouvrez l'e-mail de confirmation envoyé à "+email+" et cliquez sur le lien pour activer votre compte.","ok");}
+  catch(err){msg("signupMsg",fr(err));}finally{b.disabled=false;}});
 $("#btnOut").onclick=()=>{const s=ls.get();if(s)fetch(SB+"/auth/v1/logout",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+s.access_token}}).catch(()=>{});ls.set(null);setCookie(null);show("vLogin");};
 
 (async()=>{
