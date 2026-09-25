@@ -278,6 +278,23 @@ td.crit .rowact{justify-content:flex-start;margin-top:6px}
 .sz-plist label{display:flex;gap:6px;align-items:center}
 
 #vPrep,#vSaisie{display:flex;flex-direction:column;gap:18px}#vPrep[hidden],#vSaisie[hidden]{display:none}
+/* Téléphone : liste des candidats en bandeau horizontal, sans rester collée au-dessus de la grille */
+@media (max-width:900px){
+  .sz-side{position:static;max-height:none;overflow:visible;padding:10px 12px}
+  .sz-side h2{font-size:15px;margin:0 0 6px}
+  .sz-cands{flex-direction:row;overflow-x:auto;gap:6px;padding:2px 2px 6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .sz-cands li{flex:0 0 auto;scroll-snap-align:start}
+  .sz-cands button{width:auto;grid-template-columns:10px auto auto;border-color:var(--line);padding:6px 10px}
+  .sz-cands .fictif{display:none}
+}
+@media (max-width:760px){
+  .sz-gnav{display:grid;grid-template-columns:auto minmax(0,1fr) auto;width:100%}
+  .sz-gnav [data-home]{grid-column:1/-1;justify-self:start}
+  .sz-gnav select{width:100%;max-width:none}
+  .sz-ind{grid-template-columns:auto auto 1fr;gap:6px 10px}
+  .sz-ind .sz-t{grid-column:1/-1;padding-top:0}
+  .sz-lv{padding-top:4px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -1535,7 +1552,8 @@ const Saisie=(()=>{
     side.innerHTML=`<h2>Candidats</h2><ol class="sz-cands">`+S.apps.map(a=>{const r=S.saisies[key(S.code,a.id)];
       return `<li><button type="button" data-app="${a.id}" class="${a.id===S.app?"on":""}"><span class="dot ${etat(S.code,a.id)}"></span><span class="nm">${esc(nomApp(a))}${a.fictif?'<span class="fictif">fictif</span>':""}</span><span class="n20">${r&&r.note20!=null?fr(+r.note20):""}</span></button></li>`;}).join("")+`</ol>`;
     const ns=S.apps.map(a=>S.saisies[key(S.code,a.id)]).filter(x=>x&&x.note20!=null).map(x=>+x.note20);
-    side.innerHTML+=`<p class="hint" style="margin:0">${ns.length}/${S.apps.length} complète(s)${ns.length?" · moyenne "+fr(ns.reduce((s,x)=>s+x,0)/ns.length):""}</p>`;}
+    side.innerHTML+=`<p class="hint" style="margin:0">${ns.length}/${S.apps.length} complète(s)${ns.length?" · moyenne "+fr(ns.reduce((s,x)=>s+x,0)/ns.length):""}</p>`;
+    const on=side.querySelector(".sz-cands button.on"),ol=side.querySelector(".sz-cands");if(on&&ol&&ol.scrollWidth>ol.clientWidth)ol.scrollLeft=on.parentNode.offsetLeft-ol.offsetLeft-8;}
   function renderGrille(){const m=$("#szMain");
     if(!S.apps.length){$("#szSide").hidden=true;m.innerHTML=`<button type="button" class="ghost small" data-home>← Toutes les grilles</button><p class="hint">Aucun candidat pour la promotion ${esc(S.promo)}.${S.coord?" Ajoutez-les dans « Coordination › Candidats ».":""}</p>`;return;}
     renderSide();
