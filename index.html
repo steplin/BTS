@@ -1,16 +1,139 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Outils Kerplouz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-body{margin:0;background:#fff;color:#18241E;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 16px}
-main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-h1{margin:0;font-size:26px}
-p{margin:0;color:#4A5A51}
-a.card{display:block;border:1px solid #DCE2D9;border-radius:12px;padding:14px 16px;color:inherit;text-decoration:none}
-a.card:hover{border-color:#2E6A4B}
-a.card b{display:block;color:#2E6A4B;font-size:16px}
-</style></head><body><main>
-<h1>Outils pédagogiques · Kerplouz LaSalle</h1>
-<p>Outils en ligne, utilisables sans compte. Les données saisies restent dans votre navigateur.</p>
-<a class="card" href="/BTS/"><b>Grilles d'évaluation BTS AP</b>Génère les classeurs Excel d'évaluation de la promotion 2026-2028 à partir de la liste des apprenants.</a>
-</main></body></html>
+:root{--bg:#F4F6F3;--surface:#FFFFFF;--line:#DCE2D9;--ink:#18241E;--ink-2:#4A5A51;--ink-3:#76857C;--accent:#2E6A4B;--accent-soft:#DCEBDF;--danger:#A8412F;--danger-soft:#F6DED8;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-inline:16px;display:grid;place-items:center}
+main{width:100%;max-width:400px;padding-block:32px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;flex-direction:column;gap:4px;text-align:center}
+.brand small{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+h1{font:700 26px/1.15 var(--display);margin:0;letter-spacing:-.01em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 2px rgba(24,36,30,.05),0 8px 24px rgba(24,36,30,.06)}
+h2{font:600 17px/1.3 var(--body);margin:0}
+.field{display:flex;flex-direction:column;gap:5px}
+label{font-size:13px;font-weight:500;color:var(--ink-2)}
+input{font:15px var(--body);color:var(--ink);background:#F8FAF7;border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:600 15px var(--body);border:0;border-radius:9px;padding:11px 14px;background:var(--accent);color:#fff;cursor:pointer}
+button:hover{filter:brightness(1.07)}button:disabled{opacity:.6;cursor:wait}
+button.link{background:none;color:var(--accent);padding:0;font-weight:500;font-size:13.5px;text-decoration:underline;text-underline-offset:3px;align-self:flex-start}
+button.ghost{background:none;color:var(--ink-2);border:1px solid var(--line)}
+.msg{font-size:13.5px;border-radius:8px;padding:9px 11px}
+.msg.err{background:var(--danger-soft);color:var(--danger)}.msg.ok{background:var(--accent-soft);color:var(--accent)}
+.hint{font-size:12.5px;color:var(--ink-3);margin:0}
+a.tool{display:block;border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:inherit;text-decoration:none}
+a.tool:hover{border-color:var(--accent)}a.tool b{display:block;color:var(--accent)}
+.who{font-size:13.5px;color:var(--ink-2)}
+footer{text-align:center;font-size:12px;color:var(--ink-3)}
+</style></head><body>
+<main>
+  <div class="brand"><small>Kerplouz LaSalle</small><h1>Outils pédagogiques</h1></div>
+
+  <!-- Connexion -->
+  <form class="card" id="vLogin" hidden novalidate>
+    <h2>Connexion</h2>
+    <div class="msg" id="loginMsg" hidden></div>
+    <div class="field"><label for="email">Adresse e-mail</label><input id="email" type="email" autocomplete="username" placeholder="prenom.nom@kerplouz.com" required></div>
+    <div class="field"><label for="password">Mot de passe</label><input id="password" type="password" autocomplete="current-password" required></div>
+    <button type="submit" id="btnLogin">Se connecter</button>
+    <button type="button" class="link" id="toForgot">Mot de passe oublié ?</button>
+    <p class="hint">Accès réservé aux personnels de Kerplouz LaSalle. Pas encore de compte ? Demandez-le au responsable pédagogique.</p>
+  </form>
+
+  <!-- Mot de passe oublié -->
+  <form class="card" id="vForgot" hidden novalidate>
+    <h2>Mot de passe oublié</h2>
+    <p class="hint">Saisissez votre adresse : vous recevrez un lien pour choisir un nouveau mot de passe.</p>
+    <div class="msg" id="forgotMsg" hidden></div>
+    <div class="field"><label for="femail">Adresse e-mail</label><input id="femail" type="email" autocomplete="username" placeholder="prenom.nom@kerplouz.com" required></div>
+    <button type="submit" id="btnForgot">Envoyer le lien</button>
+    <button type="button" class="link" id="backLogin">Retour à la connexion</button>
+  </form>
+
+  <!-- Nouveau mot de passe (après le lien reçu par mail) -->
+  <form class="card" id="vReset" hidden novalidate>
+    <h2>Choisir un nouveau mot de passe</h2>
+    <div class="msg" id="resetMsg" hidden></div>
+    <div class="field"><label for="np1">Nouveau mot de passe</label><input id="np1" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div class="field"><label for="np2">Confirmer le mot de passe</label><input id="np2" type="password" autocomplete="new-password" minlength="8" required></div>
+    <p class="hint">8 caractères minimum.</p>
+    <button type="submit" id="btnReset">Enregistrer le mot de passe</button>
+  </form>
+
+  <!-- Connecté -->
+  <section class="card" id="vHome" hidden>
+    <h2>Vos outils</h2>
+    <p class="who" id="who"></p>
+    <a class="tool" href="/BTS/"><b>Grilles d'évaluation BTS AP</b>Classeurs Excel d'évaluation de la promotion 2026-2028, à partir de la liste des apprenants.</a>
+    <button type="button" class="ghost" id="btnOut">Se déconnecter</button>
+  </section>
+
+  <footer>Kerplouz LaSalle · UFA du CFA ECB</footer>
+</main>
+<script>
+const SB="https://olqclfsywasktwirswpb.supabase.co", KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x", SKEY="kep.session";
+const $=s=>document.querySelector(s);
+const params=new URLSearchParams(location.search);
+const next=(()=>{const n=params.get("next")||"";return /^\/[A-Za-z0-9\/_\-.]*$/.test(n)&&!n.startsWith("//")?n:"";})();
+const ls={get(){try{return JSON.parse(localStorage.getItem(SKEY)||"null");}catch(e){return null;}},set(v){try{v?localStorage.setItem(SKEY,JSON.stringify(v)):localStorage.removeItem(SKEY);}catch(e){}}};
+function setCookie(s){document.cookie=s?`kep_at=${s.access_token}; Path=/; Max-Age=${Math.max(60,s.expires_at-Math.floor(Date.now()/1000))}; Secure; SameSite=Lax`:"kep_at=; Path=/; Max-Age=0; Secure; SameSite=Lax";}
+function store(t,user){const s={access_token:t.access_token,refresh_token:t.refresh_token,expires_at:t.expires_at?+t.expires_at:Math.floor(Date.now()/1000)+(+t.expires_in||3600),user:user||t.user&&{id:t.user.id,email:t.user.email}||null};ls.set(s);setCookie(s);return s;}
+async function api(path,{method="GET",body,token}={}){
+  const h={apikey:KEY,"Content-Type":"application/json"};if(token)h.Authorization="Bearer "+token;
+  const r=await fetch(SB+path,{method,headers:h,body:body?JSON.stringify(body):undefined});const txt=await r.text();let d=null;try{d=txt?JSON.parse(txt):null;}catch(e){}
+  if(!r.ok){const e=new Error((d&&(d.error_description||d.msg||d.message||d.error))||("Erreur "+r.status));e.status=r.status;e.code=d&&(d.error_code||d.code);throw e;}return d;}
+function show(id){["vLogin","vForgot","vReset","vHome"].forEach(v=>$("#"+v).hidden=v!==id);const f=$("#"+id).querySelector("input");if(f)f.focus();}
+function msg(id,text,kind){const m=$("#"+id);m.textContent=text;m.className="msg "+(kind||"err");m.hidden=!text;}
+function fr(e){const m=(e.message||"").toLowerCase();
+  if(m.includes("invalid login")||e.code==="invalid_credentials")return "Adresse ou mot de passe incorrect.";
+  if(m.includes("email not confirmed"))return "Votre adresse n'est pas encore confirmée : ouvrez le mail de confirmation reçu.";
+  if(e.status===429||m.includes("rate limit"))return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
+  if(m.includes("same")&&m.includes("password"))return "Le nouveau mot de passe doit être différent de l'ancien.";
+  if(m.includes("password")&&(m.includes("weak")||m.includes("least")))return "Mot de passe trop faible : 8 caractères minimum.";
+  if(m.includes("failed to fetch"))return "Connexion au serveur impossible. Vérifiez votre accès internet.";
+  return e.message||"Une erreur est survenue.";}
+async function session(){let s=ls.get();if(!s)return null;
+  if(s.expires_at-60<Date.now()/1000){try{s=store(await api("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:s.refresh_token}}),s.user);}catch(e){ls.set(null);setCookie(null);return null;}}
+  else setCookie(s);return s;}
+function goHome(s){if(next){location.replace(next);return;}$("#who").textContent="Connecté : "+(s.user&&s.user.email||"");show("vHome");}
+
+$("#vLogin").addEventListener("submit",async e=>{e.preventDefault();const b=$("#btnLogin");msg("loginMsg","");
+  const email=$("#email").value.trim().toLowerCase(),pw=$("#password").value;
+  if(!email||!pw){msg("loginMsg","Saisissez votre adresse et votre mot de passe.");return;}
+  b.disabled=true;b.textContent="Connexion…";
+  try{const t=await api("/auth/v1/token?grant_type=password",{method:"POST",body:{email,password:pw}});goHome(store(t));}
+  catch(err){msg("loginMsg",fr(err));}finally{b.disabled=false;b.textContent="Se connecter";}});
+$("#toForgot").onclick=()=>{$("#femail").value=$("#email").value;msg("forgotMsg","");show("vForgot");};
+$("#backLogin").onclick=()=>show("vLogin");
+$("#vForgot").addEventListener("submit",async e=>{e.preventDefault();const b=$("#btnForgot");const email=$("#femail").value.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg("forgotMsg","Saisissez une adresse e-mail valide.");return;}
+  b.disabled=true;try{await api("/auth/v1/recover?redirect_to="+encodeURIComponent(location.origin+"/"),{method:"POST",body:{email}});
+    msg("forgotMsg","Si un compte existe pour cette adresse, un lien vient d'être envoyé. Pensez à regarder dans les indésirables.","ok");}
+  catch(err){msg("forgotMsg",fr(err));}finally{b.disabled=false;}});
+let recovery=null;
+$("#vReset").addEventListener("submit",async e=>{e.preventDefault();const a=$("#np1").value,b2=$("#np2").value;
+  if(a.length<8){msg("resetMsg","8 caractères minimum.");return;}if(a!==b2){msg("resetMsg","Les deux mots de passe ne sont pas identiques.");return;}
+  const b=$("#btnReset");b.disabled=true;
+  try{await api("/auth/v1/user",{method:"PUT",token:recovery.access_token,body:{password:a}});const u=await api("/auth/v1/user",{token:recovery.access_token});
+    const s=store(recovery,{id:u.id,email:u.email});msg("resetMsg","");goHome(s);}
+  catch(err){msg("resetMsg",fr(err));}finally{b.disabled=false;}});
+$("#btnOut").onclick=()=>{const s=ls.get();if(s)fetch(SB+"/auth/v1/logout",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+s.access_token}}).catch(()=>{});ls.set(null);setCookie(null);show("vLogin");};
+
+(async()=>{
+  const h=new URLSearchParams(location.hash.replace(/^#/,""));
+  if(h.get("error")){history.replaceState(null,"",location.pathname+location.search);show("vLogin");msg("loginMsg","Ce lien n'est plus valable. Redemandez-en un avec « Mot de passe oublié ».");return;}
+  if(h.get("access_token")){history.replaceState(null,"",location.pathname+location.search);
+    recovery={access_token:h.get("access_token"),refresh_token:h.get("refresh_token"),expires_at:h.get("expires_at"),expires_in:h.get("expires_in")};
+    if(h.get("type")==="recovery"||h.get("type")==="invite"){show("vReset");return;}
+    try{const u=await api("/auth/v1/user",{token:recovery.access_token});goHome(store(recovery,{id:u.id,email:u.email}));return;}catch(e){}}
+  if(params.get("logout")==="1"){ls.set(null);setCookie(null);show("vLogin");return;}
+  const s=await session();if(s)goHome(s);else{show("vLogin");if(next)msg("loginMsg","Connectez-vous pour accéder à cet outil.","ok");}
+})();
+</script>
+</body></html>
