@@ -283,7 +283,7 @@ function ligne(p){const self=p.email===moi,o=ouvert&&ouvert.email===p.email?ouve
     <td><div class="chips">${rl||'<span class="none">Aucun rôle</span>'} <button type="button" class="ghost small" data-act="roles">${o==="roles"?"Fermer":"Modifier"}</button></div>${o==="roles"?panneauRoles(p):""}</td>
     <td><div class="chips">${chipsClasses(p.email)} <button type="button" class="ghost small" data-act="classes">${o==="classes"?"Fermer":"Modifier"}</button></div>${o==="classes"?panneauClasses(p):""}</td>
     <td><label class="switch"><input type="checkbox" data-act="actif" ${p.actif?"checked":""} ${self?"disabled":""} aria-label="Compte actif"></label></td>
-    <td><div class="actions">${self?"":`${p.compte?'<button type="button" class="ghost small" data-act="reinit" title="Supprime le mot de passe et donne un nouveau code">Réinitialiser l\'accès</button>':'<button type="button" class="small" data-act="fiche" title="Fiche de connexion de cette personne (PDF)">Fiche</button>'+(p.code&&p.actif?'<button type="button" class="small" data-act="mail" title="Ouvre votre messagerie avec un mail prêt à envoyer à cette personne">Mail</button>':'')+'<button type="button" class="ghost small" data-act="code">Nouveau code</button>'}
+    <td><div class="actions">${self?"":`${p.compte?'<button type="button" class="ghost small" data-act="reinit" title="Supprime le mot de passe et donne un nouveau code">Réinitialiser l\'accès</button>':'<button type="button" class="small" data-act="fiche" title="Fiche de connexion de cette personne (PDF)">Fiche</button>'+(p.code&&p.actif?'<button type="button" class="small" data-act="mail" title="Ouvre votre messagerie avec un mail prêt à envoyer à cette personne">Mail</button>':'')+'<button type="button" class="ghost small" data-act="code">Nouveau code</button>'}${p.actif?'<button type="button" class="ghost small" data-act="role" title="Agir sur tout le site comme cette personne (tracé)">Prendre son rôle</button>':''}
       <button type="button" class="danger small" data-act="del">Supprimer</button>`}</div></td></tr>`;}
 function rendre(){
   const q=sansAccent($("#q").value.trim().toLowerCase()),fr=$("#fRole").value,fc=$("#fClasse").value;
@@ -339,6 +339,7 @@ $("#tPerso").addEventListener("click",e=>{const b=e.target.closest("button");if(
     action(async()=>{await api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body});if(body.email)ouvert={email:body.email,quoi:"roles"};},"Fiche enregistrée");return;}
   if(act==="fiche")return imprimerFiches([perso.find(x=>x.email===email)],"page");
   if(act==="mail")return ouvrirMail(perso.find(x=>x.email===email));
+  if(act==="role"){b.disabled=true;window.KepComme.prendre(email).then(()=>{location.href="/";}).catch(e=>{b.disabled=false;toast("Impossible : "+e.message,true);});return;}
   if(act==="code")return action(async()=>{const c=await api("/rest/v1/rpc/nouveau_code",{method:"POST",body:{}});await api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{code:c}});return c;},c=>"Nouveau code : "+c);
   if(act==="reinit"||act==="del"){if(!b.classList.contains("sure")){const t=b.textContent;b.classList.add("sure");if(act==="reinit")b.classList.add("danger");b.textContent="Confirmer ?";
       setTimeout(()=>{if(b.isConnected){b.classList.remove("sure");if(act==="reinit")b.classList.remove("danger");b.textContent=t;}},4000);return;}
@@ -449,4 +450,5 @@ $("#fFiches").addEventListener("submit",e=>{e.preventDefault();const mep=new For
   catch(e){const m=$("#err");m.hidden=false;m.textContent="Chargement impossible : "+frErr(e);}
 })();
 </script>
+<script src="/comme.js" defer></script>
 </body></html>
