@@ -70,12 +70,57 @@ tr.off td{background:#FAFAF8;color:var(--ink-3)}
 .actions{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:10px;padding:10px 16px;font-size:13.5px;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:90vw}
 .toast.err{background:var(--danger)}
+/* ---- Fiches de connexion ---- */
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;max-width:520px;width:calc(100% - 32px);box-shadow:0 20px 60px rgba(0,0,0,.25);color:var(--ink)}
+dialog::backdrop{background:rgba(24,36,30,.45)}
+dialog form{padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+dialog h2{font:700 20px var(--display);margin:0}
+dialog fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:7px}
+dialog legend{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+dialog label{display:flex;gap:8px;align-items:center;font-size:14px}
+dialog .foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+dialog .count{font-size:13px;color:var(--ink-2)}
 #print{display:none}
+.fiche{box-sizing:border-box;width:210mm;height:297mm;padding:18mm 20mm 16mm;display:flex;flex-direction:column;gap:7mm;font:11pt/1.45 var(--body);color:#18241E;background:#fff;page-break-after:always;break-after:page;position:relative;overflow:hidden}
+.fiche:last-child{page-break-after:auto;break-after:auto}
+.f-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5pt solid #2E6A4B;padding-bottom:4mm}
+.f-head .org{font-size:8.5pt;letter-spacing:.14em;text-transform:uppercase;color:#4A5A51}
+.f-head h1{font:700 22pt/1.1 var(--display);margin:1.5mm 0 0;color:#18241E}
+.f-head .perso{font-size:8.5pt;color:#76857C;text-align:right}
+.f-hello{font-size:12pt;margin:0}
+.f-hello b{font-weight:600}
+.f-card{border:1pt solid #CFD9CB;border-radius:4mm;background:#F4F8F2;padding:6mm 7mm;display:grid;grid-template-columns:auto 1fr;gap:3.5mm 8mm;align-items:baseline}
+.f-card dt{font-size:8.5pt;letter-spacing:.1em;text-transform:uppercase;color:#4A5A51}
+.f-card dd{margin:0;font-size:13pt;font-weight:600;word-break:break-all}
+.f-card dd.site{color:#2E6A4B}
+.f-card dd.code{font:600 26pt/1 var(--mono);letter-spacing:.28em;color:#18241E;background:#fff;border:1.2pt dashed #2E6A4B;border-radius:2.5mm;padding:2.5mm 4mm;justify-self:start}
+.f-steps{list-style:none;counter-reset:s;margin:0;padding:0;display:flex;flex-direction:column;gap:3.2mm}
+.f-steps li{counter-increment:s;display:grid;grid-template-columns:8mm 1fr;gap:3mm;align-items:start}
+.f-steps li::before{content:counter(s);width:7mm;height:7mm;border-radius:50%;background:#2E6A4B;color:#fff;font-weight:600;font-size:10pt;display:grid;place-items:center}
+.f-steps .k{font-weight:600}
+.fiche:not(.demi) .court{display:none}
+.f-rules{display:flex;flex-wrap:wrap;gap:1.5mm 2mm;margin-top:1.5mm}
+.f-rules span{font-size:9pt;border:.8pt solid #CFD9CB;border-radius:10mm;padding:.6mm 2.5mm;color:#4A5A51}
+.f-h2{font:700 12pt var(--display);margin:0 0 2.5mm;color:#18241E}
+.f-classes{display:flex;flex-wrap:wrap;gap:1.8mm}
+.f-classes span{font-size:9.5pt;border:.8pt solid #CFD9CB;border-radius:10mm;padding:.8mm 3mm}
+.f-classes span.ref{border-color:#2E6A4B;color:#2E6A4B;font-weight:600}
+.f-note{font-size:9.5pt;color:#4A5A51;margin:0}
+.f-foot{margin-top:auto;border-top:.8pt solid #CFD9CB;padding-top:3.5mm;display:flex;justify-content:space-between;gap:6mm;font-size:8.5pt;color:#76857C}
+.f-foot b{color:#A8412F;font-weight:600}
+/* planche : deux fiches courtes par page A4, à découper */
+.fiche.demi{height:148.5mm;padding:10mm 16mm 8mm;gap:4.5mm;page-break-after:auto;break-after:auto;border-bottom:.8pt dashed #9AA79F}
+.fiche.demi:nth-child(2n){page-break-after:always;break-after:page;border-bottom:0}
+.fiche.demi .f-head h1{font-size:16pt}.fiche.demi .f-card{padding:4mm 6mm;gap:2.5mm 7mm}
+.fiche.demi .f-card dd.code{font-size:20pt}.fiche.demi .f-steps{gap:1.8mm}.fiche.demi .f-steps li{font-size:10pt}
+.fiche.demi .f-rules,.fiche.demi .f-classes-bloc,.fiche.demi .long,.fiche.demi .f-note,.fiche.demi .f-h2{display:none}
+.fiche.demi .f-head{padding-bottom:2.5mm}.fiche.demi .f-card dd{font-size:11.5pt}.fiche.demi .f-steps li{grid-template-columns:6mm 1fr;gap:2.5mm;font-size:9.5pt}
+.fiche.demi .f-steps li::before{width:5.5mm;height:5.5mm;font-size:8.5pt}.fiche.demi .f-foot{padding-top:2.5mm;font-size:8pt}
+@page{size:A4;margin:0}
 @media print{
-  body{background:#fff;padding:0}main,.toast{display:none!important}
-  #print{display:block;font:12pt/1.4 var(--body)}
-  #print table{width:100%;border-collapse:collapse}#print td,#print th{border:1px solid #999;padding:6px 8px}
-  #print .code{background:none;color:#000;font-size:13pt}
+  body{background:#fff;padding:0}main,.toast,dialog{display:none!important}
+  #print{display:block}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 @media (max-width:640px){th,td{padding:9px 10px}h1{font-size:25px}}
 </style></head><body>
@@ -89,7 +134,7 @@ tr.off td{background:#FAFAF8;color:var(--ink-3)}
     <button class="tab" role="tab" data-tab="classes" aria-selected="false">Classes<span class="n" id="nClasses"></span></button>
     <button class="tab" role="tab" data-tab="outils" aria-selected="false">Droits des outils</button>
     <span class="sp"></span>
-    <button type="button" class="ghost" id="btnPrint">Imprimer les codes d'activation</button>
+    <button type="button" class="ghost" id="btnPrint">Fiches de connexion</button>
   </div>
 
   <!-- Personnel -->
@@ -144,6 +189,22 @@ tr.off td{background:#FAFAF8;color:var(--ink-3)}
   </section>
 </main>
 <div id="print"></div>
+<dialog id="dlgFiches">
+  <form method="dialog" id="fFiches">
+    <h2>Fiches de connexion</h2>
+    <p style="margin:0;font-size:13.5px;color:var(--ink-2)">Une fiche personnelle et nominative : l'adresse du site, l'identifiant, le code d'activation et la marche à suivre. Dans la fenêtre d'impression, choisissez « Enregistrer au format PDF » pour l'envoyer par Teams ou par mail, ou imprimez-la pour la remettre en main propre.</p>
+    <fieldset><legend>Pour qui</legend>
+      <label><input type="radio" name="qui" value="tous" checked> Tout le personnel sans compte</label>
+      <label><input type="radio" name="qui" value="classe"> L'équipe d'une classe <select id="dlgClasse" style="margin-left:auto"></select></label>
+      <label><input type="radio" name="qui" value="filtre"> Les personnes affichées dans la liste</label>
+    </fieldset>
+    <fieldset><legend>Mise en page</legend>
+      <label><input type="radio" name="mep" value="page" checked> Une page A4 par personne (à envoyer)</label>
+      <label><input type="radio" name="mep" value="demi"> Deux fiches par page, à découper (à distribuer)</label>
+    </fieldset>
+    <div class="foot"><span class="count" id="dlgCount"></span><span style="display:flex;gap:8px"><button type="button" class="ghost" id="dlgCancel">Annuler</button><button type="submit" id="dlgGo">Créer les fiches</button></span></div>
+  </form>
+</dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -220,7 +281,7 @@ function ligne(p){const self=p.email===moi,o=ouvert&&ouvert.email===p.email?ouve
     <td><div class="chips">${rl||'<span class="none">Aucun rôle</span>'} <button type="button" class="ghost small" data-act="roles">${o==="roles"?"Fermer":"Modifier"}</button></div>${o==="roles"?panneauRoles(p):""}</td>
     <td><div class="chips">${chipsClasses(p.email)} <button type="button" class="ghost small" data-act="classes">${o==="classes"?"Fermer":"Modifier"}</button></div>${o==="classes"?panneauClasses(p):""}</td>
     <td><label class="switch"><input type="checkbox" data-act="actif" ${p.actif?"checked":""} ${self?"disabled":""} aria-label="Compte actif"></label></td>
-    <td><div class="actions">${self?"":`${p.compte?'<button type="button" class="ghost small" data-act="reinit" title="Supprime le mot de passe et donne un nouveau code">Réinitialiser l\'accès</button>':'<button type="button" class="ghost small" data-act="code">Nouveau code</button>'}
+    <td><div class="actions">${self?"":`${p.compte?'<button type="button" class="ghost small" data-act="reinit" title="Supprime le mot de passe et donne un nouveau code">Réinitialiser l\'accès</button>':'<button type="button" class="small" data-act="fiche" title="Fiche de connexion de cette personne (PDF)">Fiche</button><button type="button" class="ghost small" data-act="code">Nouveau code</button>'}
       <button type="button" class="danger small" data-act="del">Supprimer</button>`}</div></td></tr>`;}
 function rendre(){
   const q=sansAccent($("#q").value.trim().toLowerCase()),fr=$("#fRole").value,fc=$("#fClasse").value;
@@ -274,10 +335,11 @@ $("#tPerso").addEventListener("click",e=>{const b=e.target.closest("button");if(
     const body={prenom:v("prenom"),nom:v("nom").toUpperCase()};const nm=v("email").toLowerCase();if(nm!==email)body.email=nm;
     if(!body.prenom||!body.nom){toast("Le prénom et le nom sont obligatoires.",true);return;}
     action(async()=>{await api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body});if(body.email)ouvert={email:body.email,quoi:"roles"};},"Fiche enregistrée");return;}
+  if(act==="fiche")return imprimerFiches([perso.find(x=>x.email===email)],"page");
   if(act==="code")return action(async()=>{const c=await api("/rest/v1/rpc/nouveau_code",{method:"POST",body:{}});await api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{code:c}});return c;},c=>"Nouveau code : "+c);
   if(act==="reinit"||act==="del"){if(!b.classList.contains("sure")){const t=b.textContent;b.classList.add("sure");if(act==="reinit")b.classList.add("danger");b.textContent="Confirmer ?";
       setTimeout(()=>{if(b.isConnected){b.classList.remove("sure");if(act==="reinit")b.classList.remove("danger");b.textContent=t;}},4000);return;}
-    if(act==="reinit")return action(()=>api("/rest/v1/rpc/admin_reinitialiser",{method:"POST",body:{mail:email}}),c=>"Accès réinitialisé. Nouveau code à remettre : "+c);
+    if(act==="reinit")return action(()=>api("/rest/v1/rpc/admin_reinitialiser",{method:"POST",body:{mail:email}}),c=>"Accès réinitialisé. Nouveau code : "+c+" — bouton « Fiche » pour l'envoyer.");
     return action(()=>api("/rest/v1/rpc/admin_supprimer",{method:"POST",body:{mail:email}}),"Personne supprimée");}});
 $("#tPerso").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!tr)return;const email=tr.dataset.email,p=perso.find(x=>x.email===email);
   if(e.target.dataset.act==="actif")return action(()=>api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{actif:e.target.checked}}),e.target.checked?"Compte réactivé":"Compte suspendu");
@@ -308,13 +370,51 @@ $("#tOutils").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!
   const r=roles.length===Object.keys(ROLES_OUTIL).length?[]:roles.length?roles:["coordinateur"];
   action(()=>api("/rest/v1/outils?code=eq."+enc(tr.dataset.outil),{method:"PATCH",prefer:"return=minimal",body:{roles:r}}),"Droits de l'outil modifiés");});
 
-$("#btnPrint").onclick=()=>{const l=perso.filter(p=>!p.compte&&p.actif&&p.code);
-  if(!l.length){toast("Tout le personnel actif a déjà créé son compte.");return;}
-  $("#print").innerHTML=`<h2 style="font-family:var(--display)">Outils pédagogiques Kerplouz — codes d'activation</h2>
-    <p>Première connexion sur <b>${esc(location.host)}</b> : « Première connexion », puis votre adresse, ce code et le mot de passe de votre choix. Le code ne sert qu'une fois.</p>
-    <table><thead><tr><th>Nom</th><th>Adresse</th><th>Code</th></tr></thead><tbody>${l.map(p=>`<tr><td>${esc(p.nom)} ${esc(p.prenom)}</td><td>${esc(p.email)}</td><td><span class="code">${esc(p.code)}</span></td></tr>`).join("")}</tbody></table>
-    <p style="font-size:10pt;color:#555">Imprimé le ${new Date().toLocaleDateString("fr-FR")} · document personnel, à découper et remettre à chacun.</p>`;
-  window.print();};
+/* ---------- fiches de connexion ---------- */
+const SITE=/^(localhost|127\.)/.test(location.hostname)||!location.host?"keprojects.pages.dev":location.host;
+const ROLES_FICHE={formateur:"formateur·rice",coordinateur_filiere:"coordination de filière",responsable_peda:"responsable pédagogique",secretariat:"secrétariat",direction:"direction",vie_sco:"vie scolaire"};
+function fiche(p,mep){const cl=affDe(p.email).filter(c=>c.actif);
+  const roles=p.roles.map(r=>ROLES_FICHE[r]||r);if(cl.some(c=>c.fonction==="referent"))roles.push("référent·e de classe");
+  return `<section class="fiche ${mep==="demi"?"demi":""}">
+  <div class="f-head"><div><div class="org">Kerplouz LaSalle · UFA du CFA ECB</div><h1>Votre accès aux outils pédagogiques</h1></div>
+    <div class="perso">Document personnel<br>${esc(p.prenom)} ${esc(p.nom)}</div></div>
+  <p class="f-hello">Bonjour <b>${esc(p.prenom)}</b>,<span class="long"><br>la plateforme pédagogique de l'UFA regroupe vos outils (grilles d'évaluation, fabrique à livret…). Voici de quoi créer votre accès : il ne faut que quelques instants.</span></p>
+  <dl class="f-card">
+    <dt>Site</dt><dd class="site">${esc(SITE)}</dd>
+    <dt>Identifiant</dt><dd>${esc(p.email)}</dd>
+    <dt>Code d'activation</dt><dd class="code">${esc(p.code)}</dd>
+  </dl>
+  <div><h2 class="f-h2">Première connexion</h2>
+  <ol class="f-steps">
+    <li><span>Ouvrez <span class="k">${esc(SITE)}</span> dans votre navigateur (ordinateur, tablette ou téléphone).</span></li>
+    <li><span>Cliquez sur <span class="k">« Première connexion : créer mon mot de passe »</span>.</span></li>
+    <li><span>Saisissez votre <span class="k">adresse</span> et le <span class="k">code d'activation</span> ci-dessus.</span></li>
+    <li><span>Choisissez votre <span class="k">mot de passe</span><span class="court"> (8 caractères, minuscule, majuscule, chiffre et caractère spécial)</span>, saisissez-le deux fois, puis validez : vous arrivez sur vos outils.
+      <span class="f-rules"><span>8 caractères minimum</span><span>une minuscule</span><span>une majuscule</span><span>un chiffre</span><span>un caractère spécial</span></span></span></li>
+  </ol></div>
+  <p class="f-note">Les fois suivantes, connectez-vous simplement avec votre adresse et votre mot de passe.</p>
+  ${cl.length||roles.length?`<div class="f-classes-bloc"><h2 class="f-h2">Ce que vous y trouverez</h2>
+    ${roles.length?`<p class="f-note" style="margin-bottom:2.5mm">Profil : ${esc(roles.join(", "))}.</p>`:""}
+    ${cl.length?`<div class="f-classes">${cl.map(c=>`<span class="${c.fonction==="referent"?"ref":""}">${c.fonction==="referent"?"★ ":""}${esc(c.libelle)}</span>`).join("")}</div>
+    <p class="f-note" style="margin-top:2mm">Les outils affichés correspondent aux formations de vos classes${cl.some(c=>c.fonction==="referent")?" · ★ classe dont vous êtes référent·e":""}.</p>`:""}</div>`:""}
+  <div class="f-foot"><span><b>Code personnel à usage unique</b> : ne le transmettez pas. Il ne sert plus une fois votre mot de passe créé.</span>
+    <span style="text-align:right;white-space:nowrap">Mot de passe oublié ou question :<br>le responsable pédagogique · ${new Date().toLocaleDateString("fr-FR")}</span></div>
+</section>`;}
+function imprimerFiches(liste,mep){liste=liste.filter(p=>p&&p.code&&!p.compte&&p.actif);
+  if(!liste.length){toast("Aucune fiche à créer : ces personnes ont déjà un compte (ou pas de code).",true);return;}
+  $("#print").innerHTML=liste.map(p=>fiche(p,mep)).join("");
+  const t=document.title;document.title=liste.length===1?`Accès outils Kerplouz - ${liste[0].nom} ${liste[0].prenom}`:`Fiches de connexion Kerplouz (${liste.length})`;
+  setTimeout(()=>{window.print();document.title=t;},60);}
+function listeDialog(){const f=new FormData($("#fFiches")),qui=f.get("qui");
+  let l=perso.filter(p=>!p.compte&&p.actif&&p.code);
+  if(qui==="classe"){const c=$("#dlgClasse").value;l=l.filter(p=>affect.some(a=>a.email===p.email&&a.classe===c));}
+  if(qui==="filtre"){const vis=new Set([...document.querySelectorAll("#tPerso tr[data-email]")].map(tr=>tr.dataset.email));l=l.filter(p=>vis.has(p.email));}
+  return l;}
+function majDialog(){const n=listeDialog().length;$("#dlgCount").textContent=n?`${n} fiche${n>1?"s":""}`:"Aucune personne sans compte dans cette sélection";$("#dlgGo").disabled=!n;}
+$("#btnPrint").onclick=()=>{$("#dlgClasse").innerHTML=classes.filter(c=>c.actif).map(c=>`<option value="${esc(c.code)}">${esc(c.libelle)}</option>`).join("");majDialog();$("#dlgFiches").showModal();};
+$("#fFiches").addEventListener("change",e=>{if(e.target.id==="dlgClasse")$("#fFiches").querySelector("[value=classe]").checked=true;majDialog();});
+$("#dlgCancel").onclick=()=>$("#dlgFiches").close();
+$("#fFiches").addEventListener("submit",e=>{e.preventDefault();const mep=new FormData($("#fFiches")).get("mep");const l=listeDialog();$("#dlgFiches").close();imprimerFiches(l,mep);});
 
 /* ---------- démarrage ---------- */
 (async()=>{
