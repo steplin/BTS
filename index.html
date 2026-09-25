@@ -68,6 +68,10 @@ a.tile:hover{border-color:var(--c);box-shadow:0 6px 18px rgba(24,36,30,.08);tran
 .tile.soon b,.tile.soon .ico{opacity:.75}
 .tile .go{margin-top:auto;font-size:13px;font-weight:600;color:var(--c)}
 .note{font-size:13px;color:var(--ink-3);text-align:center;margin:4px 0 0}
+.mine{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}
+.chip{font-size:12px;font-weight:500;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+.banner{background:#FFF6E5;border:1px solid #F0DDB5;color:#7A5410;border-radius:10px;padding:12px 14px;font-size:13.5px}
+a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radius:999px;padding:6px 12px;text-decoration:none}
 @media (prefers-reduced-motion:reduce){.tile{transition:none}}
 </style></head><body>
 <main>
@@ -122,8 +126,10 @@ a.tile:hover{border-color:var(--c);box-shadow:0 6px 18px rgba(24,36,30,.08);tran
   <section id="vHome" hidden>
     <div class="dash-head">
       <div class="t"><span class="eyebrow">Kerplouz LaSalle · Filière paysage</span><h1>Vos outils pédagogiques</h1></div>
-      <div class="me"><span id="who"></span><button type="button" class="ghost" id="btnOut">Se déconnecter</button></div>
+      <div class="me"><span id="who"></span><a class="admin" id="lnkAdmin" href="/admin/" hidden>Administration</a><button type="button" class="ghost" id="btnOut">Se déconnecter</button></div>
     </div>
+    <div class="banner" id="banner" hidden></div>
+    <div class="mine" id="mine"></div>
     <div class="tabs" role="group" aria-label="Filtrer par formation" id="tabs"></div>
     <div id="levels" style="display:flex;flex-direction:column;gap:26px"></div>
     <p class="note">Un outil vous manque ? Parlez-en au responsable pédagogique : les outils « À venir » sont développés selon vos besoins.</p>
@@ -159,10 +165,25 @@ function fr(e){const m=(e.message||"").toLowerCase();
 async function session(){let s=ls.get();if(!s)return null;
   if(s.expires_at-60<Date.now()/1000){try{s=store(await api("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:s.refresh_token}}),s.user);}catch(e){ls.set(null);setCookie(null);return null;}}
   else setCookie(s);return s;}
-function goHome(s){if(next){location.replace(next);return;}
-  const email=s.user&&s.user.email||"";$("#who").innerHTML="Connecté · <b>"+email.replace(/[<>&]/g,"")+"</b>";renderDash();show("vHome");
-  api("/rest/v1/profils?select=role&id=eq."+(s.user&&s.user.id),{token:s.access_token}).then(p=>{const r=p&&p[0]&&p[0].role;
-    if(r)$("#who").innerHTML="<b>"+email.replace(/[<>&]/g,"")+"</b> · "+({coordinateur:"Coordinateur",formateur:"Formateur",secretariat:"Secrétariat"}[r]||r);}).catch(()=>{});}
+const ROLES={coordinateur:"Coordinateur",formateur:"Formateur",secretariat:"Secrétariat"};
+const esc=t=>String(t==null?"":t).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+let droits=null;
+async function goHome(s){if(next){location.replace(next);return;}
+  const email=s.user&&s.user.email||"";
+  try{droits=await api("/rest/v1/rpc/mes_droits",{method:"POST",body:{},token:s.access_token});}
+  catch(e){droits=null;}
+  if(!droits){show("vLogin");msg("loginMsg","Impossible de lire vos droits d'accès. Réessayez dans un instant.");return;}
+  if(!droits.actif){signOutLocal(s);show("vLogin");msg("loginMsg","Votre compte est suspendu. Contactez le responsable pédagogique.");return;}
+  $("#who").innerHTML="<b>"+esc(droits.email||email)+"</b> · "+esc(ROLES[droits.role]||droits.role||"");
+  $("#lnkAdmin").hidden=!droits.admin;
+  const cl=droits.classes||[];
+  $("#mine").innerHTML=cl.length?"Vos classes :"+cl.map(c=>`<span class="chip">${esc(c.libelle)}</span>`).join("")
+    :(droits.admin?"":"<span>Aucune classe ne vous est encore attribuée : le responsable pédagogique doit vous rattacher à vos classes pour afficher leurs outils.</span>");
+  const refus=params.get("refus");
+  if(refus){history.replaceState(null,"","/");const bn=$("#banner");bn.hidden=false;
+    bn.textContent=refus==="suspendu"?"Votre compte est suspendu.":"Vous n'avez pas accès à cet outil. Si vous en avez besoin, demandez au responsable pédagogique de vous rattacher à la classe concernée.";}
+  filtre="all";renderDash();show("vHome");}
+function signOutLocal(s){if(s)fetch(SB+"/auth/v1/logout",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+s.access_token}}).catch(()=>{});ls.set(null);setCookie(null);}
 /* ---- Catalogue des outils par formation ---- */
 const ICONS={
   grille:'<path d="M4 4h16v16H4z"/><path d="M4 9h16M4 14h16M9 4v16"/>',
@@ -184,18 +205,26 @@ const LEVELS=[
   {id:"bp",nom:"BP Aménagements paysagers",niv:"Niveau 4",c:"#2E6A4B",sub:"Formation en unités capitalisables",tools:[
     {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"}]},
   {id:"btsa",nom:"BTSA Aménagements paysagers",niv:"Niveau 5",c:"#D1683F",sub:"Promotion 2026-2028",tools:[
-    {t:"Grilles d'évaluation BTS AP",d:"Classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/"},
+    {t:"Grilles d'évaluation BTS AP",d:"Classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/",code:"grilles-bts"},
     {t:"Calendrier des CCF",d:"Planning des situations d'évaluation et des intervenants sur les deux ans.",i:"calend"}]},
   {id:"cs",nom:"CS Arboriste élagueur",niv:"Niveau 4",c:"#8A6A3B",sub:"Certificat de spécialisation",tools:[
     {t:"Grilles d'évaluation",d:"Grilles des capacités du CS et notes du groupe.",i:"grille"}]},
   {id:"tous",nom:"Toutes formations",niv:"Transversal",c:"#4A5A51",sub:"Outils pédagogiques communs",tools:[
-    {t:"La fabrique à livret",d:"Export Yparéo en entrée, un livret d'alternance Word par apprenti·e en sortie : les 18 modèles v5 validés, publipostés dans le navigateur.",i:"livret",href:"/livret/"}]}
+    {t:"La fabrique à livret",d:"Export Yparéo en entrée, un livret d'alternance Word par apprenti·e en sortie : les 18 modèles v5 validés, publipostés dans le navigateur.",i:"livret",href:"/livret/",code:"livret"}]}
 ];
 let filtre="all";
+function visibles(){
+  const d=droits||{},niv=new Set(d.niveaux||[]),out=new Set(d.outils||[]);
+  return LEVELS.filter(l=>d.admin||l.id==="tous"||niv.has(l.id))
+    .map(l=>Object.assign({},l,{tools:l.tools.filter(t=>t.code?out.has(t.code):true)}))
+    .filter(l=>l.tools.length);
+}
 function renderDash(){
-  const tabs=[{id:"all",nom:"Toutes les formations",c:"var(--ink-3)"},...LEVELS.map(l=>({id:l.id,nom:l.id==="tous"?"Transversal":l.nom.split(" ")[0]+(l.id==="capa"?" JP":l.id==="bpa"?" OSP":l.id==="bp"?" AP":l.id==="btsa"?" AP":""),c:l.c}))];
+  const LV=visibles();if(filtre!=="all"&&!LV.some(l=>l.id===filtre))filtre="all";
+  const tabs=[{id:"all",nom:"Toutes les formations",c:"var(--ink-3)"},...LV.map(l=>({id:l.id,nom:l.id==="tous"?"Transversal":l.nom.split(" ")[0]+(l.id==="capa"?" JP":l.id==="bpa"?" OSP":l.id==="bp"?" AP":l.id==="btsa"?" AP":""),c:l.c}))];
   $("#tabs").innerHTML=tabs.map(t=>`<button type="button" class="tab" aria-pressed="${filtre===t.id}" data-f="${t.id}" style="--c:${t.c}"><span class="sw"></span>${t.nom}</button>`).join("");
-  $("#levels").innerHTML=LEVELS.filter(l=>filtre==="all"||filtre===l.id).map(l=>`
+  $("#tabs").hidden=LV.length<2;
+  $("#levels").innerHTML=LV.filter(l=>filtre==="all"||filtre===l.id).map(l=>`
     <section class="level" style="--c:${l.c}" aria-labelledby="h-${l.id}">
       <div class="level-h"><h2 id="h-${l.id}">${l.nom}</h2><span class="niv">${l.niv}</span><span class="sub">${l.sub}</span></div>
       <div class="tiles">${l.tools.map(t=>{const on=!!t.href;const ico=`<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[t.i]||ICONS.fiche}</svg></span>`;
@@ -243,7 +272,7 @@ $("#vSignup").addEventListener("submit",async e=>{e.preventDefault();const email
     if(r&&Array.isArray(r.identities)&&r.identities.length===0){msg("signupMsg","Un compte existe déjà pour cette adresse. Utilisez « Mot de passe oublié » si besoin.");return;}
     msg("signupMsg","Compte créé. Ouvrez l'e-mail de confirmation envoyé à "+email+" et cliquez sur le lien pour activer votre compte.","ok");}
   catch(err){msg("signupMsg",fr(err));}finally{b.disabled=false;}});
-$("#btnOut").onclick=()=>{const s=ls.get();if(s)fetch(SB+"/auth/v1/logout",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+s.access_token}}).catch(()=>{});ls.set(null);setCookie(null);show("vLogin");};
+$("#btnOut").onclick=()=>{signOutLocal(ls.get());show("vLogin");};
 
 (async()=>{
   const h=new URLSearchParams(location.hash.replace(/^#/,""));
