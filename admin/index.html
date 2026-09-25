@@ -140,7 +140,7 @@ dialog .count{font-size:13px;color:var(--ink-2)}
   <!-- Personnel -->
   <section id="p-perso">
     <div class="card">
-      <p class="help">Seules les personnes de cette liste peuvent se connecter. <b>Première connexion</b> : adresse + <b>code d'activation</b> (à leur remettre) + mot de passe choisi. Le code ne sert qu'une fois ; « Réinitialiser l'accès » en donne un nouveau (mot de passe oublié). Un formateur voit les outils des formations de ses classes ; direction, vie scolaire, secrétariat, coordination et responsable pédagogique voient toutes les formations. ★ = référent·e de la classe.</p>
+      <p class="help">Seules les personnes de cette liste peuvent se connecter. <b>Première connexion</b> : adresse + <b>code d'activation</b> (à leur remettre) + mot de passe choisi. Le code ne sert qu'une fois ; « Réinitialiser l'accès » en donne un nouveau (mot de passe oublié). Un formateur voit les outils des formations de ses classes ; un coordinateur de filière voit aussi sa filière ; direction, vie scolaire, secrétariat et responsable pédagogique voient toutes les formations. ★ = référent·e de la classe.</p>
       <div class="bar">
         <input type="search" id="q" placeholder="Rechercher un nom, une adresse, une classe" aria-label="Rechercher" style="min-width:250px">
         <select id="fRole" aria-label="Filtrer"><option value="">Tout le personnel</option></select>
@@ -211,10 +211,11 @@ dialog .count{font-size:13px;color:var(--ink-2)}
 const SB="https://olqclfsywasktwirswpb.supabase.co", KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x", SKEY="kep.session";
 const $=s=>document.querySelector(s);
 const esc=t=>String(t==null?"":t).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
-const NIVEAUX={capa:"CAPa JP",bpa:"BPA OSP",bp:"BP AP",btsa:"BTSA AP",cs:"CS Arboriste",autre:"Autre",tous:"Toutes formations"};
-const ROLES={formateur:"Formateur",coordinateur_filiere:"Coordinateur de filière",responsable_peda:"Responsable pédagogique",secretariat:"Secrétariat",direction:"Direction",vie_sco:"Vie scolaire"};
-const ROLES_OUTIL=Object.assign({referent:"Référent de classe"},ROLES);
-const TOUS_NIVEAUX=["coordinateur_filiere","responsable_peda","secretariat","direction","vie_sco"];
+const NIVEAUX={capa:"CAPa JP",bpa:"BPA OSP",bp:"BP AP",btsa:"BTSA AP",cs:"CS Arboriste",bprea:"BPREA",autre:"Autre",tous:"Toutes formations"};
+const ROLES={formateur:"Formateur",responsable_peda:"Responsable pédagogique",secretariat:"Secrétariat",direction:"Direction",vie_sco:"Vie scolaire"};
+const ROLES_OUTIL=Object.assign({referent:"Référent de classe",coordinateur_filiere:"Coordinateur de filière"},ROLES);
+const FILIERES=["capa","bpa","bp","btsa","cs","bprea"];
+const TOUS_NIVEAUX=["responsable_peda","secretariat","direction","vie_sco"];
 
 /* ---------- session ---------- */
 let session=null,moi="";
@@ -257,7 +258,7 @@ const mailDe=(prenom,nom)=>sansAccent(prenom).toLowerCase().trim().replace(/\s+/
 
 /* ---------- rendu ---------- */
 const affDe=email=>affect.filter(a=>a.email===email).map(a=>Object.assign({},classes.find(c=>c.code===a.classe),{fonction:a.fonction})).filter(c=>c.code).sort((a,b)=>a.ordre-b.ordre);
-const effRoles=p=>{const r=new Set(p.roles);const a=affDe(p.email);if(a.length)r.add("formateur");if(a.some(c=>c.fonction==="referent"))r.add("referent");return r;};
+const effRoles=p=>{const r=new Set(p.roles);const a=affDe(p.email);if(a.length)r.add("formateur");if(a.some(c=>c.fonction==="referent"))r.add("referent");if((p.filieres||[]).length)r.add("coordinateur_filiere");return r;};
 function chipsClasses(email){const cl=affDe(email);return cl.length?cl.map(c=>`<span class="chip ${esc(c.niveau)} ${c.fonction==="referent"?"ref":""}" title="${esc(NIVEAUX[c.niveau])}${c.fonction==="referent"?" · référent·e":""}${c.actif?"":" · classe désactivée"}" style="${c.actif?"":"opacity:.5"}">${c.fonction==="referent"?"★ ":""}${esc(c.libelle)}</span>`).join(""):'<span class="none">Aucune classe</span>';}
 function panneauRoles(p){const self=p.email===moi;
   return `<div class="panel" data-panel="roles">
@@ -265,7 +266,8 @@ function panneauRoles(p){const self=p.email===moi;
       <input data-f="email" value="${esc(p.email)}" aria-label="Adresse" style="width:250px" ${p.compte?"disabled title='Adresse figée : le compte existe'":""}>
       <button type="button" class="small" data-act="ids">Enregistrer</button></div>
     <div class="grid">${Object.keys(ROLES).map(r=>`<label><input type="checkbox" data-role="${r}" ${p.roles.includes(r)?"checked":""}>${ROLES[r]}</label>`).join("")}
-      <label title="Accès à cette page et à tous les outils"><input type="checkbox" data-role="__admin" ${p.admin?"checked":""} ${self?"disabled":""}><b>Administrateur</b></label></div></div>`;}
+      <label title="Accès à cette page et à tous les outils"><input type="checkbox" data-role="__admin" ${p.admin?"checked":""} ${self?"disabled":""}><b>Administrateur</b></label>
+      <h4>Coordination de filière</h4>${FILIERES.map(f=>`<label><input type="checkbox" data-filiere="${f}" ${(p.filieres||[]).includes(f)?"checked":""}>${NIVEAUX[f]}</label>`).join("")}</div></div>`;}
 function panneauClasses(p){const mine=Object.fromEntries(affect.filter(a=>a.email===p.email).map(a=>[a.classe,a.fonction]));
   return `<div class="panel grid" data-panel="classes">`+Object.keys(NIVEAUX).filter(n=>classes.some(c=>c.niveau===n)).map(n=>
     `<h4>${esc(NIVEAUX[n])}</h4>`+classes.filter(c=>c.niveau===n).map(c=>{const f=mine[c.code]||"";const ref=affect.find(a=>a.classe===c.code&&a.fonction==="referent");
@@ -275,7 +277,7 @@ function panneauClasses(p){const mine=Object.fromEntries(affect.filter(a=>a.emai
 function ligne(p){const self=p.email===moi,o=ouvert&&ouvert.email===p.email?ouvert.quoi:null;
   const etat=p.compte?(p.derniere_connexion?"dernière connexion le "+new Date(p.derniere_connexion).toLocaleDateString("fr-FR"):"compte créé, jamais connecté")
     :(p.code?`pas encore de compte · code <span class="code">${esc(p.code)}</span>`:"pas encore de compte");
-  const rl=p.roles.map(r=>`<span class="chip role">${esc(ROLES[r]||r)}</span>`).join("")+(p.admin?'<span class="chip adm">Administrateur</span>':"");
+  const rl=p.roles.map(r=>`<span class="chip role">${esc(ROLES[r]||r)}</span>`).join("")+(p.filieres||[]).map(f=>`<span class="chip ${f}" title="Coordinateur·rice de filière">Coord. ${esc(NIVEAUX[f]||f)}</span>`).join("")+(p.admin?'<span class="chip adm">Administrateur</span>':"");
   return `<tr class="${p.actif?"":"off"}" data-email="${esc(p.email)}">
     <td><b>${esc(p.nom)} ${esc(p.prenom)}</b>${self?' <span class="badge b-on">vous</span>':""}<span class="sub">${esc(p.email)}</span><span class="sub">${etat}</span></td>
     <td><div class="chips">${rl||'<span class="none">Aucun rôle</span>'} <button type="button" class="ghost small" data-act="roles">${o==="roles"?"Fermer":"Modifier"}</button></div>${o==="roles"?panneauRoles(p):""}</td>
@@ -343,9 +345,9 @@ $("#tPerso").addEventListener("click",e=>{const b=e.target.closest("button");if(
     return action(()=>api("/rest/v1/rpc/admin_supprimer",{method:"POST",body:{mail:email}}),"Personne supprimée");}});
 $("#tPerso").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!tr)return;const email=tr.dataset.email,p=perso.find(x=>x.email===email);
   if(e.target.dataset.act==="actif")return action(()=>api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{actif:e.target.checked}}),e.target.checked?"Compte réactivé":"Compte suspendu");
-  if(e.target.dataset.role){const pn=e.target.closest(".panel");const roles=[...pn.querySelectorAll("[data-role]")].filter(x=>x.checked&&x.dataset.role!=="__admin").map(x=>x.dataset.role);
-    const admin=pn.querySelector("[data-role=__admin]").checked;
-    return action(()=>api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{roles,admin}}),"Rôles enregistrés");}
+  if(e.target.dataset.role||e.target.dataset.filiere){const pn=e.target.closest(".panel");const roles=[...pn.querySelectorAll("[data-role]")].filter(x=>x.checked&&x.dataset.role!=="__admin").map(x=>x.dataset.role);
+    const admin=pn.querySelector("[data-role=__admin]").checked,filieres=[...pn.querySelectorAll("[data-filiere]")].filter(x=>x.checked).map(x=>x.dataset.filiere);
+    return action(()=>api("/rest/v1/personnel?email=eq."+enc(email),{method:"PATCH",prefer:"return=minimal",body:{roles,admin,filieres}}),"Rôles enregistrés");}
   if(e.target.dataset.classe){const code=e.target.dataset.classe,f=e.target.value;
     return action(async()=>{
       if(!f)return api(`/rest/v1/affectations?email=eq.${enc(email)}&classe=eq.${enc(code)}`,{method:"DELETE"});
@@ -372,9 +374,9 @@ $("#tOutils").addEventListener("change",e=>{const tr=e.target.closest("tr");if(!
 
 /* ---------- fiches de connexion ---------- */
 const SITE=/^(localhost|127\.)/.test(location.hostname)||!location.host?"keprojects.pages.dev":location.host;
-const ROLES_FICHE={formateur:"formateur·rice",coordinateur_filiere:"coordination de filière",responsable_peda:"responsable pédagogique",secretariat:"secrétariat",direction:"direction",vie_sco:"vie scolaire"};
+const ROLES_FICHE={formateur:"formateur·rice",responsable_peda:"responsable pédagogique",secretariat:"secrétariat",direction:"direction",vie_sco:"vie scolaire"};
 function fiche(p,mep){const cl=affDe(p.email).filter(c=>c.actif);
-  const roles=p.roles.map(r=>ROLES_FICHE[r]||r);if(cl.some(c=>c.fonction==="referent"))roles.push("référent·e de classe");
+  const roles=p.roles.map(r=>ROLES_FICHE[r]||r);if(cl.some(c=>c.fonction==="referent"))roles.push("référent·e de classe");(p.filieres||[]).forEach(f=>roles.push("coordination "+(NIVEAUX[f]||f)));
   return `<section class="fiche ${mep==="demi"?"demi":""}">
   <div class="f-head"><div><div class="org">Kerplouz LaSalle · UFA du CFA ECB</div><h1>Votre accès aux outils pédagogiques</h1></div>
     <div class="perso">Document personnel<br>${esc(p.prenom)} ${esc(p.nom)}</div></div>
