@@ -1,0 +1,598 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>La fabrique à livret · Kerplouz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #FBFAF8; --surface: #FFFFFF; --ink: #232323; --ink-soft: #6B6B6B;
+    --rule: #E4DED5; --orange: #C96A3D; --orange-soft: #F3E4DA;
+    --green: #5F8C34; --green-soft: #E6EEDB; --red: #A33A2A; --red-soft: #F4E1DD;
+    --shadow: 0 1px 2px rgba(35,35,35,.06), 0 8px 24px -16px rgba(35,35,35,.25);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #191817; --surface: #222120; --ink: #ECE7E0; --ink-soft: #A29B92;
+      --rule: #35322E; --orange: #E09263; --orange-soft: #3A2A21;
+      --green: #9DC26B; --green-soft: #26301C; --red: #DE8C7C; --red-soft: #3A2320;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #191817; --surface: #222120; --ink: #ECE7E0; --ink-soft: #A29B92;
+    --rule: #35322E; --orange: #E09263; --orange-soft: #3A2A21;
+    --green: #9DC26B; --green-soft: #26301C; --red: #DE8C7C; --red-soft: #3A2320;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    font-size: 15px; line-height: 1.55;
+  }
+  .page { max-width: 880px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 72px; }
+
+  header { border-bottom: 2px solid var(--orange); padding-bottom: 18px; margin-bottom: 30px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--orange); margin: 0 0 6px;
+  }
+  h1 { font-family: Spectral, Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1.15; margin: 0 0 10px; text-wrap: balance; }
+  .chapeau { color: var(--ink-soft); max-width: 64ch; margin: 0; }
+
+  .etape { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 16px; margin-bottom: 34px; }
+  .num {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 500; color: var(--orange);
+    border: 1px solid var(--rule); border-radius: 50%; width: 28px; height: 28px;
+    display: grid; place-items: center; margin-top: 2px;
+  }
+  h2 { font-family: Spectral, Georgia, serif; font-size: 21px; font-weight: 600; margin: 2px 0 8px; text-wrap: balance; }
+  .etape > div > p.aide { margin: 0 0 14px; color: var(--ink-soft); max-width: 66ch; }
+
+  .depot {
+    border: 1.5px dashed var(--rule); border-radius: 10px; background: var(--surface);
+    padding: 24px 22px; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .depot:hover, .depot.survol { border-color: var(--orange); background: var(--orange-soft); }
+  .depot strong { display: block; font-size: 16px; margin-bottom: 4px; }
+  .depot span { color: var(--ink-soft); font-size: 13px; }
+  .depot:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+  .depot.charge { border-style: solid; border-color: var(--green); text-align: left; }
+  .depot.charge strong { color: var(--green); }
+
+  .tableau { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-size: 11.5px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); background: var(--ground); white-space: nowrap; }
+  td.n { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; }
+  th.n { text-align: right; }
+  td.code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; white-space: nowrap; }
+  td.fichier { font-size: 12.5px; color: var(--ink-soft); word-break: break-all; }
+  td.date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tr.sans-modele td { background: var(--red-soft); }
+  td input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--orange); cursor: pointer; }
+  td input[type="checkbox"]:disabled { cursor: not-allowed; }
+  select.modele {
+    font: inherit; font-size: 13.5px; color: var(--ink); background: var(--ground);
+    border: 1px solid var(--rule); border-radius: 7px; padding: 6px 8px; max-width: 100%;
+  }
+  select.modele:focus-visible, td input:focus-visible { outline: 2px solid var(--orange); outline-offset: 1px; }
+  tr.sans-modele select.modele { border-color: var(--red); color: var(--red); }
+
+  .pastille { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 99px; white-space: nowrap; }
+  .p-memo { background: var(--green-soft); color: var(--green); }
+  .p-prop { background: var(--orange-soft); color: var(--orange); }
+  .p-aucun { background: var(--red-soft); color: var(--red); font-weight: 600; }
+  .p-origine { background: var(--ground); color: var(--ink-soft); border: 1px solid var(--rule); }
+
+  .barre { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 12px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+  .barre .total { margin-left: auto; color: var(--ink); }
+  .barre .total b { font-family: "IBM Plex Mono", monospace; font-weight: 500; }
+
+  button.lien {
+    font: inherit; font-size: 13.5px; background: none; border: 0; padding: 2px 0;
+    color: var(--orange); cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+  }
+  button.lien:disabled { color: var(--ink-soft); cursor: default; text-decoration: none; }
+  button.lien:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+
+  .boutons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button.action {
+    font: inherit; font-weight: 600; color: #fff; background: var(--orange);
+    border: 0; border-radius: 8px; padding: 12px 22px; cursor: pointer;
+  }
+  button.action:hover:not(:disabled) { filter: brightness(1.06); }
+  button.action:disabled { background: var(--rule); color: var(--ink-soft); cursor: not-allowed; }
+  button.action:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  button.second { background: none; color: var(--orange); border: 1px solid var(--orange); padding: 10px 18px; }
+
+  .journal { margin-top: 14px; font-size: 13.5px; color: var(--ink-soft); min-height: 22px; }
+  .journal.succes { color: var(--green); }
+  .journal.erreur { color: var(--red); background: var(--red-soft); padding: 10px 14px; border-radius: 8px; }
+
+  .alertes { display: grid; gap: 10px; margin-top: 14px; }
+  details.autres { margin-top: 14px; }
+  details.autres > summary { cursor: pointer; padding: 8px 0; font-size: 14px; color: var(--ink-soft); }
+  details.autres > summary:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  details.autres .tableau { box-shadow: none; }
+  details.autres tr.sans-modele td { background: transparent; }
+  details.autres .p-aucun { background: transparent; font-weight: 500; }
+  details.alerte { border: 1px solid var(--rule); border-left: 3px solid var(--red); border-radius: 0 8px 8px 0; background: var(--surface); padding: 0 14px; }
+  details.alerte > summary { cursor: pointer; padding: 10px 0; font-size: 14px; color: var(--red); font-weight: 500; }
+  details.alerte > summary:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  details.alerte ul { margin: 0 0 12px; padding-left: 18px; font-size: 13.5px; columns: 2 220px; }
+
+  .bibli td .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .remplacement { font-size: 12.5px; color: var(--ink-soft); }
+
+  .note { margin-top: 34px; padding: 14px 18px; background: var(--green-soft); border-left: 3px solid var(--green); border-radius: 0 8px 8px 0; font-size: 13.5px; max-width: 76ch; }
+  .note + .note { margin-top: 12px; background: var(--orange-soft); border-left-color: var(--orange); }
+  .note b { font-weight: 600; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  code { font-family: "IBM Plex Mono", monospace; font-size: .9em; background: var(--orange-soft); padding: 1px 5px; border-radius: 4px; }
+
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:13.5px; color:var(--ink-soft); margin-bottom:26px; }
+  .topbar a, .bibli a { color:var(--orange); text-decoration:none; font-weight:500; }
+  .topbar a:hover, .bibli a:hover { text-decoration:underline; text-underline-offset:3px; }
+  .topbar .qui { display:flex; gap:14px; align-items:center; }
+  @media (max-width: 560px) {
+    h1 { font-size: 27px; }
+    .etape { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    .barre .total { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .depot { transition: none; } }
+</style>
+
+</head><body>
+<div class="page">
+  <nav class="topbar"><a href="/">← Outils pédagogiques</a><span class="qui"><span id="qui"></span><button class="lien" id="deconnexion" type="button">Se déconnecter</button></span></nav>
+  <header>
+    <p class="eyebrow">CFA / UFA Kerplouz LaSalle · 2026-2027 · livrets v5</p>
+    <h1>Fabrique de livrets d'alternance</h1>
+    <p class="chapeau">L'export Yparéo entre, un livret Word par apprenti·e sort. Les 18 modèles validés sont rangés ici ; la page associe chaque groupe Yparéo à son modèle et remplit les livrets dans votre navigateur.</p>
+  </header>
+
+  <section class="etape">
+    <div class="num">1</div>
+    <div>
+      <h2>La liste des apprentis</h2>
+      <p class="aide">L'export CSV Yparéo, toutes classes confondues. La page regroupe les apprentis par la colonne <code>NOM_GROUPE_APPRENANT</code>.</p>
+      <div class="depot" id="depot" tabindex="0" role="button" aria-label="Choisir l'export CSV Yparéo">
+        <strong id="depot-titre">Déposez l'export Yparéo ici</strong>
+        <span id="depot-detail">ou cliquez pour le choisir (.csv, séparateur ; ou ,)</span>
+      </div>
+      <input type="file" id="fichier-csv" accept=".csv,text/csv" hidden>
+      <div class="journal" id="journal-csv"></div>
+    </div>
+  </section>
+
+  <section class="etape" id="etape-groupes" hidden>
+    <div class="num">2</div>
+    <div>
+      <h2>Les groupes et leurs modèles</h2>
+      <p class="aide">Cochez les groupes à publiposter. La correspondance groupe → modèle est mémorisée avec votre compte : corrigez-la ici si besoin, elle servira aux prochains exports.</p>
+      <div class="tableau">
+        <table>
+          <thead><tr><th scope="col"><span class="sr">Choix</span></th><th scope="col">Groupe Yparéo</th><th scope="col" class="n">Apprentis</th><th scope="col">Modèle</th><th scope="col">Correspondance</th></tr></thead>
+          <tbody id="corps-groupes"></tbody>
+        </table>
+      </div>
+      <details class="autres" id="autres" hidden>
+        <summary id="autres-titre"></summary>
+        <p class="aide">Groupes sans livret v5 : formations courtes, formation continue, années passées. Rattachez-en un à un modèle seulement s'il doit avoir un livret.</p>
+        <div class="tableau">
+          <table>
+            <thead><tr><th scope="col"><span class="sr">Choix</span></th><th scope="col">Groupe Yparéo</th><th scope="col" class="n">Apprentis</th><th scope="col">Modèle</th><th scope="col">Correspondance</th></tr></thead>
+            <tbody id="corps-autres"></tbody>
+          </table>
+        </div>
+      </details>
+      <div class="barre">
+        <button class="lien" id="tout-cocher" type="button">Tout cocher</button>
+        <button class="lien" id="rien-cocher" type="button">Tout décocher</button>
+        <button class="lien" id="memoriser-propositions" type="button" hidden>Mémoriser les propositions</button>
+        <span class="total" id="total-choisi"></span>
+      </div>
+      <div class="alertes" id="alertes"></div>
+    </div>
+  </section>
+
+  <section class="etape" id="etape-generer" hidden>
+    <div class="num">3</div>
+    <div>
+      <h2>Les livrets</h2>
+      <p class="aide">Un .zip, un livret par apprenti·e : <code>Livret_&lt;GROUPE&gt;_&lt;NOM&gt;_&lt;Prénom&gt;.docx</code>, rangés par dossier de groupe quand plusieurs groupes sont choisis. Sont remplis : nom, prénom, entreprise, maître d'apprentissage et dates de contrat ; une colonne absente de l'export laisse la case vide.</p>
+      <div class="boutons">
+        <button class="action" id="generer" type="button" disabled>Générer les livrets</button>
+      </div>
+      <div class="journal" id="journal-generer"></div>
+    </div>
+  </section>
+
+  <section class="etape">
+    <div class="num" aria-hidden="true">·</div>
+    <div>
+      <h2>La bibliothèque des modèles</h2>
+      <p class="aide">Les 18 livrets v5 validés, sans aucune donnée d'apprenti, téléchargeables tels quels. Pour faire évoluer un modèle, transmettez la nouvelle version validée au responsable pédagogique : elle doit porter les jetons <code>{{NOM}}</code> et <code>{{PRENOM}}</code> et le code du livret dans son pied de page.</p>
+      <div class="tableau bibli">
+        <table>
+          <thead><tr><th scope="col">Code</th><th scope="col">Groupe</th><th scope="col">Fichier</th><th scope="col">Déposé le</th><th scope="col">Action</th></tr></thead>
+          <tbody id="corps-bibli"></tbody>
+        </table>
+      </div>
+            <div class="journal" id="journal-bibli"></div>
+    </div>
+  </section>
+
+  <p class="note">
+    <b>La liste des apprentis ne sort pas de votre navigateur.</b> Elle est lue, fusionnée et
+    empaquetée ici : aucun envoi réseau. Seule la correspondance
+    groupe → modèle est mémorisée avec votre compte Kerplouz : des noms de groupes, jamais un nom d'apprenti.
+    Des 1 400 colonnes de l'export, la page ne lit que le groupe, le nom et le prénom, l'entreprise,
+    le maître d'apprentissage et les dates de contrat. Supprimez l'export une fois les livrets faits.
+  </p>
+  <p class="note">
+    <b>Les modèles sont communs à l'établissement.</b> Ils sont publiés avec l'outil,
+    identiques pour tous les formateurs. Gardez les originaux sur votre drive.
+  </p>
+</div>
+
+<script src="zip_simple.js"></script>
+<script src="publipostage.js"></script>
+<script src="compte.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const P = window.PUBLIPOSTAGE;
+
+  function dire(ou, texte, etat) {
+    const el = $(ou);
+    el.textContent = texte;
+    el.className = "journal" + (etat ? " " + etat : "");
+  }
+  const err = (e) => (e && e.message) || String(e);
+
+  // ------------------------------------------------------------ bibliothèque
+  // Les 18 modèles validés sont publiés avec l'outil (modeles/<code>.docx).
+  const ORIGINE = "2026-09-23";
+  const BIBLIO = [
+    ["001", "CAPaJP1-A", "CAPa JP 1 - A", ["CAPAJP1A"]],
+    ["002", "CAPaJP1-B", "CAPa JP 1 - B", ["CAPAJP1B"]],
+    ["003", "CAPaJP1-C", "CAPa JP 1 - C", ["CAPAJP1C"]],
+    ["004", "CAPaJP2-A", "CAPa JP 2 - A", ["CAPAJP2A"]],
+    ["005", "CAPaJP2-B", "CAPa JP 2 - B", ["CAPAJP2B"]],
+    ["006", "CAPaJP2-C", "CAPa JP 2 - C", ["CAPAJP2C"]],
+    ["007", "BPAOSP1", "BPA OSP 1", ["BPAOSP1"]],
+    ["008", "BPAP1", "BP AP 1", ["BPAP1", "BPAP1A"]],
+    ["009", "BPAP1an", "BP AP 1 an", ["BPAP1AN"]],
+    ["010", "BPAP2-A", "BP AP 2 - A", ["BPAP2A"]],
+    ["011", "BPAP2-B", "BP AP 2 - B", ["BPAP2B"]],
+    ["012", "BPAOSP1an", "BPA OSP 1 an", ["BPAOSP1AN"]],
+    ["013", "BPAOSP2", "BPA OSP 2", ["BPAOSP2", "BPAOSPA", "BPAOSPB", "BPAOSP2A", "BPAOSP2B"]],
+    ["014", "BTSAAP1", "BTSA AP 1", ["BTSAAP1", "BTSAAP1G1", "BTSAP1"]],
+    ["015", "BTSAAP2", "BTSA AP 2", ["BTSAAP2", "BTSAAP2G1", "BTSAP2"]],
+    ["016", "CSAG-A", "CS AG - A", ["CSAGA", "CSAGAG1", "CSARBORISTEGRIMPEURA", "CSARBORISTEGRIMPEURAG1"]],
+    ["017", "CSAG-B", "CS AG - B", ["CSAGB", "CSAGBG1", "CSARBORISTEGRIMPEURB", "CSARBORISTEGRIMPEURBG1"]],
+    ["018", "CQPCOP", "CQP COP 1 an", ["CQPCOP", "CQPCOP1AN", "CQPCOPFC1AN", "CQPCOPFC"]],
+  ].map(([n, dossier, libelle, cles]) => ({
+    code: "UFA-LIV-2026-" + n, dossier, libelle, cles,
+    fichier: "Livret_alternance_" + dossier + "_2026-2027_v5.docx",
+    chemin: "modeles/UFA-LIV-2026-" + n + ".docx",
+  }));
+  const parCode = Object.fromEntries(BIBLIO.map((m) => [m.code, m]));
+
+  let correspondances = {}; // clé de groupe → { groupe, code }
+  const prepares = {};
+
+  async function modelePrepare(code) {
+    if (!prepares[code]) {
+      prepares[code] = (async () => {
+        const r = await fetch(parCode[code].chemin, { credentials: "same-origin" });
+        if (!r.ok) throw new Error("modèle " + code + " introuvable (" + r.status + ")");
+        return P.preparer(await r.arrayBuffer());
+      })();
+      prepares[code].catch(() => { delete prepares[code]; });
+    }
+    return prepares[code];
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "—";
+    const [a, m, j] = iso.split("-");
+    return j + "/" + m + "/" + a;
+  }
+
+  function afficherBibli() {
+    const corps = $("corps-bibli");
+    corps.innerHTML = "";
+    BIBLIO.forEach((m) => {
+      const tr = document.createElement("tr");
+      const td = (texte, cls) => { const c = document.createElement("td"); if (cls) c.className = cls; c.textContent = texte; tr.appendChild(c); return c; };
+      td(m.code, "code");
+      td(m.libelle);
+      td(m.fichier, "fichier");
+      td(formatDate(ORIGINE), "date");
+      const l = document.createElement("a");
+      l.href = m.chemin; l.download = m.fichier; l.textContent = "Télécharger";
+      td("").appendChild(l);
+      corps.appendChild(tr);
+    });
+  }
+
+  // ------------------------------------------------------------- correspondance
+  const cleGroupe = (g) => P.normaliser(g).slice(0, 120) || "vide";
+  const cleAppariement = (g) => String(g || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+    // Yparéo suffixe le site (« - KE ») et l'année (« 26-27 ») : on les retire avant de comparer.
+    .replace(/\b(20)?26\s*[-/]\s*(20)?27\b/g, "").replace(/\bKE\b/g, "").replace(/[^A-Z0-9]/g, "");
+
+  function proposer(groupe) {
+    const k = cleAppariement(groupe);
+    const m = BIBLIO.find((b) => b.cles.includes(k));
+    return m ? m.code : "";
+  }
+
+  // Rend { code, etat } : "memo" (mémorisé), "prop" (proposé par la page), "aucun".
+  function modeleDuGroupe(groupe) {
+    const c = correspondances[cleGroupe(groupe)];
+    if (c) return { code: c.code || "", etat: c.code ? "memo" : "aucun" };
+    const p = proposer(groupe);
+    return { code: p, etat: p ? "prop" : "aucun" };
+  }
+
+  async function memoriserCorrespondance(groupe, code) {
+    correspondances[cleGroupe(groupe)] = { groupe, code };
+    try { await Compte.enregistrer({ correspondances }); }
+    catch (e) { dire("journal-csv", "La correspondance n'a pas pu être mémorisée : " + err(e), "erreur"); }
+  }
+
+  // ------------------------------------------------------------------ la liste
+  let listeCourante = null; // { groupes: Map(groupe → [apprentis]), sansNom, sansGroupe }
+  const coches = new Set();
+
+  function lireFichier(f) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => {
+        const octets = new Uint8Array(fr.result);
+        // Yparéo exporte selon les réglages en UTF-8 ou en Windows-1252 : on tente UTF-8 strict.
+        try { res(new TextDecoder("utf-8", { fatal: true }).decode(octets)); }
+        catch (e) { res(new TextDecoder("windows-1252").decode(octets)); }
+      };
+      fr.onerror = () => rej(new Error("fichier illisible"));
+      fr.readAsArrayBuffer(f);
+    });
+  }
+
+  async function chargerCSV(f) {
+    try {
+      const texte = await lireFichier(f);
+      const lignes = P.lireCSV(texte);
+      const entetes = (lignes[0] || []).map(P.normaliser);
+      if (!P.ALIAS.groupe_ypareo.some((a) => entetes.includes(a))) {
+        throw new Error("la colonne NOM_GROUPE_APPRENANT est absente de ce fichier");
+      }
+      const { apprentis, sansNom, colonnesReconnues } = P.lireListe(texte);
+      const groupes = new Map();
+      const sansGroupe = [];
+      apprentis.forEach((a) => {
+        if (!a.groupe_ypareo) { sansGroupe.push(a); return; }
+        if (!groupes.has(a.groupe_ypareo)) groupes.set(a.groupe_ypareo, []);
+        groupes.get(a.groupe_ypareo).push(a);
+      });
+      listeCourante = { groupes, sansNom, sansGroupe, colonnes: colonnesReconnues };
+      coches.clear();
+      $("depot").classList.add("charge");
+      $("depot-titre").textContent = f.name;
+      $("depot-detail").textContent = apprentis.length + " apprentis dans " + groupes.size + " groupes · cliquez pour changer de fichier";
+      const remplis = ["entreprise_nom", "ma_nom", "contrat_debut"].filter((c) => colonnesReconnues.includes(c)).length;
+      dire("journal-csv", remplis === 3 ? "" : "Certaines colonnes entreprise / maître d'apprentissage / contrat sont absentes : ces cases resteront vides.");
+      afficherGroupes();
+    } catch (e) {
+      dire("journal-csv", "Liste non lue : " + err(e), "erreur");
+    }
+  }
+
+  function pastille(etat) {
+    const s = document.createElement("span");
+    s.className = "pastille " + { memo: "p-memo", prop: "p-prop", aucun: "p-aucun" }[etat];
+    s.textContent = { memo: "mémorisée", prop: "proposée", aucun: "aucun modèle" }[etat];
+    return s;
+  }
+
+  function afficherGroupes() {
+    const corpsModele = $("corps-groupes"), corpsAutres = $("corps-autres");
+    corpsModele.innerHTML = ""; corpsAutres.innerHTML = "";
+    let nAutres = 0, apprentisAutres = 0;
+    const noms = [...listeCourante.groupes.keys()].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
+    let propositions = 0;
+    noms.forEach((groupe) => {
+      const n = listeCourante.groupes.get(groupe).length;
+      const { code, etat } = modeleDuGroupe(groupe);
+      if (etat === "prop") propositions++;
+      if (!code) coches.delete(groupe);
+      const tr = document.createElement("tr");
+      if (!code) tr.className = "sans-modele";
+
+      const tdC = document.createElement("td");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = "g-" + cleGroupe(groupe);
+      cb.checked = coches.has(groupe);
+      cb.disabled = !code;
+      cb.setAttribute("aria-label", "Publiposter " + groupe);
+      cb.addEventListener("change", () => { cb.checked ? coches.add(groupe) : coches.delete(groupe); majTotal(); });
+      tdC.appendChild(cb);
+
+      const tdG = document.createElement("td");
+      const lab = document.createElement("label");
+      lab.htmlFor = cb.id;
+      lab.textContent = groupe;
+      tdG.appendChild(lab);
+
+      const tdN = document.createElement("td");
+      tdN.className = "n";
+      tdN.textContent = n;
+
+      const tdM = document.createElement("td");
+      const sel = document.createElement("select");
+      sel.className = "modele";
+      sel.id = "m-" + cleGroupe(groupe);
+      sel.setAttribute("aria-label", "Modèle pour " + groupe);
+      const o0 = document.createElement("option");
+      o0.value = ""; o0.textContent = "— aucun modèle —";
+      sel.appendChild(o0);
+      BIBLIO.forEach((m) => {
+        const o = document.createElement("option");
+        o.value = m.code;
+        o.textContent = m.code.slice(-3) + " · " + m.libelle;
+        sel.appendChild(o);
+      });
+      sel.value = code;
+      sel.addEventListener("change", async () => {
+        await memoriserCorrespondance(groupe, sel.value);
+        if (sel.value) coches.add(groupe);
+        afficherGroupes();
+      });
+      tdM.appendChild(sel);
+
+      const tdE = document.createElement("td");
+      tdE.appendChild(pastille(etat));
+
+      tr.append(tdC, tdG, tdN, tdM, tdE);
+      if (code) corpsModele.appendChild(tr);
+      else { corpsAutres.appendChild(tr); nAutres++; apprentisAutres += n; }
+    });
+    $("autres").hidden = nAutres === 0;
+    $("autres-titre").textContent = nAutres + " autre" + (nAutres > 1 ? "s" : "") + " groupe" + (nAutres > 1 ? "s" : "")
+      + " sans livret (" + apprentisAutres + " personne" + (apprentisAutres > 1 ? "s" : "") + ")";
+    $("memoriser-propositions").hidden = propositions === 0;
+    $("etape-groupes").hidden = false;
+    $("etape-generer").hidden = false;
+    afficherAlertes();
+    majTotal();
+  }
+
+  function afficherAlertes() {
+    const zone = $("alertes");
+    zone.innerHTML = "";
+    const bloc = (titre, lignes) => {
+      if (!lignes.length) return;
+      const d = document.createElement("details");
+      d.className = "alerte";
+      const s = document.createElement("summary");
+      s.textContent = titre;
+      const ul = document.createElement("ul");
+      lignes.forEach((t) => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+      d.append(s, ul);
+      zone.appendChild(d);
+    };
+    const sansGroupe = listeCourante.sansGroupe.map((a) => a.nom + " " + a.prenom);
+    bloc(sansGroupe.length + " apprenti" + (sansGroupe.length > 1 ? "s" : "") + " sans groupe dans Yparéo : pas de livret", sansGroupe);
+    const sn = listeCourante.sansNom.length;
+    bloc(sn + " ligne" + (sn > 1 ? "s" : "") + " sans nom ni prénom, écartée" + (sn > 1 ? "s" : ""),
+      listeCourante.sansNom.map((a) => (a.groupe_ypareo || "sans groupe") + (a.entreprise_nom ? " — " + a.entreprise_nom : "")));
+  }
+
+  function majTotal() {
+    let n = 0;
+    coches.forEach((g) => { n += listeCourante.groupes.get(g).length; });
+    $("total-choisi").innerHTML = "";
+    const b = document.createElement("b");
+    b.textContent = n;
+    $("total-choisi").append(b, " livret" + (n > 1 ? "s" : "") + " · " + coches.size + " groupe" + (coches.size > 1 ? "s" : ""));
+    $("generer").disabled = n === 0;
+  }
+
+  $("tout-cocher").addEventListener("click", () => {
+    listeCourante.groupes.forEach((_, g) => { if (modeleDuGroupe(g).code) coches.add(g); });
+    afficherGroupes();
+  });
+  $("rien-cocher").addEventListener("click", () => { coches.clear(); afficherGroupes(); });
+  $("memoriser-propositions").addEventListener("click", async () => {
+    for (const g of listeCourante.groupes.keys()) {
+      const { code, etat } = modeleDuGroupe(g);
+      if (etat === "prop") correspondances[cleGroupe(g)] = { groupe: g, code };
+    }
+    try { await Compte.enregistrer({ correspondances }); }
+    catch (e) { dire("journal-csv", "Les correspondances n'ont pas pu être mémorisées : " + err(e), "erreur"); }
+    afficherGroupes();
+  });
+
+  const depot = $("depot"), champ = $("fichier-csv");
+  depot.addEventListener("click", () => champ.click());
+  depot.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); champ.click(); } });
+  champ.addEventListener("change", () => { if (champ.files[0]) chargerCSV(champ.files[0]); champ.value = ""; });
+  ["dragenter", "dragover"].forEach((t) => depot.addEventListener(t, (e) => { e.preventDefault(); depot.classList.add("survol"); }));
+  ["dragleave", "drop"].forEach((t) => depot.addEventListener(t, (e) => { e.preventDefault(); depot.classList.remove("survol"); }));
+  depot.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) chargerCSV(e.dataTransfer.files[0]); });
+
+  // ---------------------------------------------------------------- génération
+  // Seuls ces champs sont reportés ; tout autre jeton est vidé (adresse, téléphone, mail,
+  // naissance et représentant légal de l'apprenti se remplissent à la main).
+  const RETENUS = new Set(["nom", "prenom", "entreprise_nom", "entreprise_adresse", "entreprise_telephone",
+    "entreprise_mail", "ma_nom", "ma_prenom", "ma_telephone", "ma_mail", "contrat_debut", "contrat_fin"]);
+
+  $("generer").addEventListener("click", async () => {
+    const bouton = $("generer");
+    bouton.disabled = true;
+    const choisis = [...coches].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
+    const total = choisis.reduce((t, g) => t + listeCourante.groupes.get(g).length, 0);
+    const parDossier = choisis.length > 1;
+    const entrees = [], dejaVus = new Set();
+    let fait = 0;
+    try {
+      for (const g of choisis) {
+        const code = modeleDuGroupe(g).code;
+        const m = parCode[code];
+        dire("journal-generer", "Ouverture du modèle " + code + "…");
+        const prep = await modelePrepare(code);
+        for (const a of listeCourante.groupes.get(g)) {
+          const valeurs = {};
+          RETENUS.forEach((c) => { valeurs[c] = a[c] || ""; });
+          const octets = await P.produire(prep, valeurs, RETENUS);
+          let nom = P.nomFichier(a, "Livret_" + m.dossier);
+          if (parDossier) nom = m.dossier + "/" + nom;
+          let unique = nom, i = 2;
+          while (dejaVus.has(unique)) unique = nom.replace(/\.docx$/, "_" + i++ + ".docx");
+          dejaVus.add(unique);
+          entrees.push({ nom: unique, donnees: octets, compresser: false });
+          fait++;
+          if (fait % 5 === 0 || fait === total) dire("journal-generer", "Livret " + fait + " sur " + total + "…");
+        }
+      }
+      const zip = await ZIP_SIMPLE.ecrire(entrees);
+      const nomZip = choisis.length === 1
+        ? "Livrets_" + parCode[modeleDuGroupe(choisis[0]).code].dossier + "_2026-2027.zip"
+        : "Livrets_" + choisis.length + "_groupes_2026-2027.zip";
+      const url = URL.createObjectURL(zip);
+      const lien = document.createElement("a");
+      lien.href = url; lien.download = nomZip;
+      document.body.appendChild(lien); lien.click(); lien.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      dire("journal-generer", fait + " livret" + (fait > 1 ? "s" : "") + " enregistré" + (fait > 1 ? "s" : "") + " dans " + nomZip + ".", "succes");
+    } catch (e) {
+      dire("journal-generer", "Échec : " + err(e), "erreur");
+    }
+    bouton.disabled = false;
+  });
+
+  // ------------------------------------------------------------ démarrage
+  afficherBibli();
+  $("deconnexion").addEventListener("click", () => { Compte.deconnecter(); location.replace("/"); });
+  (async () => {
+    const ok = await Compte.init();
+    if (!ok) { location.replace("/?next=" + encodeURIComponent(location.pathname)); return; }
+    $("qui").textContent = Compte.email || "";
+    try {
+      const d = await Compte.lire();
+      if (d && d.correspondances) { correspondances = d.correspondances; if (listeCourante) afficherGroupes(); }
+    } catch (e) { console.warn("correspondances", e); }
+  })();
+})();
+</script>
+
+</body></html>
