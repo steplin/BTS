@@ -149,6 +149,8 @@ tr:hover .rowact,.rowact:focus-within{opacity:1}
 .rowact button{padding:2px 6px;font-size:11.5px;line-height:1.2}
 td.crit .rowact{justify-content:flex-start;margin-top:6px}
 .addcrit{margin-top:8px}
+.ro-note{background:var(--sunk);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--ink-2)}
+#editor.ro .ce{cursor:default}#editor.ro .rowact,#editor.ro #addCrit,#editor.ro #resetOne,#editor.ro #delGrid{display:none!important}
 .sync{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
 .sync .dotc{width:8px;height:8px;border-radius:99px;background:var(--accent)}
 .sync.pending .dotc{background:var(--ochre)}.sync.err .dotc{background:var(--danger)}.sync.err{color:var(--danger)}
@@ -806,7 +808,7 @@ const VERSION = {n:"6.4",date:"25/09/2026"};
 /* Une seule version : la dernière */
 const TOOL_VERSIONS = {"6.4":{engine:"tpl",themes:["origine","kerplouz","impression","logo"],features:{}}};
 const CHANGELOG = [
-  ["6.4","25/09/2026","Grilles communes à l'équipe : toute modification ou création de grille est enregistrée automatiquement dans la base, visible par tous les formateurs du BTS, avec l'historique des versions (qui, quand, quoi) et le retour à une version précédente."],
+  ["6.4","25/09/2026","Modification des grilles réservée aux administrateurs et au coordinateur de la filière BTS (lecture seule pour les autres). Grilles communes à l'équipe : toute modification ou création de grille est enregistrée automatiquement dans la base, visible par tous les formateurs du BTS, avec l'historique des versions (qui, quand, quoi) et le retour à une version précédente."],
   ["6.3","25/09/2026","Correction : la grille C8.2 apparaissait en double sous le code C8.1 (onglet mal nommé dans le fichier officiel) ; C8.1 et C8.2 sont désormais distinctes. Ajout et suppression de critères et d'indicateurs, création d'une grille complète (nouvelle capacité). Garde-fous dans Excel : note plafonnée au barème de la ligne (saisie refusée, alerte rouge en cas de copier-coller) et verrouillage des critères, indicateurs et barèmes, avec mot de passe facultatif."],
   ["6.2","25/09/2026","Création de compte réservée aux adresses @kerplouz.com, mot de passe avec caractère spécial obligatoire, suppression du choix de version (seule la dernière est utilisée)."],
   ["6.1","25/09/2026","Accès réservé : connexion par adresse e-mail et mot de passe sur la page d'accueil du site, l'outil n'est servi qu'aux personnes connectées."],
@@ -973,8 +975,17 @@ function renderEditor(){
       <button id="resetYes" class="small" type="button">${g.custom?"Supprimer":"Rétablir"}</button><button id="resetNo" class="ghost small" type="button">Annuler</button></div>
     <div id="histPanel" class="histp" hidden></div>
     <p class="hint">Chaque modification est enregistrée automatiquement pour toute l'équipe, avec l'historique des versions. Cliquez sur un texte ou un barème pour le modifier. « + indicateur », « ✕ » et « + Ajouter un critère » changent la structure : la grille Excel est alors reconstruite sur la mise en page officielle (logos, colonnes, cellules fusionnées, total recalculé).</p>`;
-  renderSync();
+  applyReadOnly();renderSync();
 }
+let READONLY=false;
+function applyReadOnly(){const ed=$("#editor");if(!ed)return;ed.classList.toggle("ro",READONLY);
+  const nb=$("#btnNew");if(nb)nb.hidden=READONLY||!$("#newForm").hidden;if(READONLY)$("#newForm").hidden=true;
+  if(!READONLY)return;
+  ed.querySelectorAll(".ce,.title-edit").forEach(e=>e.setAttribute("contenteditable","false"));
+  ed.querySelectorAll("input[data-k],input[data-m]").forEach(e=>e.disabled=true);
+  if(!ed.querySelector(".ro-note")){const n=document.createElement("div");n.className="ro-note";
+    n.textContent="Lecture seule : seuls les administrateurs et le coordinateur de la filière BTS modifient les grilles. Vous pouvez générer les fichiers Excel et consulter l'historique.";
+    const m=ed.querySelector(".meta");if(m)m.parentNode.insertBefore(n,m);}}
 function renderSync(){const el=$("#gridSync");if(!el)return;const g=state.grilles[state.active];if(!g)return;
   let st;try{st=Shared.status(g);}catch(e){return;} // module pas encore prêt au premier affichage
   el.className="sync"+(st.cls?" "+st.cls:"");el.innerHTML=`<span class="dotc" aria-hidden="true"></span><span>${st.html}</span>`;}
@@ -986,6 +997,7 @@ function refreshTotal(){const g=state.grilles[state.active];const t=total(g);$("
 const ed=$("#editor");
 ed.addEventListener("input",e=>{
   const g=state.grilles[state.active],el=e.target,k=el.dataset.k,m=el.dataset.m;
+  if(READONLY)return;
   if(m==="date"){const v=el.value.trim();const d=frToIso(v);g.date=d;el.setCustomValidity(v&&!d?"Date attendue au format jj/mm/aaaa":"");}
   else if(m){g[m]=el.value;}
   else if(k==="titre"){g.titre=el.textContent.trim();const c=document.querySelector(`.cap[data-i="${state.active}"] .tt`);if(c)c.textContent=g.titre;}
@@ -997,6 +1009,7 @@ ed.addEventListener("input",e=>{
 });
 ed.addEventListener("click",e=>{
   const g=state.grilles[state.active],b=e.target.closest("button");if(!b)return;
+  if(READONLY&&b.id!=="histBtn")return;
   const ci=+b.dataset.ci,ii=+b.dataset.ii;
   if(b.dataset.act==="addI")g.criteres[ci].i.push({t:"Nouvel indicateur",b:0});
   else if(b.dataset.act==="delI"&&g.criteres.reduce((a,c)=>a+c.i.length,0)<2)return;
@@ -1005,6 +1018,7 @@ ed.addEventListener("click",e=>{
   else if(b.id==="addCrit")g.criteres.push({c:"Nouveau critère",i:[{t:"Indicateur",b:0}]});
   else if(b.id==="resetOne"||b.id==="delGrid"){$("#resetConfirm").hidden=false;return;}
   else if(b.id==="histBtn"){Shared.showHistory(g);return;}
+  else if(READONLY)return;
   else if(b.dataset.restore){Shared.restore(g,+b.dataset.restore);return;}
   else if(b.id==="resetNo"){$("#resetConfirm").hidden=true;return;}
   else if(b.id==="resetYes"){if(g.custom){Shared.save(g,"suppression");state.grilles.splice(state.active,1);state.active=Math.max(0,state.active-1);}
@@ -1193,8 +1207,8 @@ const Shared=(()=>{
     if(g.dirty)return {cls:"pending",html:"Modification en cours…"};
     if(g.version)return {cls:"",html:`Enregistrée pour toute l'équipe · version ${g.version}${g.majLe?" du "+esc(heure(g.majLe)):""}${g.majNom?" par "+esc(g.majNom):""}`};
     return {cls:"",html:"Grille officielle, pas encore modifiée par l'équipe"};}
-  function touch(g){g.dirty=true;g.syncErr=null;renderSync();clearTimeout(timers[g.code]);timers[g.code]=setTimeout(()=>save(g,"modification"),2500);}
-  async function save(g,action){clearTimeout(timers[g.code]);if(!online){persist();return;}
+  function touch(g){if(READONLY)return;g.dirty=true;g.syncErr=null;renderSync();clearTimeout(timers[g.code]);timers[g.code]=setTimeout(()=>save(g,"modification"),2500);}
+  async function save(g,action){clearTimeout(timers[g.code]);if(READONLY)return;if(!online){persist();return;}
     if(busy[g.code]){timers[g.code]=setTimeout(()=>save(g,action),800);return;}
     busy[g.code]=true;renderSync();
     try{const r=await Cloud.call("/rest/v1/rpc/grille_enregistrer",{method:"POST",body:{p_code:g.code,p_donnees:pack(g),p_action:action,p_version:g.version||null}});
@@ -1204,6 +1218,9 @@ const Shared=(()=>{
       g.syncErr=e.message||String(e);}
     finally{busy[g.code]=false;if(state.grilles[state.active]===g)renderSync();}}
   async function load(serverWins){
+    try{const d=await Cloud.call("/rest/v1/rpc/mes_droits",{method:"POST",body:{}});
+      READONLY=!(d&&d.actif&&(d.admin||(d.filieres||[]).includes("btsa")));}catch(e){READONLY=true;}
+    applyReadOnly();
     let rows;try{rows=await Cloud.call("/rest/v1/grilles_bts?select=code,donnees,version,supprime,maj_nom,maj_par,maj_le");online=true;}
     catch(e){online=false;console.warn("grilles communes",e);renderSync();return;}
     const byCode=Object.fromEntries(rows.map(r=>[r.code,r]));let changed=false;
@@ -1214,7 +1231,8 @@ const Shared=(()=>{
       if(g)state.grilles[i]=n;else{let at=state.grilles.findIndex(x=>x.code.localeCompare(r.code,"fr",{numeric:true})>0);state.grilles.splice(at<0?state.grilles.length:at,0,n);}
       changed=true;}
     // grilles modifiées sur ce poste (ou dans l'ancien enregistrement personnel) mais absentes de la base : envoyées
-    const envoi=[];for(const g of state.grilles){if(byCode[g.code])continue;g.version=null;
+    const envoi=[];for(const g of [...state.grilles]){if(byCode[g.code])continue;g.version=null;
+      if(READONLY){if(g.custom){state.grilles.splice(state.grilles.indexOf(g),1);changed=true;continue;}const o=official(g.code);if(o&&!same(g,o)){Object.assign(g,o,{sel:g.sel});g.dirty=false;changed=true;}continue;}
       if(g.custom)envoi.push([g,"creation"]);else{const o=official(g.code);if(o&&!same(g,o))envoi.push([g,"modification"]);}}
     state.active=Math.min(state.active,state.grilles.length-1);
     if(changed){persist();renderCaps();renderEditor();}else renderSync();
@@ -1236,7 +1254,7 @@ const Shared=(()=>{
       const lab={creation:"Création",modification:"Modification",suppression:"Suppression",retablissement:"Retour à une version"};
       p.innerHTML=histCache.length?histCache.map((h,k)=>{const prev=histCache[k+1]?histCache[k+1].donnees:(g.custom?null:official(g.code));
         return `<div class="he"><span><b>${esc(lab[h.action]||h.action)}</b> · version ${h.version} · ${esc(h.auteur_nom||h.auteur||"")}<span class="d"><br>${esc(heure(h.le))} · ${esc(h.action==="suppression"?"grille supprimée":resume(prev,h.donnees))}</span></span>
-          ${k>0&&h.action!=="suppression"?`<button class="ghost small" type="button" data-restore="${h.id}">Revenir à cette version</button>`:(k===0?'<span class="pill ok">actuelle</span>':"")}</div>`;}).join("")
+          ${k>0&&h.action!=="suppression"&&!READONLY?`<button class="ghost small" type="button" data-restore="${h.id}">Revenir à cette version</button>`:(k===0?'<span class="pill ok">actuelle</span>':"")}</div>`;}).join("")
         :'<span class="hint">Aucune modification enregistrée : c\'est la grille officielle.</span>';}
     catch(e){p.innerHTML=`<span class="hint err">Historique indisponible : ${esc(e.message)}</span>`;}}
   async function restore(g,id){const h=histCache.find(x=>x.id===id);if(!h)return;
