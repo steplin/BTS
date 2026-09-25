@@ -246,7 +246,8 @@ const ICONS={
   decoup:'<circle cx="6" cy="7" r="2.5"/><circle cx="6" cy="17" r="2.5"/><path d="M8 8.5 20 16M8 15.5 20 8"/>',
   fiche:'<path d="M6 3h12v18H6z"/><path d="M9 7h6M9 11h6M9 15h3"/>',
   arbre:'<path d="M12 21v-6"/><path d="M12 15c-4 0-6-2.5-6-5.5S8.5 4 12 4s6 2.5 6 5.5S16 15 12 15z"/>',
-  suivi:'<path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/>'
+  suivi:'<path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/>',
+  coord:'<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="4" rx="1.5"/><rect x="13" y="10" width="7" height="10" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/>'
 };
 const LEVELS=[
   {id:"capa",nom:"CAPa Jardinier paysagiste",niv:"Niveau 3",c:"#6E9A3A",sub:"Formation en unités capitalisables",tools:[
@@ -257,6 +258,7 @@ const LEVELS=[
     {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"}]},
   {id:"btsa",nom:"BTSA Aménagements paysagers",niv:"Niveau 5",c:"#D1683F",sub:"Promotion 2026-2028",tools:[
     {t:"Grilles d'évaluation BTS AP",d:"Classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/",code:"grilles-bts"},
+    {t:"Coordination BTS AP",d:"Tableau de bord des résultats de la promotion, candidats, épreuves et convocations, courriers aux entreprises, impression et documents de fin d'année.",i:"coord",href:"/CCF/?vue=coord",code:"grilles-bts"},
     {t:"Tableau de bord CCF",d:"Vos épreuves certificatives : saisie en ligne des grilles des capacités dont vous êtes intervenant ; suivi des résultats, convocations et courriers pour le coordinateur.",i:"suivi",href:"/CCF/",code:"ccf-bts"},
     {t:"Calendrier des CCF",d:"Planning des situations d'évaluation et des intervenants sur les deux ans.",i:"calend"}]},
   {id:"bprea",nom:"BP Responsable d'entreprise agricole",niv:"Niveau 4",c:"#7C8A2A",sub:"Formation en unités capitalisables",tools:[
