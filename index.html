@@ -70,6 +70,10 @@ a.tile:hover{border-color:var(--c);box-shadow:0 6px 18px rgba(24,36,30,.08);tran
 .note{font-size:13px;color:var(--ink-3);text-align:center;margin:4px 0 0}
 .mine{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}
 .chip{font-size:12px;font-weight:500;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+.apercu{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:13px;color:var(--ink-2);background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+.apercu select{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.apercu.on{border-style:solid;border-color:#D1683F;background:#FFF3EC}
+.apercu .info{flex-basis:100%;color:#8A3F1C}
 .banner{background:#FFF6E5;border:1px solid #F0DDB5;color:#7A5410;border-radius:10px;padding:12px 14px;font-size:13.5px}
 a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radius:999px;padding:6px 12px;text-decoration:none}
 @media (prefers-reduced-motion:reduce){.tile{transition:none}}
@@ -129,6 +133,25 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
       <div class="t"><span class="eyebrow">Kerplouz LaSalle · Filière paysage</span><h1>Vos outils pédagogiques</h1></div>
       <div class="me"><span id="who"></span><a class="admin" id="lnkAdmin" href="/admin/" hidden>Administration</a><button type="button" class="ghost" id="btnOut">Se déconnecter</button></div>
     </div>
+    <div class="apercu" id="apercu" hidden>
+      <label for="apRole"><b>Voir comme</b></label>
+      <select id="apRole">
+        <option value="">Moi (administrateur)</option>
+        <option value="formateur">Formateur</option>
+        <option value="referent">Référent de classe</option>
+        <option value="coordinateur_filiere">Coordinateur de filière</option>
+        <option value="responsable_peda">Responsable pédagogique</option>
+        <option value="secretariat">Secrétariat</option>
+        <option value="direction">Direction</option>
+        <option value="vie_sco">Vie scolaire</option>
+      </select>
+      <label for="apNiv" id="apNivL" hidden>de la formation</label>
+      <select id="apNiv" hidden>
+        <option value="capa">CAPa JP</option><option value="bpa">BPA OSP</option><option value="bp">BP AP</option>
+        <option value="btsa" selected>BTSA AP</option><option value="cs">CS Arboriste</option><option value="bprea">BPREA</option>
+      </select>
+      <span class="info" id="apInfo" hidden></span>
+    </div>
     <div class="banner" id="banner" hidden></div>
     <div class="mine" id="mine"></div>
     <div class="tabs" role="group" aria-label="Filtrer par formation" id="tabs"></div>
@@ -168,7 +191,23 @@ async function session(){let s=ls.get();if(!s)return null;
   else setCookie(s);return s;}
 const ROLES={formateur:"Formateur",referent:"Référent de classe",coordinateur_filiere:"Coordinateur de filière",responsable_peda:"Responsable pédagogique",secretariat:"Secrétariat",direction:"Direction",vie_sco:"Vie scolaire"};
 const esc=t=>String(t==null?"":t).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
-let droits=null;
+let droits=null,outilsCat=[],apercu=null;
+const TOUS_NIV=["capa","bpa","bp","btsa","cs","bprea","autre"],NIV_LARGE=["responsable_peda","secretariat","direction","vie_sco"];
+/* Aperçu « Voir comme » : même calcul que mes_droits() côté base, sur un profil fictif. Affichage seulement. */
+function simuler(role,niv){
+  const r=role==="referent"?["formateur","referent"]:[role];
+  const nv=NIV_LARGE.includes(role)?TOUS_NIV.slice():[niv];
+  const outils=outilsCat.filter(o=>(!o.roles||!o.roles.length||o.roles.some(x=>r.includes(x)))&&(o.niveau==="tous"||nv.includes(o.niveau))).map(o=>o.code);
+  return {roles:r,admin:false,actif:true,niveaux:nv,outils,classes:[]};}
+function majApercu(){const role=$("#apRole").value,large=NIV_LARGE.includes(role);
+  $("#apNiv").hidden=$("#apNivL").hidden=!role||large;
+  apercu=role?simuler(role,$("#apNiv").value):null;
+  $("#apercu").classList.toggle("on",!!apercu);
+  const lib=$("#apRole").selectedOptions[0].text+(role&&!large?" "+$("#apNiv").selectedOptions[0].text:"");
+  $("#apInfo").hidden=!apercu;
+  $("#apInfo").textContent=apercu?`Aperçu : voici le tableau de bord d'une personne « ${lib} ». Rien n'est modifié, et les outils s'ouvrent toujours avec vos propres droits d'administrateur.`:"";
+  filtre="all";renderDash();}
+$("#apRole").onchange=majApercu;$("#apNiv").onchange=majApercu;
 async function goHome(s){if(next){location.replace(next);return;}
   const email=s.user&&s.user.email||"";
   try{droits=await api("/rest/v1/rpc/mes_droits",{method:"POST",body:{},token:s.access_token});}
@@ -180,6 +219,8 @@ async function goHome(s){if(next){location.replace(next);return;}
   const rl=(droits.roles||[]).filter(r=>r!=="coordinateur_filiere").map(r=>ROLES[r]||r);(droits.filieres||[]).forEach(f=>rl.push("Coordination "+(FIL[f]||f)));if(droits.admin)rl.push("Administrateur");
   $("#who").innerHTML="<b>"+esc(nomAff)+"</b>"+(rl.length?" · "+esc(rl.join(", ")):"");
   $("#lnkAdmin").hidden=!droits.admin;
+  $("#apercu").hidden=!droits.admin;$("#apRole").value="";apercu=null;$("#apInfo").hidden=true;$("#apercu").classList.remove("on");$("#apNiv").hidden=$("#apNivL").hidden=true;
+  if(droits.admin){try{outilsCat=await api("/rest/v1/outils?select=code,niveau,roles,ordre&order=ordre",{token:s.access_token})||[];}catch(e){outilsCat=[];$("#apercu").hidden=true;}}
   const cl=droits.classes||[];
   $("#mine").innerHTML=cl.length?"Vos classes :"+cl.map(c=>`<span class="chip"${c.fonction==="referent"?' title="Vous êtes référent·e de cette classe" style="border-color:var(--accent);color:var(--accent)"':""}>${c.fonction==="referent"?"★ ":""}${esc(c.libelle)}</span>`).join("")
     :(droits.admin||(droits.niveaux||[]).length?"":"<span>Aucune classe ne vous est encore attribuée : le responsable pédagogique doit vous rattacher à vos classes pour afficher leurs outils.</span>");
@@ -220,7 +261,7 @@ const LEVELS=[
 ];
 let filtre="all";
 function visibles(){
-  const d=droits||{},niv=new Set(d.niveaux||[]),out=new Set(d.outils||[]);
+  const d=apercu||droits||{},niv=new Set(d.niveaux||[]),out=new Set(d.outils||[]);
   return LEVELS.filter(l=>d.admin||l.id==="tous"||niv.has(l.id))
     .map(l=>Object.assign({},l,{tools:l.tools.filter(t=>t.code?out.has(t.code):true)}))
     .filter(l=>l.tools.length);
