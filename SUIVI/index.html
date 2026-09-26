@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suivi des apprenants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#F4F6F3;--surface:#FFFFFF;--line:#DCE2D9;--ink:#18241E;--ink-2:#4A5A51;--ink-3:#76857C;--accent:#2E6A4B;--accent-soft:#DCEBDF;
+  --danger:#A8412F;--warn:#7A5410;--warn-soft:#FFF6E5;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 var(--body);padding-inline:16px}
+main{max-width:1240px;margin:0 auto;padding-block:22px 60px;display:flex;flex-direction:column;gap:16px}
+a{color:var(--accent)}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.head .t{display:flex;flex-direction:column;gap:3px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+h1{font:700 26px/1.15 var(--display);margin:0;letter-spacing:-.01em}
+.me{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.me a{font-weight:600;text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.bar label{font-size:12.5px;color:var(--ink-3);font-weight:500}
+select,input[type=search],input[type=text],textarea{font:14px var(--body);color:var(--ink);background:#F8FAF7;border:1px solid var(--line);border-radius:8px;padding:7px 9px;max-width:100%}
+input[type=search]{min-width:240px}
+button,.btn{font:600 13.5px var(--body);border:0;border-radius:8px;padding:8px 12px;background:var(--accent);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+button.ghost,.btn.ghost{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sp{flex:1}
+.status{font-size:12.5px;color:var(--ink-3)}.status.err{color:var(--danger)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.empty{color:var(--ink-3);text-align:center;padding:30px}
+
+.onglets{display:flex;gap:6px;flex-wrap:wrap}
+.onglets button{background:var(--surface);color:var(--ink-2);border:1px solid var(--line);border-radius:99px;font-weight:500;padding:7px 14px}
+.onglets button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.onglets .n:empty{display:none}
+.onglets .n{margin-left:6px;font-size:11px;background:rgba(0,0,0,.08);border-radius:99px;padding:0 6px}
+.onglets button[aria-selected="true"] .n{background:rgba(255,255,255,.2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{font-size:12.5px;font-weight:500;padding:5px 11px;border-radius:99px;background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--ink-3);font-weight:600;white-space:nowrap}
+tr.app{cursor:pointer}tr.app:hover td{background:#F8FAF7}
+td.num{text-align:center;white-space:nowrap}
+.nom{font-weight:600}.sub{font-size:12px;color:var(--ink-3)}
+.pill{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 8px;background:#EEF2EC;color:var(--ink-2);white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.danger{background:#F6DED8;color:var(--danger)}.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.bar-p{height:6px;border-radius:9px;background:#E6EBE3;overflow:hidden;min-width:70px}.bar-p i{display:block;height:100%;background:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font:700 24px/1.1 var(--display)}.kpi span{font-size:12.5px;color:var(--ink-3)}
+/* fiche */
+dialog{border:0;border-radius:14px;padding:0;width:min(860px,96vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(24,36,30,.35)}
+.fiche{display:flex;flex-direction:column;gap:14px;padding:18px 20px;max-height:92vh;overflow:auto}
+.fiche h2{font:700 21px/1.2 var(--display);margin:0}
+.fhead{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.fdl{display:grid;grid-template-columns:max-content 1fr;gap:3px 14px;font-size:13.5px;margin:0}.fdl dt{color:var(--ink-3)}.fdl dd{margin:0}
+form.note{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;background:#F8FAF7;border:1px solid var(--line);border-radius:12px;padding:12px}
+form.note .large{grid-column:1/-1}
+form.note label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-3);font-weight:500}
+form.note textarea{min-height:64px;resize:vertical}
+form.note .ck{flex-direction:row;align-items:center;gap:6px;color:var(--ink-2)}
+input[type=date]{font:14px var(--body);border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
+.journal{display:flex;flex-direction:column;gap:8px}
+.jn{border:1px solid var(--line);border-left:4px solid var(--c,#9AA69F);border-radius:10px;padding:9px 12px;background:#fff}
+.jn .h{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3)}
+.jn .h b{color:var(--ink);font-size:13.5px}
+.jn p{margin:4px 0 0;white-space:pre-wrap}
+.jn .act{margin-top:6px;font-size:13px;background:var(--warn-soft);border-radius:8px;padding:5px 9px}
+.jn .act.fait{background:var(--accent-soft);text-decoration:line-through;color:var(--ink-3)}
+.jn .tools{display:flex;gap:6px;margin-top:6px}
+button.mini{font-size:12px;padding:3px 9px;background:var(--surface);color:var(--accent);border:1px solid var(--line)}
+button.mini.del{color:var(--danger)}
+.hint{font-size:12.5px;color:var(--ink-3);margin:0}
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  body{background:#fff;padding:0}main{display:none!important}
+  dialog{position:static;box-shadow:none;width:auto;max-height:none;display:block}
+  .fiche{max-height:none;overflow:visible;padding:0}.noprint{display:none!important}
+}
+</style></head><body>
+<main>
+  <div class="head">
+    <div class="t"><span class="eyebrow">Kerplouz LaSalle · Accompagnement</span><h1>Suivi des apprenants</h1></div>
+    <div class="me"><span id="who"></span><a href="/#suivi">← Accueil</a></div>
+  </div>
+  <div class="onglets" role="tablist">
+    <button type="button" role="tab" data-o="liste" aria-selected="true">Apprenants<span class="n" id="nListe"></span></button>
+    <button type="button" role="tab" data-o="actions" aria-selected="false">Actions à mener<span class="n" id="nActions"></span></button>
+    <button type="button" role="tab" data-o="tdb" aria-selected="false">Tableau de bord</button>
+  </div>
+  <div class="bar" id="bar">
+    <label for="fClasse">Classe</label><select id="fClasse"><option value="">Toutes mes classes</option></select>
+    <input type="search" id="q" placeholder="Rechercher un nom, une entreprise" aria-label="Rechercher">
+    <span class="sp"></span><span class="status" id="status" aria-live="polite"></span>
+  </div>
+  <section id="o-liste">
+    <div class="chips" id="chips" style="margin-bottom:10px"></div>
+    <div class="card scroll"><table>
+      <thead><tr><th>Apprenant·e</th><th>Classe</th><th>Entreprise · tuteur</th><th>Dernier échange</th><th class="num">Visites<br><span class="sub">cette année</span></th><th class="num">Alertes</th><th class="num">Actions<br><span class="sub">en retard</span></th><th>Progression UC</th></tr></thead>
+      <tbody id="tListe"><tr><td colspan="8" class="empty">Chargement…</td></tr></tbody>
+    </table></div>
+    <p class="hint" style="margin-top:8px">Cliquez sur une ligne pour ouvrir la fiche de suivi : entretiens, visites en entreprise, alertes, aménagements et actions à mener. Les notes « confidentielles » ne sont lues que par leur auteur, le ou la référent·e de la classe, la vie scolaire et le responsable pédagogique.</p>
+  </section>
+  <section id="o-actions" hidden>
+    <div class="card scroll"><table>
+      <thead><tr><th>Échéance</th><th>Apprenant·e</th><th>Classe</th><th>Action ou alerte</th><th>Notée par</th><th></th></tr></thead>
+      <tbody id="tActions"></tbody>
+    </table></div>
+  </section>
+  <section id="o-tdb" hidden>
+    <div class="kpis" id="kpis"></div>
+    <div class="card scroll" style="margin-top:12px"><table>
+      <thead><tr><th>Classe</th><th class="num">Apprenant·es</th><th class="num">Sans échange<br><span class="sub">depuis 6 semaines</span></th><th class="num">Sans visite<br><span class="sub">cette année</span></th><th class="num">Alertes ouvertes</th><th class="num">Actions en retard</th></tr></thead>
+      <tbody id="tTdb"></tbody>
+    </table></div>
+  </section>
+</main>
+<dialog id="dlg"><div class="fiche" id="fiche"></div></dialog>
+<script>
+"use strict";
+const SB="https://olqclfsywasktwirswpb.supabase.co",KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x",SKEY="kep.session";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let session=null;
+function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+async function frais(){session=session||ls(SKEY);if(!session)return false;
+  if(session.expires_at-60>Date.now()/1000)return true;
+  try{const r=await fetch(SB+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:session.refresh_token})});
+    if(!r.ok)throw 0;const t=await r.json();
+    session=Object.assign(session,{access_token:t.access_token,refresh_token:t.refresh_token,expires_at:t.expires_at?+t.expires_at:Math.floor(Date.now()/1000)+(+t.expires_in||3600)});
+    ls(SKEY,session);document.cookie="kep_at="+session.access_token+"; Path=/; Max-Age="+Math.max(60,session.expires_at-Math.floor(Date.now()/1000))+"; Secure; SameSite=Lax";return true;
+  }catch(e){return false;}}
+async function api(path,{method="GET",body}={}){
+  if(!await frais())throw new Error("Session expirée : reconnectez-vous depuis la page d'accueil.");
+  const r=await fetch(SB+path,{method,headers:{apikey:KEY,"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:body?JSON.stringify(body):undefined});
+  const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){d=t;}
+  if(!r.ok)throw new Error((d&&(d.message||d.msg))||("Erreur "+r.status));return d;}
+const rpc=(n,b)=>api("/rest/v1/rpc/"+n,{method:"POST",body:b||{}});
+const statut=(m,err)=>{$("#status").textContent=m||"";$("#status").classList.toggle("err",!!err);};
+const toast=m=>{const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4200);};
+
+const TYPES={entretien:["Entretien","#2E6A4B"],visite:["Visite en entreprise","#3F6FA8"],contact:["Échange avec l'entreprise ou la famille","#6B5CA5"],alerte:["Alerte","#A8412F"],amenagement:["Aménagement de parcours","#B07A1E"],positif:["Point positif","#4E8A2E"],autre:["Autre","#76857C"]};
+const S={liste:[],actions:[],onglet:"liste",filtre:"tous",app:null,notes:[],edit:null,moi:""};
+const jr=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"";
+const jours=d=>d?Math.round((Date.now()-new Date(d+"T12:00:00"))/864e5):null;
+const sans=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const auj=()=>new Date().toISOString().slice(0,10);
+const FILTRES=[["tous","Tous"],["alertes","Alertes ouvertes"],["retard","Actions en retard"],["silence","Sans échange depuis 6 semaines"],["visite","Pas de visite cette année"]];
+
+async function init(){
+  if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
+  try{const d=await rpc("mes_droits");S.moi=d.email||"";$("#who").textContent=((d.prenom||"")+" "+(d.nom||"")).trim();await charger();}
+  catch(e){$("#tListe").innerHTML=`<tr><td colspan="8" class="empty">${esc(e.message)}</td></tr>`;return;}
+  const cl=[...new Map(S.liste.map(a=>[a.classe,a.libelle])).entries()];
+  $("#fClasse").innerHTML='<option value="">Toutes mes classes</option>'+cl.map(([c,l])=>`<option value="${esc(c)}">${esc(l)}</option>`).join("");
+  const pre=new URLSearchParams(location.search).get("classe")||ls("suivi.classe");if(pre&&cl.some(([c])=>c===pre))$("#fClasse").value=pre;
+  const o=new URLSearchParams(location.search).get("o")||ls("suivi.onglet");if(["liste","actions","tdb"].includes(o))onglet(o);else render();
+  const a=new URLSearchParams(location.search).get("apprenant");if(a)ouvrir(a);
+}
+async function charger(){[S.liste,S.actions]=await Promise.all([rpc("suivi_liste"),rpc("suivi_actions")]);S.liste=S.liste||[];S.actions=S.actions||[];}
+function visibles(){const c=$("#fClasse").value,q=sans($("#q").value.trim());
+  return S.liste.filter(a=>(!c||a.classe===c)&&(!q||sans(a.nom+" "+a.prenom+" "+a.entreprise+" "+a.tuteur).includes(q)));}
+function filtrer(L){const f=S.filtre;return L.filter(a=>f==="tous"||(f==="alertes"&&a.alertes)||(f==="retard"&&a.en_retard)||(f==="silence"&&(!a.dernier||jours(a.dernier)>42))||(f==="visite"&&!a.visites));}
+function render(){
+  const V=visibles(),L=filtrer(V),cls=new Set(V.map(a=>a.classe));
+  $("#nListe").textContent=V.length;
+  const A=S.actions.filter(x=>cls.has(x.classe)&&V.some(a=>a.id===x.apprenant));$("#nActions").textContent=A.length||"";
+  $("#chips").innerHTML=FILTRES.map(([k,l])=>`<button type="button" data-f="${k}" aria-pressed="${S.filtre===k}">${l} <span class="sub">${k==="tous"?V.length:V.filter(a=>filtrerUn(a,k)).length}</span></button>`).join("");
+  $("#tListe").innerHTML=L.length?L.map(a=>{const pct=a.uc_total?Math.round(100*a.uc_acquises/a.uc_total):null,j=jours(a.dernier);
+    return `<tr class="app" data-app="${a.id}" tabindex="0"><td><span class="nom">${esc(a.nom)} ${esc(a.prenom)}</span>${a.fictif?' <span class="pill">fictif</span>':""}</td>
+      <td>${esc(a.libelle)}${a.referent?' <span class="pill ok" title="Vous êtes référent·e de cette classe">★ référent·e</span>':""}</td>
+      <td>${esc(a.entreprise)||'<span class="sub">—</span>'}${a.tuteur?`<div class="sub">${esc(a.tuteur)}</div>`:""}</td>
+      <td>${a.dernier?`${jr(a.dernier)}<div class="sub">il y a ${j} jour${j>1?"s":""}</div>`:'<span class="pill warn">aucun</span>'}</td>
+      <td class="num">${a.visites||'<span class="sub">0</span>'}</td>
+      <td class="num">${a.alertes?`<span class="pill danger">${a.alertes}</span>`:'<span class="sub">0</span>'}</td>
+      <td class="num">${a.en_retard?`<span class="pill warn">${a.en_retard}</span>`:'<span class="sub">0</span>'}</td>
+      <td>${pct==null?'<span class="sub">—</span>':`<div class="bar-p" title="${a.uc_acquises} UC acquises sur ${a.uc_total}"><i style="width:${pct}%"></i></div><span class="sub">${a.uc_acquises}/${a.uc_total} UC</span>`}</td></tr>`;}).join("")
+    :`<tr><td colspan="8" class="empty">${S.liste.length?"Aucun apprenant pour ce filtre.":"Aucun apprenant dans vos classes pour l'instant."}</td></tr>`;
+  $("#tActions").innerHTML=A.length?A.map(x=>{const ret=x.echeance&&x.echeance<auj();
+    return `<tr><td>${x.echeance?`<span class="pill ${ret?"warn":""}">${jr(x.echeance)}</span>`:'<span class="sub">sans date</span>'}</td>
+      <td><a href="#" data-ouvrir="${x.apprenant}">${esc(x.nom)} ${esc(x.prenom)}</a></td><td>${esc(x.libelle)}</td>
+      <td><span class="pill" style="color:${TYPES[x.type][1]}">${TYPES[x.type][0]}</span> ${esc(x.suite)}</td><td class="sub">${esc(x.auteur_nom)}<br>${jr(x.le)}</td>
+      <td><button type="button" class="mini" data-fait="${x.id}">Fait</button></td></tr>`;}).join(""):`<tr><td colspan="6" class="empty">Aucune action en attente.</td></tr>`;
+  const T=[...cls].map(c=>{const g=V.filter(a=>a.classe===c);return {c,l:g[0].libelle,n:g.length,sil:g.filter(a=>filtrerUn(a,"silence")).length,vis:g.filter(a=>!a.visites).length,al:g.reduce((s,a)=>s+a.alertes,0),ret:g.reduce((s,a)=>s+a.en_retard,0)};});
+  const tot=k=>T.reduce((s,x)=>s+x[k],0);
+  $("#kpis").innerHTML=[[V.length,"apprenant·es suivi·es"],[tot("sil"),"sans échange depuis 6 semaines"],[tot("vis"),"sans visite en entreprise cette année"],[tot("al"),"alertes ouvertes"],[tot("ret"),"actions en retard"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
+  $("#tTdb").innerHTML=T.map(x=>`<tr><td><a href="#" data-cl="${esc(x.c)}">${esc(x.l)}</a></td><td class="num">${x.n}</td><td class="num">${x.sil}</td><td class="num">${x.vis}</td><td class="num">${x.al}</td><td class="num">${x.ret}</td></tr>`).join("")||`<tr><td colspan="6" class="empty">—</td></tr>`;
+}
+function filtrerUn(a,k){return (k==="alertes"&&a.alertes)||(k==="retard"&&a.en_retard)||(k==="silence"&&(!a.dernier||jours(a.dernier)>42))||(k==="visite"&&!a.visites);}
+function onglet(o){S.onglet=o;ls("suivi.onglet",o);$$("[data-o]").forEach(b=>b.setAttribute("aria-selected",b.dataset.o===o));["liste","actions","tdb"].forEach(k=>$("#o-"+k).hidden=k!==o);render();}
+
+/* ---------- Fiche de suivi ---------- */
+async function ouvrir(id){S.app=S.liste.find(a=>a.id===id);if(!S.app)return;S.edit=null;
+  try{S.notes=await rpc("suivi_notes_de",{p_app:id})||[];}catch(e){toast(e.message);return;}
+  fiche();if(!$("#dlg").open)$("#dlg").showModal();}
+function formNote(n){n=n||{type:"entretien",le:auj()};
+  return `<form class="note noprint" id="fNote">
+    <label>Type<select name="type">${Object.entries(TYPES).map(([k,[l]])=>`<option value="${k}"${n.type===k?" selected":""}>${l}</option>`).join("")}</select></label>
+    <label>Date<input type="date" name="le" value="${esc(n.le||auj())}" required></label>
+    <label class="large">Objet<input type="text" name="titre" value="${esc(n.titre||"")}" placeholder="ex. Bilan de période, visite chez le tuteur…"></label>
+    <label class="large">Compte rendu<textarea name="texte" placeholder="Ce qui a été dit, observé, décidé">${esc(n.texte||"")}</textarea></label>
+    <label class="large">Action à mener (facultatif)<input type="text" name="suite" value="${esc(n.suite||"")}" placeholder="ex. Rappeler le tuteur, prévoir un entretien avec la famille"></label>
+    <label>Échéance<input type="date" name="echeance" value="${esc(n.echeance||"")}"></label>
+    <label class="ck"><input type="checkbox" name="confidentiel"${n.confidentiel?" checked":""}> Confidentielle</label>
+    <div class="large" style="display:flex;gap:8px"><button type="submit">${n.id?"Enregistrer la modification":"Ajouter au suivi"}</button>${n.id?'<button type="button" class="ghost" id="annulerEdit">Annuler</button>':""}</div>
+  </form>`;}
+function fiche(){const a=S.app,pct=a.uc_total?Math.round(100*a.uc_acquises/a.uc_total):null;
+  $("#fiche").innerHTML=`<div class="fhead"><div><span class="eyebrow">Fiche de suivi · ${esc(a.libelle)}</span><h2>${esc(a.nom)} ${esc(a.prenom)}${a.fictif?' <span class="pill">fictif</span>':""}</h2></div>
+      <div class="noprint" style="display:flex;gap:6px"><button type="button" class="ghost" id="btnImpr">Imprimer</button><button type="button" class="ghost" id="btnFermer">Fermer</button></div></div>
+    <dl class="fdl"><dt>Formation</dt><dd>${esc(a.libelle)} · cohorte ${esc(a.cohorte)} (fin ${jr(a.fin)})</dd>
+      <dt>Entreprise</dt><dd>${esc(a.entreprise)||"—"}${a.tuteur?" · tuteur : "+esc(a.tuteur):""}</dd>
+      ${pct!=null?`<dt>Progression</dt><dd>${a.uc_acquises} UC acquises sur ${a.uc_total} · <a href="/UC/?vue=tdb" class="noprint">résultats UC</a></dd>`:a.source==="bts"?`<dt>Progression</dt><dd><a href="/CCF/">Résultats des CCF</a></dd>`:""}
+      <dt>Suivi</dt><dd>${S.notes.length} note${S.notes.length>1?"s":""} · ${a.visites} visite${a.visites>1?"s":""} en entreprise cette année</dd></dl>
+    ${S.edit?"":formNote()}
+    <div class="journal">${S.notes.length?S.notes.map(n=>S.edit===n.id?formNote(n):noteHTML(n)).join(""):'<p class="empty">Aucune note pour l\'instant.</p>'}</div>`;
+}
+function noteHTML(n){const [l,c]=TYPES[n.type]||TYPES.autre,moi=n.auteur===S.moi;
+  return `<div class="jn" style="--c:${c}"><div class="h"><b>${l}${n.titre?" · "+esc(n.titre):""}</b><span>${jr(n.le)} · ${esc(n.auteur_nom||n.auteur)}</span>${n.confidentiel?'<span class="pill warn">confidentielle</span>':""}</div>
+    ${n.texte?`<p>${esc(n.texte)}</p>`:""}
+    ${n.suite?`<div class="act${n.fait?" fait":""}">➜ ${esc(n.suite)}${n.echeance?" · avant le "+jr(n.echeance):""}</div>`:""}
+    <div class="tools noprint">${(n.suite||n.type==="alerte")?`<button type="button" class="mini" data-fait="${n.id}" data-v="${!n.fait}">${n.fait?"Rouvrir":(n.type==="alerte"&&!n.suite?"Alerte levée":"Action faite")}</button>`:""}
+      ${moi?`<button type="button" class="mini" data-edit="${n.id}">Modifier</button><button type="button" class="mini del" data-del="${n.id}">Supprimer</button>`:""}</div></div>`;}
+async function enregistrer(f){const d=Object.fromEntries(new FormData(f));d.confidentiel=!!f.confidentiel.checked;d.apprenant=S.app.id;if(S.edit)d.id=S.edit;
+  if(!d.texte.trim()&&!d.titre.trim()&&!d.suite.trim()){toast("Écrivez au moins un objet, un compte rendu ou une action.");return;}
+  f.querySelector("button[type=submit]").disabled=true;
+  try{await rpc("suivi_enregistrer",{p:d});await recharger();toast("Note enregistrée");}catch(e){toast(e.message);f.querySelector("button[type=submit]").disabled=false;}}
+async function recharger(){const id=S.app&&S.app.id;await charger();render();if(id&&$("#dlg").open){S.app=S.liste.find(a=>a.id===id);S.edit=null;S.notes=await rpc("suivi_notes_de",{p_app:id})||[];fiche();}}
+
+document.addEventListener("click",async e=>{const t=e.target;
+  const o=t.closest("[data-o]");if(o){onglet(o.dataset.o);return;}
+  const f=t.closest("[data-f]");if(f){S.filtre=f.dataset.f;render();return;}
+  const tr=t.closest("tr.app");if(tr){ouvrir(tr.dataset.app);return;}
+  const ov=t.closest("[data-ouvrir]");if(ov){e.preventDefault();ouvrir(ov.dataset.ouvrir);return;}
+  const cl=t.closest("[data-cl]");if(cl){e.preventDefault();$("#fClasse").value=cl.dataset.cl;ls("suivi.classe",cl.dataset.cl);onglet("liste");return;}
+  const fa=t.closest("[data-fait]");if(fa){fa.disabled=true;try{await rpc("suivi_fait",{p_id:+fa.dataset.fait,p_fait:fa.dataset.v!=="false"});await recharger();}catch(err){toast(err.message);fa.disabled=false;}return;}
+  const ed=t.closest("[data-edit]");if(ed){S.edit=+ed.dataset.edit;fiche();return;}
+  if(t.id==="annulerEdit"){S.edit=null;fiche();return;}
+  const de=t.closest("[data-del]");if(de){if(de.dataset.sur!=="1"){de.dataset.sur="1";de.textContent="Confirmer la suppression";return;}
+    try{await rpc("suivi_supprimer",{p_id:+de.dataset.del});await recharger();toast("Note supprimée");}catch(err){toast(err.message);}return;}
+  if(t.id==="btnFermer"){$("#dlg").close();return;}
+  if(t.id==="btnImpr"){window.print();return;}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("tr.app"))ouvrir(e.target.dataset.app);});
+document.addEventListener("submit",e=>{if(e.target.id==="fNote"){e.preventDefault();enregistrer(e.target);}});
+$("#fClasse").onchange=()=>{ls("suivi.classe",$("#fClasse").value||null);render();};
+$("#q").oninput=render;
+init();
+</script>
+</body></html>
