@@ -523,7 +523,7 @@ const Saisie=(()=>{
         const cls=[mes.has(cd)?"moi":"",passe?"passe":"",e.date?"":"vide",alerte?"alerte":""].filter(Boolean).join(" ");
         const per=e.periode_debut?`Prévu du ${esc(court(e.periode_debut))}${e.periode_fin?" au "+esc(court(e.periode_fin)):""}`:"";
         const cConv=conv?`<td>${e.convoc_le?`<span class="pill ok">✓ faites le ${esc(new Date(e.convoc_le).toLocaleDateString("fr-FR"))}</span> <button type="button" class="ghost small" data-convno="${esc(cd)}">Annuler</button>`
-          :`<button type="button" class="small" data-convcal="${esc(cd)}" ${e.date&&S.apps.length?"":"disabled"} title="${e.date?(memeJour(cd).length>1?"Une convocation par candidat pour toutes les épreuves du jour : "+memeJour(cd).join(", "):""):"Fixez d'abord la date exacte"}">Convocations${e.date&&memeJour(cd).length>1?" du jour ("+memeJour(cd).length+")":""}</button> <button type="button" class="ghost small" data-convok="${esc(cd)}">Marquer faites</button>${alerte?`<br><span class="sz-warn">à faire${j===0?" aujourd'hui":" (J-"+j+")"}</span>`:""}`}</td>`:"";
+          :`<button type="button" class="small" data-convcal="${esc(cd)}" ${e.date&&S.apps.length?"":"disabled"} title="${e.date?(memeJour(cd).length>1?"Une convocation par candidat pour toutes les épreuves du jour : "+memeJour(cd).join(", "):""):"Fixez d'abord la date exacte"}">Convocations (PDF)${e.date&&memeJour(cd).length>1?" du jour ("+memeJour(cd).length+")":""}</button> <button type="button" class="ghost small" data-convok="${esc(cd)}">Marquer faites</button>${alerte?`<br><span class="sz-warn">à faire${j===0?" aujourd'hui":" (J-"+j+")"}</span>`:""}`}</td>`:"";
         return S.coord?`<tr class="${cls}"><td><input type="date" data-epr="date" data-code="${esc(cd)}" value="${esc(e.date||"")}" aria-label="Date ${esc(cd)}"></td>
           <td class="per"><input type="date" data-epr="periode_debut" data-code="${esc(cd)}" value="${esc(e.periode_debut||"")}" aria-label="Début de période ${esc(cd)}"> <input type="date" data-epr="periode_fin" data-code="${esc(cd)}" value="${esc(e.periode_fin||"")}" aria-label="Fin de période ${esc(cd)}"></td>
           <td><b>${esc(cd)}</b> ${esc(g.titre)}</td><td>${esc(semOf(g)||"—")}${g.se?" · "+esc(g.se):""}</td><td>${esc(g.intervenant||"—")}</td>
@@ -585,7 +585,7 @@ const Saisie=(()=>{
         <td><input data-epr="lieu" data-code="${esc(cd)}" value="${esc(e.lieu||"")}"></td>
         <td><input data-epr="materiel" data-code="${esc(cd)}" value="${esc(e.materiel||"")}"></td>
         <td><input data-epr="consignes" data-code="${esc(cd)}" value="${esc(e.consignes||"")}"></td>
-        <td><button type="button" class="small" data-conv="${esc(cd)}" ${N?"":"disabled"}>Convocations${(S.epr[cd]||{}).date&&memeJour(cd).length>1?" du jour ("+memeJour(cd).length+")":""}</button></td></tr>`;}).join("")}</tbody></table></div>
+        <td><button type="button" class="small" data-conv="${esc(cd)}" ${N?"":"disabled"}>Convocations (PDF)${(S.epr[cd]||{}).date&&memeJour(cd).length>1?" du jour ("+memeJour(cd).length+")":""}</button> <button type="button" class="ghost small" data-convw="${esc(cd)}" ${N?"":"disabled"} title="Convocations au format Word modifiable, une par candidat (.zip)">Word</button></td></tr>`;}).join("")}</tbody></table></div>
       <div class="field" style="max-width:480px"><label for="szSign">Signataire des courriers</label><input id="szSign" placeholder="ex. Prénom NOM, responsable de formation BTS" value="${esc(signataire())}"></div>`;
       $("#szSign").oninput=e=>{state.res.sign=e.target.value;persist();};}
     else if(S.ctab==="cour"){const k=+state.res.periode||2;const al=S.apps.filter(a=>alertes(notesPer(a,k)).length);
@@ -623,10 +623,11 @@ const Saisie=(()=>{
   const dateLongue=iso=>{if(!iso)return "";const [y,m,d]=iso.split("-").map(Number);return d+(d===1?"er":"")+" "+moisFr[m-1]+" "+y;};
   const adresseLignes=a=>String(a||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
   function heurePassage(e,i){e={...e,heure:e.heure||HEURE_DEF};if(!(+e.duree>0))return e.heure.replace(":","h");const [h,m]=e.heure.split(":").map(Number);const t=h*60+m+i*(+e.duree);return String(Math.floor(t/60)).padStart(2,"0")+"h"+String(t%60).padStart(2,"0");}
-  async function docConvocations(btn,cd){const sign=signataire();if(!sign){toast("Indiquez le signataire des courriers.");$("#szSign")&&$("#szSign").focus();return;}
+  const THEME_PDF={origine:{fill:"FFFFFF",color:"000000"},kerplouz:{fill:"2E6A4B",color:"FFFFFF"},impression:{fill:"E7E7E7",color:"000000"},logo:{fill:"D1683F",color:"FFFFFF"}};
+  async function docConvocations(btn,cd,mode){const sign=signataire();if(!sign){toast("Indiquez le signataire des courriers.");$("#szSign")&&$("#szSign").focus();return;}
     const e0=S.epr[cd]||{};if(!e0.date){toast("Indiquez d'abord la date de l'épreuve "+cd+".");return;}
     const jour=memeJour(cd),lieux=[...new Set(jour.map(k=>S.epr[k].lieu||LIEU_DEF))],n=jour.length;
-    busy(btn,async()=>{const tpl=b64u8(TPL_RES.conv),zip=new JSZip();
+    busy(btn,async()=>{const tpl=b64u8(TPL_RES.conv),zip=new JSZip(),lettres=[],pdfMode=mode!=="word"&&window.KepDoc&&KepDoc.courriers;
       for(const [i,a] of S.apps.entries()){const nom=((a.prenom||"")+" "+(a.nom||"").toUpperCase()).trim();
         const L=[];for(const k of jour){const e=S.epr[k],g=grille(k),h=heurePassage(e,i),se=g.se||"",ev=g.intervenant||"";
           const lx=e.lieu||LIEU_DEF,l=L.find(x=>x.HEURE===h&&x.SE===se&&x.lx===lx);
@@ -634,12 +635,22 @@ const Saisie=(()=>{
         for(const l of L){l.INTITULE="– "+l.titres.join(" ; ");l.INTERVENANTS=[...new Set(l.ev.filter(Boolean))].join(", ")+(lieux.length>1?" ("+l.lx+")":"");}
         const P=[];for(const k of jour){const e=S.epr[k],t=[e.materiel?"Matériel : "+e.materiel:"",e.consignes||""].filter(Boolean).join(" — ");if(!t)continue;
           const x=P.find(p=>p.t===t);if(x)x.c.push(k);else P.push({t,c:[k]});}
+        if(pdfMode){const obj=n>1?"aux épreuves certificatives (ECCF)":"à une épreuve certificative (ECCF)",aux=n>1?"aux "+n+" épreuves certificatives suivantes":"à l’épreuve certificative suivante";
+          lettres.push({dest:[nom],lieuDate:"Kerplouz, le "+auj(),objet:"Objet : convocation "+obj+" du "+dateLongue(e0.date)+" — BTSA Aménagements paysagers",
+            corps:["Madame, Monsieur,","Vous êtes convoqué·e le "+dateLongue(e0.date)+", à "+lieux.join(" et ")+", "+aux+", dans le cadre du BTSA Aménagements paysagers (promotion "+S.promo+") :"],
+            tableau:{tete:["Heure de passage","Capacité(s)","Situation d’évaluation","Évaluateur(s)"],lignes:L.map(l=>[l.HEURE,l.CODE+" "+l.INTITULE,l.SE,l.INTERVENANTS]),gras:[0],centre:[0,2]},
+            titrePuces:"Matériel à apporter et consignes :",puces:P.length?P.map(p=>p.c.join(", ")+" : "+p.t):["Aucun matériel particulier."],
+            fin:["Merci de vous présenter 10 minutes avant l’heure indiquée, muni·e d’une pièce d’identité. Toute absence doit être justifiée auprès du centre de formation.","Nous vous prions d’agréer nos salutations distinguées."],
+            signataire:sign,copie:[a.entreprise,a.tuteur?"à l'attention de "+a.tuteur:""].filter(Boolean).join(", ")||"entreprise d'accueil"});continue;}
         const u=await ResultatsEngine.doc(tpl,{theme:state.theme,lignes:L,puces:P.length?P.map(p=>p.c.join(", ")+" : "+p.t):["Aucun matériel particulier."],
           champs:{DEST1:nom,DEST2:"",DEST3:"",DEST4:"",DATE:auj(),CIVILITE:"Madame, Monsieur",PROMO:S.promo,DATEEPREUVE:dateLongue(e0.date),LIEU:lieux.join(" et "),SIGNATAIRE:sign,
           OBJETEPR:n>1?"aux épreuves certificatives (ECCF)":"à une épreuve certificative (ECCF)",AUXEPR:n>1?"aux "+n+" épreuves certificatives suivantes":"à l’épreuve certificative suivante",
           COPIE:[a.entreprise,a.tuteur?"à l'attention de "+a.tuteur:""].filter(Boolean).join(", ")||"entreprise d'accueil"}});
         zip.file(nomFichier(`Convocation ${e0.date} ${a.nom} ${a.prenom}`)+".docx",u);}
-      if(await save(nomFichier(`Convocations ${e0.date} ${jour.join(" ")} BTS AP ${suffixe()}`).slice(0,120)+".zip",await zip.generateAsync({type:"blob"}))){
+      const base=nomFichier(`Convocations ${e0.date} ${jour.join(" ")} BTS AP ${suffixe()}`).slice(0,120);
+      const ok=pdfMode?await save(base+".pdf",await KepDoc.courriers(lettres,{titre:"Convocations "+jour.join(", ")+" "+dateLongue(e0.date),logo:"/lib/logo-kerplouz.png",theme:THEME_PDF[state.theme]||THEME_PDF.origine}))
+        :await save(base+".zip",await zip.generateAsync({type:"blob"}));
+      if(ok){
         try{await marquerJour(cd,true);toast(n>1?"Convocations du "+dateLongue(e0.date)+" ("+jour.join(", ")+") notées comme faites.":"Convocations "+cd+" notées comme faites.");}catch(err){console.warn("convocations",err);}}});}
   async function docCourriers(btn,type){const sign=signataire();if(!sign){toast("Indiquez le signataire des courriers.");$("#szSign")&&$("#szSign").focus();return;}
     const k=+state.res.periode||2,per=PERIODES[k];
@@ -669,6 +680,7 @@ const Saisie=(()=>{
     try{
       if(b.dataset.delApp){ask(b,async()=>{await Cloud.call(`/rest/v1/bts_apprenants?id=eq.${b.dataset.delApp}`,{method:"DELETE"});await load();});return;}
       if(b.dataset.conv)return docConvocations(b,b.dataset.conv);
+      if(b.dataset.convw)return docConvocations(b,b.dataset.convw,"word");
       if(b.id==="szLRes")return docCourriers(b,"res");
       if(b.id==="szLAl")return docCourriers(b,"al");
       if(b.id==="szFict"){const n0=S.apps.length;await Cloud.call("/rest/v1/bts_apprenants",{method:"POST",body:PRENOMS.map((p,i)=>({promo:S.promo,nom:"FICTIF",prenom:p,fictif:true,ordre:n0+i+1,
