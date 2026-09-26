@@ -29,6 +29,13 @@ export async function onRequest(ctx) {
         const res = await ctx.next();
         const out = new Response(res.body, res);
         out.headers.set("Cache-Control", "private, no-store");
+        // En-têtes de sécurité (mêmes valeurs que /_headers)
+        out.headers.set("X-Frame-Options", "DENY");
+        out.headers.set("Content-Security-Policy", "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'");
+        out.headers.set("X-Content-Type-Options", "nosniff");
+        out.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+        out.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+        out.headers.set("Strict-Transport-Security", "max-age=31536000");
         return out;
       }
       refus = d && d.actif ? "droit" : "suspendu";

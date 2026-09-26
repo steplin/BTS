@@ -255,6 +255,7 @@ async function session(){let s=ls.get();if(!s)return null;
   else setCookie(s);return s;}
 const ROLES={formateur:"Formateur",referent:"Référent de classe",coordinateur_filiere:"Coordinateur de filière",responsable_peda:"Responsable pédagogique",secretariat:"Secrétariat",direction:"Direction",vie_sco:"Vie scolaire"};
 const esc=t=>String(t==null?"":t).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const estHttp=u=>/^https?:\/\/\S/i.test(String(u||"").trim()),lienSur=u=>estHttp(u)?String(u).trim():"#";
 let droits=null,outilsCat=[],apercu=null;
 const TOUS_NIV=["capa","bpa","bp","btsa","cs","bprea","autre"],NIV_LARGE=["responsable_peda","secretariat","direction","vie_sco"];
 /* Aperçu « Voir comme » : même calcul que mes_droits() côté base, sur un profil fictif. Affichage seulement. */
@@ -452,7 +453,7 @@ function renderActus(){const d=SEM.d;
     <form id="fInfo" class="finfo" hidden></form><form id="fAlt" class="finfo" hidden></form>`;
   if(!d){$("#levels").innerHTML=h+'<p class="note" style="text-align:left">Chargement…</p>';return;}
   const C=d.classes||[],moi=(droits.email||"").toLowerCase(),resp=droits.admin||(droits.roles||[]).includes("responsable_peda");
-  const carteInfo=x=>`<div class="acard${x.importante?" imp":""}"><span class="tag">${x.importante?"Important":"Info"}</span><b>${esc(x.titre)}</b>${x.texte?`<p>${esc(x.texte)}</p>`:""}${x.lien?`<a href="${esc(x.lien)}" target="_blank" rel="noopener">Ouvrir le lien →</a>`:""}
+  const carteInfo=x=>`<div class="acard${x.importante?" imp":""}"><span class="tag">${x.importante?"Important":"Info"}</span><b>${esc(x.titre)}</b>${x.texte?`<p>${esc(x.texte)}</p>`:""}${estHttp(x.lien)?`<a href="${esc(x.lien)}" target="_blank" rel="noopener">Ouvrir le lien →</a>`:""}
     <span class="s">${esc(x.auteur_nom||x.auteur)} · ${x.classes.length?esc(x.classes.map(c=>(C.find(k=>k.code===c)||{libelle:c}).libelle).join(", ")):"toutes les classes"}${x.au?" · jusqu'au "+jfr(x.au):""}</span>
     ${x.auteur===moi||resp?`<button type="button" class="mini del" data-infodel="${x.id}">Retirer</button>`:""}</div>`;
   const section=(k,cartes,vide)=>{const f=FORMS[k];return `<section class="level" style="--c:${f.c}"><div class="level-h"><h2>${f.nom}</h2><span class="niv">${f.niv}</span><span class="sub">${k==="tous"?"Infos communes à toutes les formations":f.sub}</span></div>
@@ -470,7 +471,7 @@ function renderActus(){const d=SEM.d;
 function formInfo(){const d=SEM.d||{},C=d.classes||[];
   $("#fInfo").innerHTML=`<input name="titre" required placeholder="Titre (ex. Sortie pédagogique CAPa JP 2 jeudi)">
     <textarea name="texte" placeholder="Détails (facultatif)"></textarea>
-    <input name="lien" type="url" placeholder="Lien (facultatif)">
+    <input name="lien" type="url" pattern="https?://.+" title="Adresse commençant par http:// ou https://" placeholder="Lien (facultatif), https://…">
     <div class="ck"><span>Pour :</span>${C.map(c=>`<label><input type="checkbox" name="classes" value="${esc(c.code)}"> ${esc(c.libelle)}</label>`).join("")}<span class="s" style="flex-basis:100%;color:var(--ink-3)">Aucune case cochée = visible par tout le personnel</span></div>
     <div class="row"><label style="font-size:12.5px">Du <input type="date" name="du" value="${SEM.lundi>lundiDe(new Date())?SEM.lundi:new Date().toISOString().slice(0,10)}"></label><label style="font-size:12.5px">au <input type="date" name="au" value="${addJ(SEM.lundi,4)}"></label>
       <label style="font-size:12.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" name="importante" style="width:auto"> importante</label></div>
@@ -505,8 +506,8 @@ function alertSem(m){const b=$("#banner");b.hidden=false;b.textContent=m;}
 document.addEventListener("change",e=>{if(e.target.closest("#fAlt")&&e.target.name==="classe")formAlt(e.target.value);});
 document.addEventListener("submit",async e=>{const f=e.target;
   if(f.id==="fInfo"){e.preventDefault();const fd=new FormData(f),s=await session();
-    const body={titre:fd.get("titre").trim(),texte:fd.get("texte").trim(),lien:fd.get("lien").trim(),classes:fd.getAll("classes"),du:fd.get("du")||undefined,au:fd.get("au")||null,importante:!!fd.get("importante"),auteur:(droits.email||"").toLowerCase(),auteur_nom:((droits.prenom||"")+" "+(droits.nom||"")).trim()};
-    if(!body.titre)return;f.querySelector("button[type=submit]").disabled=true;
+    const body={titre:fd.get("titre").trim(),texte:fd.get("texte").trim(),lien:fd.get("lien").trim(),classes:fd.getAll("classes"),du:fd.get("du")||undefined,au:fd.get("au")||null,importante:!!fd.get("importante")};
+    if(!body.titre)return;if(body.lien&&!estHttp(body.lien)){alertSem("Le lien doit commencer par http:// ou https://");return;}f.querySelector("button[type=submit]").disabled=true;
     try{await api("/rest/v1/infos",{method:"POST",body,token:s.access_token});f.hidden=true;chargerSemaine();}catch(err){alertSem("Info non publiée : "+err.message);f.querySelector("button[type=submit]").disabled=false;}}
   if(f.id==="fAlt"){e.preventDefault();const s=await session(),per=[...f.querySelectorAll(".per")].map(r=>({du:r.querySelector("[name=du]").value,au:r.querySelector("[name=au]").value,note:r.querySelector("[name=note]").value})).filter(p=>p.du);
     try{await api("/rest/v1/rpc/alternance_fixer",{method:"POST",body:{p_classe:f.classe.value,p_periodes:per},token:s.access_token});f.hidden=true;chargerSemaine();}catch(err){alertSem("Calendrier non enregistré : "+err.message);}}
@@ -520,7 +521,7 @@ function resDe(i){const r=VEILLE_D.ret[cleUrl(i.url)];return r&&r.resume!=null?r
 function renderVeilleFil(){const box=$("#veilleFil");if(!box)return;
   if(!VEILLE_D){box.innerHTML='<p class="note" style="text-align:left">Chargement des actualités…</p>';return;}
   const I=VEILLE_D.items.filter(i=>{const r=VEILLE_D.ret[cleUrl(i.url)];return !(r&&r.masque);});
-  const li=i=>{const r=resDe(i);return `<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.titre)}</a><span>${esc(i.source)}${i.date?" · "+new Date(i.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):""}</span>${r?`<p>${esc(r)}</p>`:""}</li>`;};
+  const li=i=>{const r=resDe(i);return `<li><a href="${esc(lienSur(i.url))}" target="_blank" rel="noopener">${esc(i.titre)}</a><span>${esc(i.source)}${i.date?" · "+new Date(i.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):""}</span>${r?`<p>${esc(r)}</p>`:""}</li>`;};
   const ks=mesFilieres().filter(k=>filtre==="all"||filtre===k);
   let h=ks.map(k=>{const f=FORMS[k],L=I.filter(i=>filDe(i).includes(k)).slice(0,6);
     return `<section class="level actus" style="--c:${f.c}"><div class="level-h"><h2>${f.nom}</h2><span class="niv">${f.niv}</span><span class="sub"><a href="/VEILLE/?fil=${k}" style="color:${f.c}">Toute la veille ${f.court} →</a></span></div>
@@ -529,7 +530,7 @@ function renderVeilleFil(){const box=$("#veilleFil");if(!box)return;
     if(C.length)h+=`<section class="level actus" style="--c:#4A5A51"><div class="level-h"><h2>Formation, apprentissage et réglementation</h2><span class="niv">Toutes filières</span><span class="sub"><a href="/VEILLE/" style="color:#4A5A51">Toute la veille →</a></span></div><ul>${C.map(li).join("")}</ul></section>`;}
   box.innerHTML=h;}
 function extrasAccueil(){if(!EXTRAS)EXTRAS=chargerExtras();renderVeilleFil();}
-function afficherActus(L){if(!L||!L.length||!$("#actusL"))return;$("#actusL").innerHTML=L.map(i=>`<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.titre)}</a><span>${esc(i.source)}${i.date?" · "+new Date(i.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):""}</span></li>`).join("");$("#actus").hidden=false;}
+function afficherActus(L){if(!L||!L.length||!$("#actusL"))return;$("#actusL").innerHTML=L.map(i=>`<li><a href="${esc(lienSur(i.url))}" target="_blank" rel="noopener">${esc(i.titre)}</a><span>${esc(i.source)}${i.date?" · "+new Date(i.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):""}</span></li>`).join("");$("#actus").hidden=false;}
 async function chargerExtras(){const s=await session();if(!s)return;const out=outilsVus(),adm=droits&&droits.admin&&!apercu;
   if(adm||out.has("suivi")){try{const a=await api("/rest/v1/rpc/suivi_actions",{method:"POST",body:{},token:s.access_token})||[];const auj=new Date().toISOString().slice(0,10),r=a.filter(x=>x.echeance&&x.echeance<auj).length;
     BADGES.suivi=a.length?`<span class="badge${r?" warn":""}" title="${a.length} action(s) ouverte(s)${r?", dont "+r+" en retard":""}">${a.length}</span>`:"";navEsp();}catch(e){}}

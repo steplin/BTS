@@ -89,7 +89,7 @@ textarea{min-height:54px}
   </div>
   <section class="card" id="add" hidden>
     <form class="add" id="fAdd">
-      <label class="large">Adresse de l'article (le lien vers l'article lui-même)<input type="url" name="url" required placeholder="https://…"></label>
+      <label class="large">Adresse de l'article (le lien vers l'article lui-même)<input type="url" name="url" required pattern="https?://.+" title="Adresse commençant par http:// ou https://" placeholder="https://…"></label>
       <label class="large">Titre<input type="text" name="titre" required></label>
       <label>Thème<select name="theme" id="addTheme"></select></label>
       <label>Source<input type="text" name="source" placeholder="ex. Unep, Ouest-France…"></label>
@@ -126,6 +126,7 @@ textarea{min-height:54px}
 const SB="https://olqclfsywasktwirswpb.supabase.co",KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x",SKEY="kep.session";
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const estHttp=u=>/^https?:\/\/\S/i.test(String(u||"").trim()),lienSur=u=>estHttp(u)?String(u).trim():"#";
 let session=null;
 function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
 async function frais(){session=session||ls(SKEY);if(!session)return false;
@@ -189,7 +190,7 @@ function carte(i,pin){const c=THEMES[i.theme]||"#76857C",epingle=V.pins.find(p=>
   const d=pin?i.publie_le:i.date;
   const F=filieresDe(i),res=resumeDe(i),mq=masque(i),ed=V.resp&&V.editUrl===i.url;
   return `<article class="art${mq?" masque":""}" style="--c:${c}"><div class="fil">${F.length?F.map(k=>`<span style="--fc:${FIL[k][1]}">${FIL[k][0]}</span>`).join(""):'<span style="--fc:#76857C">Toutes filières</span>'}${mq?'<span style="--fc:#A8412F">masquée</span>':""}</div><div class="m"><span class="pill" style="color:${c}">${esc(i.theme||"—")}</span><span>${esc(i.source||"")}</span>${d?`<span>· ${dt(d)}</span>`:""}${recent&&!pin?'<span class="pill new">nouveau</span>':""}${!pin&&epingle?'<span class="pill pin">dans la sélection</span>':""}</div>
-    <h3><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.titre)}</a></h3>
+    <h3><a href="${esc(lienSur(i.url))}" target="_blank" rel="noopener">${esc(i.titre)}</a></h3>
     ${ed?formRet(i):res?`<p>${esc(res)}</p>`:""}${pin&&i.note?`<div class="note">${esc(i.note)}</div>`:""}
     <div class="tools">${pin?`<span class="hint">Ajouté par ${esc(i.ajoute_nom||i.ajoute_par)}</span>${i.ajoute_par===V.moi||V.resp?`<button type="button" class="mini del" data-unpin="${i.id}">Retirer</button>`:""}`
       :epingle?"":`<button type="button" class="mini" data-pin="${esc(i.url)}">Ajouter à la sélection</button>`}
@@ -207,7 +208,7 @@ function render(){
   $("#flux").innerHTML=A.length?A.map(i=>carte(i,false)).join(""):`<p class="empty">${V.items.length?"Aucune actualité pour ces filtres.":"Aucune actualité chargée pour l'instant."}</p>`;
   $("#pins").innerHTML=P.length?P.map(i=>carte(i,true)).join(""):'<p class="empty">La sélection de l\'équipe est vide : cliquez sur « Ajouter à la sélection » sous une actualité, ou ajoutez un article trouvé ailleurs.</p>';
   $("#tSrc").innerHTML=V.sources.map(s=>{const e=V.etat.find(x=>x.id===s.id);
-    return `<tr><td><b>${esc(s.nom)}</b><br><a href="${esc(s.site||s.url)}" target="_blank" rel="noopener" class="hint">${esc((s.site||s.url).replace(/^https?:\/\//,""))}</a></td><td>${esc(s.theme)}<br><span class="hint">${(s.filieres||[]).length?(s.filieres||[]).map(k=>FIL[k]?FIL[k][0]:k).join(", "):"toutes filières"}</span></td><td class="hint">${esc(s.filtre)||"—"}</td>
+    return `<tr><td><b>${esc(s.nom)}</b><br><a href="${esc(lienSur(s.site||s.url))}" target="_blank" rel="noopener" class="hint">${esc((s.site||s.url).replace(/^https?:\/\//,""))}</a></td><td>${esc(s.theme)}<br><span class="hint">${(s.filieres||[]).length?(s.filieres||[]).map(k=>FIL[k]?FIL[k][0]:k).join(", "):"toutes filières"}</span></td><td class="hint">${esc(s.filtre)||"—"}</td>
       <td>${!s.actif?'<span class="hint">désactivée</span>':e?(e.ok?`<span class="ok">✓ ${e.nb} article${e.nb>1?"s":""}</span>`:`<span class="ko" title="${esc(e.erreur)}">injoignable</span>`):'<span class="hint">…</span>'}</td>
       <td style="white-space:nowrap">${V.resp?`<button type="button" class="mini" data-sedit="${s.id}">Modifier</button> <button type="button" class="mini" data-sact="${s.id}">${s.actif?"Désactiver":"Activer"}</button> <button type="button" class="mini del" data-sdel="${s.id}">Supprimer</button>`:""}</td></tr>`;}).join("")
     +(V.resp?`<tr><td colspan="5"><button type="button" class="mini" id="srcNew">+ Ajouter une source</button></td></tr>`:"");
@@ -219,7 +220,7 @@ async function retoucher(url,champs){const r=V.ret[cleUrl(url)];
 document.addEventListener("submit",e=>{const f=e.target.closest("form.ret");if(!f)return;e.preventDefault();const fd=new FormData(f);
   retoucher(f.dataset.url,{resume:fd.get("resume").trim(),filieres:fd.getAll("fil")});});
 async function epingler(url){const i=V.items.find(x=>x.url===url);if(!i)return;
-  try{await api("/rest/v1/veille_articles",{method:"POST",body:{url:i.url,titre:i.titre,source:i.source,theme:i.theme,publie_le:i.date,resume:i.resume||"",ajoute_nom:$("#who").textContent}});
+  try{await api("/rest/v1/veille_articles",{method:"POST",body:{url:i.url,titre:i.titre,source:i.source,theme:i.theme,publie_le:i.date,resume:i.resume||""}});
     await chargerPins();render();toast("Ajouté à la sélection de l'équipe");}catch(e){toast(e.message.includes("duplicate")?"Déjà dans la sélection.":e.message);}}
 document.addEventListener("click",async e=>{const t=e.target;
   const o=t.closest("[data-o]");if(o){onglet(o.dataset.o);return;}
@@ -243,7 +244,7 @@ document.addEventListener("click",async e=>{const t=e.target;
   const sd=t.closest("[data-sdel]");if(sd){if(sd.dataset.sur!=="1"){sd.dataset.sur="1";sd.textContent="Confirmer";return;}
     try{await api("/rest/v1/veille_sources?id=eq."+sd.dataset.sdel,{method:"DELETE"});await chargerSources();render();}catch(err){toast(err.message);}return;}
 });
-$("#fAdd").onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));if(!d.publie_le)delete d.publie_le;d.ajoute_nom=$("#who").textContent;
+$("#fAdd").onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));if(!d.publie_le)delete d.publie_le;if(!estHttp(d.url)){toast("L'adresse doit commencer par http:// ou https://");return;}
   try{await api("/rest/v1/veille_articles",{method:"POST",body:d});e.target.reset();$("#add").hidden=true;await chargerPins();onglet("pin");toast("Article ajouté à la sélection");}
   catch(err){toast(err.message.includes("duplicate")?"Cet article est déjà dans la sélection.":err.message);}};
 function srcFil(sel){$("#srcFil").innerHTML=Object.entries(FIL).map(([k,[l]])=>`<label><input type="checkbox" name="fil" value="${k}"${sel.includes(k)?" checked":""}> ${l}</label>`).join("");}
