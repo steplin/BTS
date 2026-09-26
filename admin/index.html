@@ -135,6 +135,7 @@ dialog .count{font-size:13px;color:var(--ink-2)}
     <button class="tab" role="tab" data-tab="outils" aria-selected="false">Droits des outils</button>
     <button class="tab" role="tab" data-tab="apprenants" aria-selected="false">Apprenants<span class="n" id="nApp"></span></button>
     <button class="tab" role="tab" data-tab="rgpd" aria-selected="false">RGPD</button>
+    <button class="tab" role="tab" data-tab="qualiopi" aria-selected="false">Qualiopi</button>
     <span class="sp"></span>
     <button type="button" class="ghost" id="btnPrint">Fiches de connexion</button>
   </div>
@@ -211,6 +212,17 @@ dialog .count{font-size:13px;color:var(--ink-2)}
       <div class="scroll"><table>
         <thead><tr><th>Apprenant·e</th><th>Classe cette année</th><th>Cohorte</th><th>Entreprise · tuteur</th><th>Gérée dans</th><th></th></tr></thead>
         <tbody id="tApp"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- Références Qualiopi -->
+  <section id="p-qualiopi" hidden>
+    <div class="card">
+      <p class="help">Référence imprimée en tête de chaque <b>courrier</b> exporté (convocations, courriers de résultats, lettres d'alerte), sous le bloc de l'établissement, comme sur les modèles de l'UFA : <i>code : date : rédacteur</i>. Les documents d'examen (grilles, documents 4 et 5, résultat final, relevés) ne sont pas codés. Enregistrement automatique.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Courrier</th><th>Code</th><th>Date de la version</th><th>Rédacteur</th></tr></thead>
+        <tbody id="tQualiopi"></tbody>
       </table></div>
     </div>
   </section>
@@ -355,9 +367,19 @@ function rendre(){
     <td>${qui.length} personne${qui.length>1?"s":""}<span class="sub">${esc(qui.slice(0,6).map(p=>p.prenom+" "+p.nom).join(", "))}${qui.length>6?"…":""}</span></td></tr>`;}).join("");
 }
 
+/* ---------- Références Qualiopi des courriers ---------- */
+async function chargerQualiopi(){const tb=$("#tQualiopi");tb.innerHTML='<tr><td colspan="4">Chargement…</td></tr>';
+  try{const R=await api("/rest/v1/qualiopi_refs?select=*&order=ordre")||[];
+    tb.innerHTML=R.map(r=>`<tr data-q="${esc(r.cle)}"><td>${esc(r.libelle)}</td><td><input data-f="code" value="${esc(r.code)}" style="width:170px" aria-label="Code ${esc(r.libelle)}"></td>
+      <td><input type="date" data-f="date_ref" value="${esc(r.date_ref||"")}" aria-label="Date"></td><td><input data-f="redacteur" value="${esc(r.redacteur)}" style="width:150px" aria-label="Rédacteur"></td></tr>`).join("")||'<tr><td colspan="4">Aucune référence.</td></tr>';}
+  catch(e){tb.innerHTML=`<tr><td colspan="4">${esc(e.message)}</td></tr>`;}}
+document.addEventListener("change",async e=>{const tr=e.target.closest("tr[data-q]");if(!tr||!e.target.dataset.f)return;
+  try{await api(`/rest/v1/qualiopi_refs?cle=eq.${encodeURIComponent(tr.dataset.q)}`,{method:"PATCH",body:{[e.target.dataset.f]:e.target.value||null,maj_le:new Date().toISOString()}});toast("Référence enregistrée");}
+  catch(err){toast("Enregistrement impossible : "+err.message,true);}});
+
 /* ---------- événements ---------- */
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
-  ["perso","classes","outils","apprenants","rgpd"].forEach(k=>$("#p-"+k).hidden=k!==t.dataset.tab);if(location.hash.slice(1)!==t.dataset.tab)history.replaceState(null,"","#"+t.dataset.tab);if(t.dataset.tab==="apprenants")chargerApp();if(t.dataset.tab==="rgpd")chargerRgpd();});
+  ["perso","classes","outils","apprenants","rgpd","qualiopi"].forEach(k=>$("#p-"+k).hidden=k!==t.dataset.tab);if(t.dataset.tab==="qualiopi")chargerQualiopi();if(location.hash.slice(1)!==t.dataset.tab)history.replaceState(null,"","#"+t.dataset.tab);if(t.dataset.tab==="apprenants")chargerApp();if(t.dataset.tab==="rgpd")chargerRgpd();});
 $("#q").oninput=rendre;$("#fRole").onchange=rendre;$("#fClasse").onchange=rendre;
 $("#fRole").innerHTML+=Object.entries(ROLES_OUTIL).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")+'<option value="__admin">Administrateurs</option><option value="__compte">Sans compte (code à remettre)</option>';
 $("#aRole").innerHTML=Object.entries(ROLES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
