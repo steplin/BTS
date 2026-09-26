@@ -241,6 +241,8 @@ async function chargerClasse(code){
     S.crs=crs;S.epCis=epc;S.valid=val;S.saisies=new Map(sai.map(s=>[kS(s.candidat,s.niveau,s.ref_id),s]));
   }catch(e){statut("");return erreur(e);}
   $("#fictif").hidden=!(S.ref.fictif||S.cands.some(c=>c.fictif));
+  $("#fictif").innerHTML=S.ref.fictif?"Essai : référentiel et candidats <b>fictifs</b>. Aucune donnée d'apprenti réel."
+    :"Référentiel et plan d'évaluation réels ; candidats <b>fictifs</b> pour les essais, en attendant l'accord pour les données des apprentis.";
   majCands();
   $("#selEpr").innerHTML=S.epreuves.map(e=>`<option value="${e.id}">${esc(e.code+" · "+e.nom)}</option>`).join("");
   if(!S.epreuves.some(e=>e.id===S.epr))S.epr=S.epreuves[0]&&S.epreuves[0].id;
