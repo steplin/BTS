@@ -234,7 +234,7 @@ function toast(m){const t=document.createElement("div");t.className="toast";t.te
 function statut(m,err){const s=$("#status");s.textContent=m||"";s.classList.toggle("err",!!err);}
 
 /* ---------- État ---------- */
-const S={classes:[],classe:null,ref:null,ucs:[],cis:[],crs:[],epreuves:[],epCis:[],cands:[],valid:[],saisies:new Map(),vue:"doc4",zone:"tdb",tdb:ls("uc.tdb")||"epr",droits:{},aff:[],affPlan:[],cand:null,epr:null,moi:""};
+const S={classes:[],classe:null,ref:null,ucs:[],cis:[],crs:[],epreuves:[],epCis:[],cands:[],valid:[],saisies:new Map(),vue:"doc4",zone:"tdb",tdb:ls("uc.tdb")||"epr",ong:ls("uc.ong")||{},droits:{},aff:[],affPlan:[],cand:null,epr:null,moi:""};
 const kS=(c,n,r)=>c+"|"+n+"|"+r;
 const byOrd=(a,b)=>(a.ordre-b.ordre)||String(a.code).localeCompare(String(b.code),"fr",{numeric:true});
 
@@ -393,7 +393,10 @@ function renderListe(){
     <table class="list"><thead><tr><th>UC</th><th>Formateurs affectés</th><th>Épreuves (responsable)</th></tr></thead><tbody>${
     S.ucs.map(u=>`<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${esc(nomsUC(u).join(", "))||'<span class="acq non">à affecter</span>'}</td>
       <td>${epsUC(u).map(e=>esc(e.code)+" ("+(esc(nomPers(e.responsable))||"—")+")").join("<br>")}</td></tr>`).join("")}</tbody></table>`;
-  $("#view").innerHTML=edi+ep+conv+aff;
+  const nbConv=SS.filter(x=>!x.items.every(it=>it.d.convoc_le)).length;
+  const [o,tabs]=ongletsHTML("coord",[["dates","Dates des épreuves"],["conv","Convocations"+(nbConv?` <span class="acq non">${nbConv}</span>`:"")],["aff","Formateurs par UC"],["edi","Éditions de la cohorte"]]);
+  const strip=h=>h.replace(/^\s*<h2 class="h2">[\s\S]*?<\/h2>/,m=>m.includes("<small>")?`<p class="meta" style="margin:0 0 10px">${m.match(/<small>([\s\S]*?)<\/small>/)[1]}</p>`:"");
+  $("#view").innerHTML=tabs+{dates:ep,conv:strip(conv),aff:strip(aff),edi:strip(edi)}[o];
 }
 /* ---------- Périodes agréées, échéances (15 jours avant) et sessions de formation ---------- */
 const perInputs=e=>[1,2,3].map(k=>`<div class="pin"><input type="date" data-per="${e.id}" data-k="p${k}_du" value="${esc(e["p"+k+"_du"]||"")}" aria-label="Période ${k} : début"><span>→</span><input type="date" data-per="${e.id}" data-k="p${k}_au" value="${esc(e["p"+k+"_au"]||"")}" aria-label="Période ${k} : fin"></div>`).join("");
@@ -438,6 +441,9 @@ function avMes(e,cands){let f=0,t=0;const cis=cisEpreuve(e.id).filter(ci=>peut("
       for(const cr of crsDe(ci)){t++;if(rempli(c.id,"cr",cr.id))f++;}t++;if(rempli(c.id,"ci",ci.id))f++;}
     if(peut("epreuve",e.id)){t++;if(rempli(c.id,"epreuve",e.id))f++;}}
   return [f,t];}
+// Onglets internes d'une zone (mémorisés par zone)
+const ongletsHTML=(zone,liste)=>{let cur=S.ong[zone];if(!liste.some(x=>x[0]===cur))cur=S.ong[zone]=liste[0][0];
+  return [cur,`<div class="seg tdbtabs" role="tablist" style="margin:0 0 14px">${liste.map(([k,l])=>`<button type="button" role="tab" data-ong="${zone}|${k}" aria-pressed="${cur===k}">${l}</button>`).join("")}</div>`];};
 // Tableau de bord en onglets : Mes épreuves · Mes UC · Résultats · Avancement
 const TDB=[["epr","Mes épreuves"],["uc","Propositions par UC"],["res","Résultats"],["av","Avancement par candidat"]];
 function renderTdb(){
@@ -484,9 +490,11 @@ async function renderCal(){
     <td>${esc(x.libelle)}</td><td><b>${esc(x.code)}</b> ${esc(x.nom)}</td><td>${esc(x.responsable||"—")}</td><td>${esc(x.lieu)}</td>
     <td>${x.convoc_le?'<span class="acq oui">convocations faites</span>':x.jour?'<span class="acq">convocations à faire</span>':""}</td></tr>`;
   const tete=`<colgroup><col style="width:16%"><col style="width:11%"><col style="width:33%"><col style="width:13%"><col style="width:15%"><col style="width:12%"></colgroup><thead><tr><th>Date</th><th>Classe</th><th>Épreuve</th><th>Responsable</th><th>Lieu</th><th>Convocations</th></tr></thead>`;
-  let h=`<p class="meta" style="margin:0 0 6px">Dates fixées par les référents de classe dans « Coordination ».</p>`;
+  const [o,tabs]=ongletsHTML("cal",[["fix","Dates fixées ("+fix.length+")"],["afix","Dates à fixer ("+afix.length+")"]]);
+  let h=tabs+`<p class="meta" style="margin:0 0 6px">Dates fixées par les référents de classe dans « Coordination ».</p>`;
+  if(o==="fix"){if(!fix.length)h+=`<p class="empty">Aucune date fixée pour l'instant.</p>`;
   for(const [k,L] of mois)h+=`<div class="mois">${esc(new Date(k+"-15T12:00:00").toLocaleDateString("fr-FR",{month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase()))}</div><table class="list cal">${tete}<tbody>${L.map(ligne).join("")}</tbody></table>`;
-  if(afix.length)h+=`<div class="mois">Dates à fixer (${afix.length})</div><table class="list cal">${tete}<tbody>${afix.map(ligne).join("")}</tbody></table>`;
+  }else h+=afix.length?`<table class="list cal">${tete}<tbody>${afix.map(ligne).join("")}</tbody></table>`:`<p class="empty">Toutes les dates sont fixées.</p>`;
   $("#view").innerHTML=h;
 }
 /* ---------- Éditions de la cohorte (PDF via l'impression du navigateur) ---------- */
@@ -697,6 +705,7 @@ document.addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.z){await toutEnregistrer();S.zone=b.dataset.z;history.replaceState(null,"","?vue="+(S.zone==="saisie"?S.vue:S.zone));render();}
   else if(b.dataset.v){await toutEnregistrer();S.vue=b.dataset.v;history.replaceState(null,"","?vue="+S.vue);render();}
+  else if(b.dataset.ong){const [z,k]=b.dataset.ong.split("|");S.ong[z]=k;ls("uc.ong",S.ong);render();}
   else if(b.dataset.tdb){S.tdb=b.dataset.tdb;ls("uc.tdb",S.tdb);renderTdb();}
   else if(b.dataset.saisir){S.zone="saisie";S.vue="doc4";S.epr=+b.dataset.saisir;S.grp=b.dataset.g||"";$("#selGrp").value=S.grp;majCands();render();window.scrollTo(0,0);}
   else if(b.dataset.go){await toutEnregistrer();if(b.dataset.c)S.cand=b.dataset.c;S.zone="saisie";S.vue=b.dataset.go;render();window.scrollTo(0,0);}
