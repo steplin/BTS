@@ -593,7 +593,8 @@ const suffixeFic=()=>KepDoc.nomFichier(S.classe.libelle+" "+(S.cohorte||""));
 const nomFicCand=c=>KepDoc.nomFichier((c.nom||"").toUpperCase()+"_"+(c.prenom||""))+"_doc5";
 async function exporter(quoi,btn){if(!window.KepDoc){toast("Module d'export indisponible, rechargez la page.");return;}
   const lib=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Préparation…";}
-  try{await toutEnregistrer();const titre=S.classe.libelle+" "+(S.cohorte||"");
+  try{if(!S.cands.length){toast("Aucun candidat dans cette classe.");return;}
+    await toutEnregistrer();const titre=S.classe.libelle+" "+(S.cohorte||"");
     if(quoi==="d5x"||quoi==="d5p"){const c=S.cands.find(x=>x.id===S.cand);if(!c)return;const F=feuilleDoc5(c);
       if(quoi==="d5x")await KepDoc.telecharger(nomFicCand(c)+".xlsx",await KepDoc.xlsx([F],{titre:"Document 5 "+nomCand(c)}));
       else await KepDoc.telecharger(nomFicCand(c)+".pdf",await KepDoc.pdf([F],{titre:"Document 5 "+nomCand(c)}),"application/pdf");}
