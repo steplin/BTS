@@ -41,6 +41,12 @@ button:disabled{opacity:.5;cursor:default}
 .chips button{font-size:12.5px;font-weight:500;padding:5px 11px;border-radius:99px;background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
 .chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 .scroll{overflow-x:auto}
+.classes{display:flex;gap:5px;flex-wrap:wrap}
+.classes button{font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.classes button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.etat{display:inline-block;min-width:22px;text-align:center;font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 6px}
+.etat.acquis{background:var(--accent-soft);color:var(--accent)}.etat.non{background:#F6DED8;color:var(--danger)}.etat.cours{background:var(--warn-soft);color:var(--warn)}.etat.avenir{background:#F1F3EF;color:var(--ink-3)}
+table.mat th.c{text-align:center;font-size:11.5px;white-space:nowrap}table.mat td{text-align:center}table.mat td:first-child,table.mat th:first-child{text-align:left;position:sticky;left:0;background:var(--surface)}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
 th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
 th{font-size:12px;color:var(--ink-3);font-weight:600;white-space:nowrap}
@@ -89,16 +95,13 @@ button.mini.del{color:var(--danger)}
     <div class="t"><span class="eyebrow">Kerplouz LaSalle · Accompagnement</span><h1>Suivi des apprenants</h1></div>
     <div class="me"><span id="who"></span><a href="/#suivi">← Accueil</a></div>
   </div>
-  <div class="onglets" role="tablist">
-    <button type="button" role="tab" data-o="liste" aria-selected="true">Apprenants<span class="n" id="nListe"></span></button>
-    <button type="button" role="tab" data-o="actions" aria-selected="false">Actions à mener<span class="n" id="nActions"></span></button>
-    <button type="button" role="tab" data-o="tdb" aria-selected="false">Tableau de bord</button>
-  </div>
   <div class="bar" id="bar">
-    <label for="fClasse">Classe</label><select id="fClasse"><option value="">Toutes mes classes</option></select>
+    <label for="fFil">Filière</label><select id="fFil"><option value="">Toutes</option></select>
+    <div class="classes" id="classes" role="group" aria-label="Classe"></div>
     <input type="search" id="q" placeholder="Rechercher un nom, une entreprise" aria-label="Rechercher">
     <span class="sp"></span><span class="status" id="status" aria-live="polite"></span>
   </div>
+  <div class="onglets" role="tablist" id="onglets"></div>
   <section id="o-liste">
     <div class="chips" id="chips" style="margin-bottom:10px"></div>
     <div class="card scroll"><table>
@@ -106,6 +109,16 @@ button.mini.del{color:var(--danger)}
       <tbody id="tListe"><tr><td colspan="8" class="empty">Chargement…</td></tr></tbody>
     </table></div>
     <p class="hint" style="margin-top:8px">Cliquez sur une ligne pour ouvrir la fiche de suivi : entretiens, visites en entreprise, alertes, aménagements et actions à mener. Les notes « confidentielles » ne sont lues que par leur auteur, le ou la référent·e de la classe, la vie scolaire et le responsable pédagogique.</p>
+  </section>
+  <section id="o-epreuves" hidden>
+    <div class="card scroll" id="epr"></div>
+    <p class="hint" style="margin-top:8px"><span class="etat acquis">acquis</span> <span class="etat non">non acquis</span> <span class="etat cours">évaluation en cours</span> <span class="etat avenir">à venir</span> · la date sous le code est celle de l'épreuve prévue pour la classe. Le détail et la saisie restent dans l'outil d'évaluation.</p>
+  </section>
+  <section id="o-entreprises" hidden>
+    <div class="card scroll"><table>
+      <thead><tr><th>Apprenant·e</th><th>Entreprise</th><th>Tuteur</th><th>Dernière visite</th><th class="num">Visites<br><span class="sub">cette année</span></th><th></th></tr></thead>
+      <tbody id="tEnt"></tbody>
+    </table></div>
   </section>
   <section id="o-actions" hidden>
     <div class="card scroll"><table>
@@ -146,31 +159,40 @@ const statut=(m,err)=>{$("#status").textContent=m||"";$("#status").classList.tog
 const toast=m=>{const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4200);};
 
 const TYPES={entretien:["Entretien","#2E6A4B"],visite:["Visite en entreprise","#3F6FA8"],contact:["Échange avec l'entreprise ou la famille","#6B5CA5"],alerte:["Alerte","#A8412F"],amenagement:["Aménagement de parcours","#B07A1E"],positif:["Point positif","#4E8A2E"],autre:["Autre","#76857C"]};
-const S={liste:[],actions:[],onglet:"liste",filtre:"tous",app:null,notes:[],edit:null,moi:""};
+const S={classe:"",fil:"",epr:{},liste:[],actions:[],onglet:"liste",filtre:"tous",app:null,notes:[],edit:null,moi:""};
 const jr=d=>d?new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"";
 const jours=d=>d?Math.round((Date.now()-new Date(d+"T12:00:00"))/864e5):null;
 const sans=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 const auj=()=>new Date().toISOString().slice(0,10);
+const FILN={capa:"CAPa JP",bpa:"BPA OSP",bp:"BP AP",btsa:"BTSA AP",cs:"CS AG",bprea:"BPREA",autre:"Autres"};
+const ONG={liste:"Entretiens et accompagnement",epreuves:"Suivi des épreuves",entreprises:"Entreprises et visites",actions:"Actions à mener",tdb:"Vue d'ensemble"};
 const FILTRES=[["tous","Tous"],["alertes","Alertes ouvertes"],["retard","Actions en retard"],["silence","Sans échange depuis 6 semaines"],["visite","Pas de visite cette année"]];
 
 async function init(){
   if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
   try{const d=await rpc("mes_droits");S.moi=d.email||"";$("#who").textContent=((d.prenom||"")+" "+(d.nom||"")).trim();await charger();}
   catch(e){$("#tListe").innerHTML=`<tr><td colspan="8" class="empty">${esc(e.message)}</td></tr>`;return;}
-  const cl=[...new Map(S.liste.map(a=>[a.classe,a.libelle])).entries()];
-  $("#fClasse").innerHTML='<option value="">Toutes mes classes</option>'+cl.map(([c,l])=>`<option value="${esc(c)}">${esc(l)}</option>`).join("");
-  const pre=new URLSearchParams(location.search).get("classe")||ls("suivi.classe");if(pre&&cl.some(([c])=>c===pre))$("#fClasse").value=pre;
-  const o=new URLSearchParams(location.search).get("o")||ls("suivi.onglet");if(["liste","actions","tdb"].includes(o))onglet(o);else render();
+  const qs=new URLSearchParams(location.search),fils=[...new Set(S.liste.map(a=>a.niveau))];
+  $("#fFil").innerHTML='<option value="">Toutes</option>'+Object.keys(FILN).filter(k=>fils.includes(k)).map(k=>`<option value="${k}">${FILN[k]}</option>`).join("");
+  const f=qs.get("filiere");if(f&&fils.includes(f)){S.fil=f;$("#fFil").value=f;}
+  const pre=qs.get("classe")||(f?"":ls("suivi.classe"));if(pre&&S.liste.some(a=>a.classe===pre))S.classe=pre;
+  else if(S.fil){const c=S.liste.filter(a=>a.niveau===S.fil).map(a=>a.classe);if(new Set(c).size===1)S.classe=c[0];}
+  const o=qs.get("o")||ls("suivi.onglet");onglet(Object.keys(ONG).includes(o)?o:(S.classe?"liste":"tdb"));
   const a=new URLSearchParams(location.search).get("apprenant");if(a)ouvrir(a);
 }
 async function charger(){[S.liste,S.actions]=await Promise.all([rpc("suivi_liste"),rpc("suivi_actions")]);S.liste=S.liste||[];S.actions=S.actions||[];}
-function visibles(){const c=$("#fClasse").value,q=sans($("#q").value.trim());
-  return S.liste.filter(a=>(!c||a.classe===c)&&(!q||sans(a.nom+" "+a.prenom+" "+a.entreprise+" "+a.tuteur).includes(q)));}
+function visibles(){const c=S.classe,q=sans($("#q").value.trim());
+  return S.liste.filter(a=>(!S.fil||a.niveau===S.fil)&&(!c||a.classe===c)&&(!q||sans(a.nom+" "+a.prenom+" "+a.entreprise+" "+a.tuteur).includes(q)));}
 function filtrer(L){const f=S.filtre;return L.filter(a=>f==="tous"||(f==="alertes"&&a.alertes)||(f==="retard"&&a.en_retard)||(f==="silence"&&(!a.dernier||jours(a.dernier)>42))||(f==="visite"&&!a.visites));}
+function classesHTML(){const L=[...new Map(S.liste.filter(a=>!S.fil||a.niveau===S.fil).map(a=>[a.classe,a.libelle])).entries()];
+  return `<button type="button" data-cl="" aria-pressed="${!S.classe}">Toutes</button>`+L.map(([c,l])=>`<button type="button" data-cl="${esc(c)}" aria-pressed="${S.classe===c}">${esc(l)}</button>`).join("");}
 function render(){
+  $("#classes").innerHTML=classesHTML();
+  $("#onglets").innerHTML=Object.entries(ONG).map(([k,l])=>`<button type="button" role="tab" data-o="${k}" aria-selected="${S.onglet===k}">${l}<span class="n" id="n_${k}"></span></button>`).join("");
   const V=visibles(),L=filtrer(V),cls=new Set(V.map(a=>a.classe));
-  $("#nListe").textContent=V.length;
-  const A=S.actions.filter(x=>cls.has(x.classe)&&V.some(a=>a.id===x.apprenant));$("#nActions").textContent=A.length||"";
+  renderEntreprises(V);renderEpreuves(V);
+  $("#n_liste").textContent=V.length;
+  const A=S.actions.filter(x=>cls.has(x.classe)&&V.some(a=>a.id===x.apprenant));$("#n_actions").textContent=A.length||"";
   $("#chips").innerHTML=FILTRES.map(([k,l])=>`<button type="button" data-f="${k}" aria-pressed="${S.filtre===k}">${l} <span class="sub">${k==="tous"?V.length:V.filter(a=>filtrerUn(a,k)).length}</span></button>`).join("");
   $("#tListe").innerHTML=L.length?L.map(a=>{const pct=a.uc_total?Math.round(100*a.uc_acquises/a.uc_total):null,j=jours(a.dernier);
     return `<tr class="app" data-app="${a.id}" tabindex="0"><td><span class="nom">${esc(a.nom)} ${esc(a.prenom)}</span>${a.fictif?' <span class="pill">fictif</span>':""}</td>
@@ -192,15 +214,35 @@ function render(){
   $("#kpis").innerHTML=[[V.length,"apprenant·es suivi·es"],[tot("sil"),"sans échange depuis 6 semaines"],[tot("vis"),"sans visite en entreprise cette année"],[tot("al"),"alertes ouvertes"],[tot("ret"),"actions en retard"]].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join("");
   $("#tTdb").innerHTML=T.map(x=>`<tr><td><a href="#" data-cl="${esc(x.c)}">${esc(x.l)}</a></td><td class="num">${x.n}</td><td class="num">${x.sil}</td><td class="num">${x.vis}</td><td class="num">${x.al}</td><td class="num">${x.ret}</td></tr>`).join("")||`<tr><td colspan="6" class="empty">—</td></tr>`;
 }
+function renderEntreprises(V){
+  $("#tEnt").innerHTML=V.length?V.map(a=>{const j=jours(a.derniere_visite);
+    return `<tr><td><a href="#" data-ouvrir="${a.id}">${esc(a.nom)} ${esc(a.prenom)}</a><div class="sub">${esc(a.libelle)}</div></td><td>${esc(a.entreprise)||'<span class="sub">à renseigner</span>'}</td><td>${esc(a.tuteur)||'<span class="sub">—</span>'}</td>
+      <td>${a.derniere_visite?`${jr(a.derniere_visite)}<div class="sub">il y a ${j} jour${j>1?"s":""}</div>`:'<span class="pill warn">jamais</span>'}</td><td class="num">${a.visites||'<span class="sub">0</span>'}</td>
+      <td><button type="button" class="mini" data-visite="${a.id}">Noter une visite</button></td></tr>`;}).join(""):`<tr><td colspan="6" class="empty">Aucun apprenant.</td></tr>`;}
+async function renderEpreuves(V){const box=$("#epr");
+  if(!S.classe){box.innerHTML='<p class="empty">Choisissez une classe pour voir le suivi de ses épreuves.</p>';return;}
+  const cl=S.classe;if(!S.epr[cl]){box.innerHTML='<p class="empty">Chargement des résultats…</p>';
+    try{S.epr[cl]=await rpc("suivi_epreuves",{p_classe:cl})||[];}catch(e){box.innerHTML=`<p class="empty">${esc(e.message)}</p>`;return;}
+    if(S.classe!==cl)return;}
+  const R=S.epr[cl];if(!R.length){box.innerHTML='<p class="empty">Pas encore de plan d\'évaluation en ligne pour cette classe : il sera suivi ici dès sa saisie dans l\'outil d\'évaluation.</p>';return;}
+  const cols=[...new Map(R.map(r=>[r.code,r])).values()].sort((a,b)=>(a.ordre-b.ordre)||a.code.localeCompare(b.code,"fr",{numeric:true})),bts=/^BTSAAP/.test(cl);
+  const E={acquis:["acquis","✓"],"non acquis":["non","✗"],"en cours":["cours","…"],"à venir":["avenir","·"],note:["acquis",""]};
+  const ids=new Set(V.map(a=>a.id));
+  box.innerHTML=`<table class="mat"><thead><tr><th>Apprenant·e</th>${cols.map(c=>`<th class="c" title="${esc(c.libelle)}">${esc(c.code)}${c.jour?`<div class="sub">${new Date(c.jour+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</div>`:""}</th>`).join("")}<th class="c">${bts?"Notées":"UC acquises"}</th></tr></thead><tbody>`
+    +V.filter(a=>ids.has(a.id)).map(a=>{const m=Object.fromEntries(R.filter(r=>r.apprenant===a.id).map(r=>[r.code,r]));
+      const n=cols.filter(c=>m[c.code]&&(m[c.code].etat==="acquis"||m[c.code].etat==="note")).length;
+      return `<tr><td><a href="#" data-ouvrir="${a.id}">${esc(a.nom)} ${esc(a.prenom)}</a></td>${cols.map(c=>{const r=m[c.code];if(!r)return "<td></td>";const [k,t]=E[r.etat]||E["à venir"];
+        return `<td><span class="etat ${k}" title="${esc(c.libelle)} : ${esc(r.etat)}">${r.note!=null?String(r.note).replace(".",","):t}</span></td>`;}).join("")}<td><b>${n}</b>/${cols.length}</td></tr>`;}).join("")
+    +`</tbody></table><p style="margin:10px 0 0"><a href="${bts?"/CCF/":"/UC/?vue=tdb"}">Ouvrir ${bts?"le tableau de bord CCF":"les résultats UC"} →</a></p>`;}
 function filtrerUn(a,k){return (k==="alertes"&&a.alertes)||(k==="retard"&&a.en_retard)||(k==="silence"&&(!a.dernier||jours(a.dernier)>42))||(k==="visite"&&!a.visites);}
-function onglet(o){S.onglet=o;ls("suivi.onglet",o);$$("[data-o]").forEach(b=>b.setAttribute("aria-selected",b.dataset.o===o));["liste","actions","tdb"].forEach(k=>$("#o-"+k).hidden=k!==o);render();}
+function onglet(o){S.onglet=o;ls("suivi.onglet",o);Object.keys(ONG).forEach(k=>$("#o-"+k).hidden=k!==o);render();}
 
 /* ---------- Fiche de suivi ---------- */
 async function ouvrir(id){S.app=S.liste.find(a=>a.id===id);if(!S.app)return;S.edit=null;
   S.notes=null;fiche();if(!$("#dlg").open)$("#dlg").showModal();
   try{S.notes=await rpc("suivi_notes_de",{p_app:id})||[];}catch(e){S.notes=[];toast(e.message);}
   if(S.app&&S.app.id===id)fiche();}
-function formNote(n){n=n||{type:"entretien",le:auj()};
+function formNote(n){n=n||Object.assign({type:"entretien",le:auj()},S.nouveau||{});
   return `<form class="note noprint" id="fNote">
     <label>Type<select name="type">${Object.entries(TYPES).map(([k,[l]])=>`<option value="${k}"${n.type===k?" selected":""}>${l}</option>`).join("")}</select></label>
     <label>Date<input type="date" name="le" value="${esc(n.le||auj())}" required></label>
@@ -232,25 +274,26 @@ async function enregistrer(f){const d=Object.fromEntries(new FormData(f));d.conf
   if(!d.texte.trim()&&!d.titre.trim()&&!d.suite.trim()){toast("Écrivez au moins un objet, un compte rendu ou une action.");return;}
   f.querySelector("button[type=submit]").disabled=true;
   try{await rpc("suivi_enregistrer",{p:d});await recharger();toast("Note enregistrée");}catch(e){toast(e.message);f.querySelector("button[type=submit]").disabled=false;}}
-async function recharger(){const id=S.app&&S.app.id;await charger();render();if(id&&$("#dlg").open){S.app=S.liste.find(a=>a.id===id);S.edit=null;S.notes=await rpc("suivi_notes_de",{p_app:id})||[];fiche();}}
+async function recharger(){S.nouveau=null;S.epr={};const id=S.app&&S.app.id;await charger();render();if(id&&$("#dlg").open){S.app=S.liste.find(a=>a.id===id);S.edit=null;S.notes=await rpc("suivi_notes_de",{p_app:id})||[];fiche();}}
 
 document.addEventListener("click",async e=>{const t=e.target;
   const o=t.closest("[data-o]");if(o){onglet(o.dataset.o);return;}
   const f=t.closest("[data-f]");if(f){S.filtre=f.dataset.f;render();return;}
   const tr=t.closest("tr.app");if(tr){ouvrir(tr.dataset.app);return;}
   const ov=t.closest("[data-ouvrir]");if(ov){e.preventDefault();ouvrir(ov.dataset.ouvrir);return;}
-  const cl=t.closest("[data-cl]");if(cl){e.preventDefault();$("#fClasse").value=cl.dataset.cl;ls("suivi.classe",cl.dataset.cl);onglet("liste");return;}
+  const cl=t.closest("[data-cl]");if(cl){e.preventDefault();S.classe=cl.dataset.cl;ls("suivi.classe",S.classe||null);if(t.closest("#o-tdb"))onglet("liste");else render();return;}
+  const vi=t.closest("[data-visite]");if(vi){S.nouveau={type:"visite"};ouvrir(vi.dataset.visite);return;}
   const fa=t.closest("[data-fait]");if(fa){fa.disabled=true;try{await rpc("suivi_fait",{p_id:+fa.dataset.fait,p_fait:fa.dataset.v!=="false"});await recharger();}catch(err){toast(err.message);fa.disabled=false;}return;}
   const ed=t.closest("[data-edit]");if(ed){S.edit=+ed.dataset.edit;fiche();return;}
   if(t.id==="annulerEdit"){S.edit=null;fiche();return;}
   const de=t.closest("[data-del]");if(de){if(de.dataset.sur!=="1"){de.dataset.sur="1";de.textContent="Confirmer la suppression";return;}
     try{await rpc("suivi_supprimer",{p_id:+de.dataset.del});await recharger();toast("Note supprimée");}catch(err){toast(err.message);}return;}
-  if(t.id==="btnFermer"){$("#dlg").close();return;}
+  if(t.id==="btnFermer"){S.nouveau=null;$("#dlg").close();return;}
   if(t.id==="btnImpr"){window.print();return;}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("tr.app"))ouvrir(e.target.dataset.app);});
 document.addEventListener("submit",e=>{if(e.target.id==="fNote"){e.preventDefault();enregistrer(e.target);}});
-$("#fClasse").onchange=()=>{ls("suivi.classe",$("#fClasse").value||null);render();};
+$("#fFil").onchange=()=>{S.fil=$("#fFil").value;if(S.classe&&!S.liste.some(a=>a.classe===S.classe&&(!S.fil||a.niveau===S.fil)))S.classe="";render();};
 $("#q").oninput=render;
 init();
 </script>
