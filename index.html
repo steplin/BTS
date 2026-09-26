@@ -61,6 +61,7 @@ a.tile:hover{border-color:var(--c);box-shadow:0 6px 18px rgba(24,36,30,.08);tran
 .tile .ico{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c)}
 .tile .ico svg{width:20px;height:20px}
 .tile b{font-size:15px;line-height:1.3}
+.tile .qui{font-size:11.5px;font-weight:600;color:var(--c);margin-top:-4px}
 .tile p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.45}
 .tile .st{position:absolute;top:14px;right:14px;font-size:11px;font-weight:600;border-radius:99px;padding:3px 8px}
 .st.on{background:#DCEBDF;color:#2E6A4B}.st.soon{background:#F1F3EF;color:var(--ink-3)}
@@ -261,7 +262,10 @@ function simuler(role,niv){
   const r=role==="referent"?["formateur","referent"]:[role];
   const nv=NIV_LARGE.includes(role)?TOUS_NIV.slice():[niv];
   const outils=outilsCat.filter(o=>(!o.roles||!o.roles.length||o.roles.some(x=>r.includes(x)))&&(o.niveau==="tous"||nv.includes(o.niveau))).map(o=>o.code);
-  return {roles:r,admin:false,actif:true,niveaux:nv,outils,classes:[]};}
+  const v=[],ens=["formateur","coordinateur_filiere","responsable_peda"].includes(role)||r.includes("referent");if(ens&&outils.includes("saisie-uc"))v.push("ev-saisie-uc");if(ens&&outils.includes("ccf-bts"))v.push("ev-saisie-bts");
+  if(nv.includes("capa")&&outils.includes("saisie-uc")){if(r.includes("referent")||role==="responsable_peda")v.push("uc-dates");if(role==="coordinateur_filiere"||role==="responsable_peda")v.push("uc-conv");if(role==="responsable_peda")v.push("uc-param");}
+  if(nv.includes("btsa")&&(role==="coordinateur_filiere"||role==="responsable_peda"))v.push("bts-coord");
+  return {roles:r,admin:false,actif:true,niveaux:nv,outils:[...outils,...v],classes:[]};}
 function majApercu(){const role=$("#apRole").value,large=NIV_LARGE.includes(role);
   $("#apNiv").hidden=$("#apNivL").hidden=!role||large;
   apercu=role?simuler(role,$("#apNiv").value):null;
@@ -281,7 +285,11 @@ async function goHome(s){if(next){location.replace(next);return;}
   // Unités capitalisables : accès aussi par UC affectée ou épreuve dont on est responsable ; coordination pour les référents
   try{const u=await api("/rest/v1/rpc/uc_acces",{method:"POST",body:{},token:s.access_token})||{},o=droits.outils=droits.outils||[],n=droits.niveaux=droits.niveaux||[];
     if(u.acces){if(!o.includes("saisie-uc"))o.push("saisie-uc");if(!n.includes("capa"))n.push("capa");}
-    if(u.coord&&!o.includes("uc-coord"))o.push("uc-coord");if(u.resp&&!o.includes("uc-param"))o.push("uc-param");}catch(e){}
+    const add=c=>{if(!o.includes(c))o.push(c);};
+    if(u.coord)add("uc-coord");if(u.referent)add("uc-dates");if(u.coordfil)add("uc-conv");if(u.resp)add("uc-param");}catch(e){}
+  {const o=droits.outils,r=droits.roles||[],ens=droits.admin||r.some(x=>["formateur","referent","coordinateur_filiere","responsable_peda"].includes(x));
+    if(ens&&o.includes("saisie-uc"))o.push("ev-saisie-uc");if(ens&&o.includes("ccf-bts"))o.push("ev-saisie-bts");}
+  try{if(await api("/rest/v1/rpc/est_coord_bts",{method:"POST",body:{},token:s.access_token})){const o=droits.outils;if(!o.includes("bts-coord"))o.push("bts-coord");}}catch(e){}
   if(!droits.actif){signOutLocal(s);show("vLogin");msg("loginMsg","Votre compte est suspendu. Contactez le responsable pédagogique.");return;}
   const nomAff=droits.prenom?droits.prenom+" "+droits.nom:(droits.email||email);
   const FIL={capa:"CAPa JP",bpa:"BPA OSP",bp:"BP AP",btsa:"BTSA AP",cs:"CS Arboriste",bprea:"BPREA"};
@@ -352,32 +360,29 @@ const ESPACES=[
 /* Catalogue : esp = espace, niv = formation */
 const TOOLS=[
   // Outils pédagogiques
-  {esp:"outils",niv:"tous",t:"Référentiels des diplômes",d:"Capacités, critères et indicateurs de chaque diplôme de la filière (source Chlorofil) : consultation, recherche et impression.",i:"fiche",href:"/REF/",code:"referentiels"},
   {esp:"outils",niv:"tous",t:"La fabrique à livret",d:"Export Yparéo en entrée, un livret d'alternance Word par apprenti·e en sortie : les 18 modèles v5 validés, publipostés dans le navigateur.",i:"livret",href:"/livret/",code:"livret"},
   {esp:"outils",niv:"tous",t:"Fiches pédagogiques prévisionnelles",d:"Par formateur : heures de face-à-face et cadrage des UC enseignées d'après le référentiel.",i:"inscr"},
-  {esp:"evaluations",niv:"capa",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille",href:"/UC/",code:"saisie-uc"},
-  {esp:"evaluations",niv:"bpa",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
-  {esp:"evaluations",niv:"bp",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
-  {esp:"evaluations",niv:"btsa",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille",href:"/CCF/",code:"ccf-bts"},
-  {esp:"evaluations",niv:"bprea",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
-  {esp:"evaluations",niv:"cs",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
-  {esp:"evaluations",niv:"btsa",t:"Préparation des grilles Excel",d:"Préparer les classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/",code:"grilles-bts"},
   // Évaluations
-  {esp:"evaluations",niv:"capa",t:"Calendrier des épreuves UC",d:"Périodes agréées et dates des épreuves du CAPa par classe.",i:"calend",href:"/UC/?vue=cal",code:"saisie-uc"},
-  {esp:"evaluations",niv:"btsa",t:"Coordination BTS AP",d:"Résultats de la promotion, candidats, épreuves et convocations, courriers aux entreprises, documents de fin d'année.",i:"coord",href:"/CCF/?vue=coord",code:"grilles-bts"},
-  {esp:"evaluations",niv:"btsa",t:"Calendrier des CCF",d:"Dates, horaires et lieux des CCF par année (BTS 1, BTS 2), repris dans les grilles.",i:"calend",href:"/CCF/?vue=cal",code:"ccf-bts"},
   // Suivi des apprenants
   {esp:"suivi",niv:"tous",t:"Toutes mes classes",d:"Vue d'ensemble de vos apprenants avec leur dernier échange, visites en entreprise, alertes et actions en retard ; fiche de suivi imprimable.",i:"suivi",href:"/SUIVI/",code:"suivi"},
-  {esp:"suivi",niv:"tous",t:"Actions à mener",d:"Toutes les actions et alertes ouvertes de vos classes, par échéance.",i:"calend",href:"/SUIVI/?o=actions",code:"suivi"},
   // Veille
-  {esp:"veille",niv:"tous",t:"Actualités de la filière",d:"Unep, arboriculture, végétal, formation et réglementation : les flux des sources de référence, filtrés et classés par thème.",i:"veille",href:"/VEILLE/",code:"veille"},
-  {esp:"veille",niv:"tous",t:"Sélection de l'équipe",d:"Les articles retenus par les formateurs, avec leur intérêt pédagogique.",i:"fiche",href:"/VEILLE/?o=pin",code:"veille"},
+  {esp:"veille",niv:"tous",t:"Veille professionnelle",qui:"Tout le personnel",d:"Toutes les actualités par filière, la sélection de l'équipe et les sources. Unep, arboriculture, végétal, formation et réglementation : les flux des sources de référence, filtrés et classés par thème.",i:"veille",href:"/VEILLE/",code:"veille"},
   // Administration
   {esp:"admin",niv:"tous",t:"Personnel, classes et droits",d:"Comptes et codes d'activation, équipes des classes, rôles et droits des outils.",i:"secu",href:"/admin/",code:"admin"},
   {esp:"admin",niv:"tous",t:"Apprenants et RGPD",d:"Apprenants des formations, échéances de conservation et suppression 5 ans après la fin de la formation.",i:"inscr",href:"/admin/#apprenants",code:"admin"},
-  {esp:"admin",niv:"tous",t:"Plans d'évaluation UC",d:"Plans agréés par cohorte, épreuves et périodes, formateurs affectés aux UC.",i:"fiche",href:"/UC/param.html",code:"uc-param"},
-  {esp:"admin",niv:"tous",t:"Référentiels : import et validation",d:"Importer ou corriger un référentiel depuis un tableur, valider les textes relus sur Chlorofil.",i:"fiche",href:"/REF/",code:"uc-param"},
   {esp:"admin",niv:"tous",t:"Sources de la veille",d:"Ajouter, filtrer ou désactiver les flux d'actualités.",i:"veille",href:"/VEILLE/?o=src",code:"uc-param"}];
+/* Évaluations : les mêmes six tuiles, dans le même ordre, pour chaque formation */
+const EVAL=[
+  ["Saisie des évaluations","Formateurs de l'épreuve","Saisie en ligne des grilles officielles de vos épreuves, apprenant par apprenant : critères, appréciations et résultats.","grille"],
+  ["Dates des épreuves","Référent de classe","Périodes prévues et date réelle de chaque épreuve (au plus tard 15 jours avant), reprises dans les grilles et le calendrier.","calend"],
+  ["Convocations","Coordinateur de filière","Convocations des apprenants et courriers aux entreprises pour chaque session d'épreuves.","conv"],
+  ["Suivi des résultats","Équipe de la formation","Tableau de bord des résultats de la promotion : épreuves passées, acquis, notes et avancement.","suivi"],
+  ["Préparation des jurys","Coordinateur de filière","Impression des documents officiels pour le jury : grilles et récapitulatifs de la cohorte.","inscr"],
+  ["Paramétrage","Responsable pédagogique","Plans d'évaluation agréés, épreuves et périodes, grilles, formateurs affectés.","fiche"]];
+const EVAL_LIENS={
+  capa:[["/UC/?vue=doc4","ev-saisie-uc"],["/UC/?vue=coord&ong=dates","uc-dates"],["/UC/?vue=coord&ong=conv","uc-conv"],["/UC/?vue=tdb","saisie-uc"],["/UC/?vue=coord&ong=edi","uc-conv"],["/UC/param.html","uc-param"]],
+  btsa:[["/CCF/","ev-saisie-bts"],["/CCF/?vue=cal","bts-coord"],["/CCF/?vue=coord&ctab=epr","bts-coord"],["/CCF/?vue=coord&ctab=dash","ccf-bts"],["/CCF/?vue=coord&ctab=imp","bts-coord"],["/BTS/","grilles-bts"]]};
+["capa","bpa","bp","btsa","bprea","cs"].forEach(k=>EVAL.forEach(([t,qui,d,i],n)=>{const l=(EVAL_LIENS[k]||[])[n];TOOLS.push(Object.assign({esp:"evaluations",niv:k,t,qui,d,i},l?{href:l[0],code:l[1]}:{}));}));
 /* Outils par diplôme : référentiel, TSF, déroulé pédagogique, suivi de la filière */
 const REFS={capa:"CAPA-JP",bpa:"BPA-OSP",bp:"BP-AP",btsa:"BTSA-AP",bprea:"BP-REA",cs:"CS-AG"};
 Object.entries(REFS).forEach(([k,ref])=>{const c=FORMS[k].court;TOOLS.push(
@@ -393,10 +398,10 @@ function visiblesEsp(esp){
   const d=apercu||droits||{},niv=new Set(d.niveaux||[]),out=outilsVus();
   const adm=d.admin&&!apercu;return TOOLS.filter(t=>t.esp===esp&&(adm||t.niv==="tous"||niv.has(t.niv))&&(t.code?adm||out.has(t.code):true))
     .filter(t=>t.code||esp!=="admin");}
-function espacesVus(){return ESPACES.filter(e=>e.id==="actus"||visiblesEsp(e.id).some(t=>t.href));}
+function espacesVus(){return ESPACES.filter(e=>e.id==="actus"||visiblesEsp(e.id).length);}
 function tuile(t){const f=FORMS[t.niv],on=!!t.href;const ico=`<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[t.i]||ICONS.fiche}</svg></span>`;
-  return on?`<a class="tile" href="${t.href}" style="--c:${f.c}">${ico}<span class="st on">${t.espNom||"Disponible"}</span><b>${t.t}</b><p>${t.d}</p><span class="go">Ouvrir l'outil →</span></a>`
-           :`<div class="tile soon" aria-disabled="true" style="--c:${f.c}">${ico}<span class="st soon">À venir${t.espNom?" · "+t.espNom:""}</span><b>${t.t}</b><p>${t.d}</p></div>`;}
+  return on?`<a class="tile" href="${t.href}" style="--c:${f.c}">${ico}<span class="st on">${t.espNom||"Disponible"}</span><b>${t.t}</b>${t.qui?`<span class="qui">${t.qui}</span>`:""}<p>${t.d}</p><span class="go">Ouvrir l'outil →</span></a>`
+           :`<div class="tile soon" aria-disabled="true" style="--c:${f.c}">${ico}<span class="st soon">À venir${t.espNom?" · "+t.espNom:""}</span><b>${t.t}</b>${t.qui?`<span class="qui">${t.qui}</span>`:""}<p>${t.d}</p></div>`;}
 function renderDash(){
   const EV=espacesVus();if(!EV.some(e=>e.id===espace))espace=(EV[0]||{id:"outils"}).id;
   navEsp(EV);
