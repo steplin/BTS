@@ -44,7 +44,15 @@ button:disabled{opacity:.5;cursor:default}
 .art{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--c,var(--line));border-radius:12px;padding:12px 14px}
 .art .m{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink-3)}
 .art h3{margin:0;font-size:15px;line-height:1.35}.art h3 a{color:var(--ink);text-decoration:none}.art h3 a:hover{color:var(--accent);text-decoration:underline}
-.art p{margin:0;font-size:13px;color:var(--ink-2)}
+.art p{margin:0;font-size:13px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.art .fil{display:flex;gap:4px;flex-wrap:wrap}.art .fil span{font-size:11px;font-weight:600;border-radius:5px;padding:0 6px;color:#fff;background:var(--fc)}
+.art.masque{opacity:.55;border-style:dashed}
+.art form.ret{display:flex;flex-direction:column;gap:6px;background:#F8FAF7;border:1px solid var(--line);border-radius:8px;padding:8px}
+.art form.ret textarea{min-height:70px;font-size:13px}.cks{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px}
+.filbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filbar button{font-size:13px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.filbar button[aria-pressed="true"]{background:var(--fc,var(--ink));border-color:var(--fc,var(--ink));color:#fff}
+.filbar label{font-size:12.5px;color:var(--ink-3);display:flex;gap:5px;align-items:center;margin-left:6px}
 .art .note{font-size:13px;background:var(--warn-soft);border-radius:8px;padding:6px 9px;color:var(--warn)}
 .art .tools{display:flex;gap:6px;margin-top:auto;padding-top:4px;flex-wrap:wrap}
 .pill{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 8px;background:#EEF2EC;color:var(--ink-2)}
@@ -90,13 +98,14 @@ textarea{min-height:54px}
       <div class="large" style="display:flex;gap:8px"><button type="submit">Ajouter à la sélection</button><button type="button" class="ghost" id="addClose">Fermer</button></div>
     </form>
   </section>
+  <div class="filbar" id="filieres"></div>
   <div class="chips" id="themes"></div>
   <section id="o-actu"><div class="flux" id="flux"><p class="empty">Chargement des actualités…</p></div></section>
   <section id="o-pin" hidden><div class="flux" id="pins"></div></section>
   <section id="o-src" hidden>
     <div class="card" style="overflow-x:auto">
       <p class="hint" style="margin-bottom:8px">Les actualités sont lues directement sur les flux RSS des sources ci-dessous et se mettent à jour d'elles-mêmes (chaque flux est relu au plus toutes les 2 heures). Pour les sites très généralistes, seuls les articles contenant un des mots-clés du filtre sont gardés.</p>
-      <table><thead><tr><th>Source</th><th>Thème</th><th>Filtre (mots-clés)</th><th>État</th><th></th></tr></thead><tbody id="tSrc"></tbody></table>
+      <table><thead><tr><th>Source</th><th>Thème · filières</th><th>Filtre (mots-clés)</th><th>État</th><th></th></tr></thead><tbody id="tSrc"></tbody></table>
     </div>
     <section class="card" id="srcForm" hidden style="margin-top:12px">
       <h2 style="margin:0 0 8px;font-size:16px" id="srcTitre">Ajouter une source</h2>
@@ -105,6 +114,7 @@ textarea{min-height:54px}
         <label class="large">Adresse du flux RSS ou Atom<input type="url" name="url" required placeholder="https://site.fr/feed/"></label>
         <label>Site<input type="url" name="site" placeholder="https://site.fr"></label>
         <label>Thème<select name="theme" id="srcTheme"></select></label>
+        <div class="large"><span style="font-size:12px;color:var(--ink-3);font-weight:500">Filières concernées (aucune = toutes)</span><div class="cks" id="srcFil" style="margin-top:3px"></div></div>
         <label class="large">Filtre : mots-clés séparés par des virgules (vide = tout garder)<input type="text" name="filtre" placeholder="paysag, espaces verts, apprenti"></label>
         <div class="large" style="display:flex;gap:8px"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="srcAnnuler">Annuler</button></div>
       </form>
@@ -135,7 +145,14 @@ const statut=(m,err)=>{$("#status").textContent=m||"";$("#status").classList.tog
 const toast=m=>{const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4200);};
 
 const THEMES={"Filière & entreprises":"#2E6A4B","Formation & apprentissage":"#3F6FA8","Réglementation":"#A8412F","Technique & végétal":"#6E9A3A","Innovation & matériel":"#B07A1E"};
-const V={items:[],pins:[],sources:[],etat:[],onglet:"actu",theme:"",resp:false,moi:"",maj:null,edit:null};
+const FIL={capa:["CAPa JP","#6E9A3A"],bpa:["BPA OSP","#3F8A70"],bp:["BP AP","#2E6A4B"],btsa:["BTSA AP","#D1683F"],cs:["CS AG","#8A6A3B"],bprea:["BPREA","#7C8A2A"]};
+const MOTS=[[/\bcapa\b|jardinier paysagiste/i,["capa"]],[/\bbpa\b/i,["bpa"]],[/\bbp\b|brevet professionnel/i,["bp"]],[/\bbtsa?\b|technicien sup/i,["btsa"]],[/arbor|élag|elag|grimp|\barbres?\b/i,["cs"]],[/exploitation agricole|agricult|élevage|\bpac\b|maraîch|installation agricole/i,["bprea"]],[/paysag|espaces? verts?|jardin/i,["capa","bpa","bp","btsa"]]];
+function filieresDe(i){const r=V.ret[cleUrl(i.url)];if(r&&r.filieres)return r.filieres;
+  const f=new Set(i.filieres||[]);const t=(i.titre||"")+" "+(i.resume||"");MOTS.forEach(([re,l])=>{if(re.test(t))l.forEach(x=>f.add(x));});
+  return Object.keys(FIL).filter(k=>f.has(k));}
+function resumeDe(i){const r=V.ret[cleUrl(i.url)];return r&&r.resume!=null?r.resume:(i.resume||"");}
+const masque=i=>{const r=V.ret[cleUrl(i.url)];return !!(r&&r.masque);};
+const V={ret:{},fil:ls("veille.fil")||"",communs:ls("veille.communs")!==false,editUrl:null,items:[],pins:[],sources:[],etat:[],onglet:"actu",theme:"",resp:false,moi:"",maj:null,edit:null};
 const sans=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 const dt=d=>d?new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"";
 const cleUrl=u=>String(u||"").replace(/[?&]utm_[^&#]*/g,"").replace(/#.*$/,"");
@@ -145,7 +162,7 @@ async function init(){
   const opts=Object.keys(THEMES).map(t=>`<option>${esc(t)}</option>`).join("");$("#addTheme").innerHTML=opts;$("#srcTheme").innerHTML=opts;
   try{const [d,ac]=await Promise.all([rpc("mes_droits"),rpc("uc_acces").catch(()=>({}))]);V.moi=d.email||"";V.resp=!!(ac&&ac.resp);$("#who").textContent=((d.prenom||"")+" "+(d.nom||"")).trim();}catch(e){}
   const o=new URLSearchParams(location.search).get("o")||ls("veille.onglet");if(["actu","pin","src"].includes(o))onglet(o,true);
-  await Promise.all([chargerPins(),chargerSources()]);render();
+  await Promise.all([chargerPins(),chargerSources(),chargerRet()]);render();
   await chargerFlux();
 }
 async function chargerFlux(){statut("Lecture des flux…");
@@ -157,48 +174,71 @@ async function chargerFlux(){statut("Lecture des flux…");
     statut(`Mis à jour à ${new Date(V.maj).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}${ko?` · ${ko} source${ko>1?"s":""} injoignable${ko>1?"s":""}`:""}`);}
   catch(e){statut(e.message,true);}
   render();}
+async function chargerRet(){try{const R=await api("/rest/v1/veille_retouches")||[];V.ret={};R.forEach(r=>V.ret[cleUrl(r.url)]=r);}catch(e){V.ret={};}}
 async function chargerPins(){try{V.pins=await api("/rest/v1/veille_articles?order=cree_le.desc")||[];}catch(e){V.pins=[];}}
 async function chargerSources(){try{V.sources=await api("/rest/v1/veille_sources?order=ordre,nom")||[];}catch(e){V.sources=[];}}
 function onglet(o,muet){V.onglet=o;ls("veille.onglet",o);$$("[data-o]").forEach(b=>b.setAttribute("aria-selected",b.dataset.o===o));["actu","pin","src"].forEach(k=>$("#o-"+k).hidden=k!==o);
-  $("#themes").hidden=o==="src";$("#bar").hidden=o==="src";if(!muet)render();}
+  $("#themes").hidden=o==="src";$("#filieres").hidden=o==="src";$("#bar").hidden=o==="src";if(!muet)render();}
 function filtre(L,avecPeriode){const q=sans($("#q").value.trim()),src=$("#fSrc").value,per=+$("#fPer").value,lim=Date.now()-per*864e5;
-  return L.filter(i=>(!V.theme||i.theme===V.theme)&&(!src||i.source===src)&&(!q||sans(i.titre+" "+(i.resume||"")+" "+(i.note||"")).includes(q))&&(!avecPeriode||!i.date||Date.parse(i.date)>=lim));}
+  return L.filter(i=>(V.resp||!masque(i))&&(!V.fil||(()=>{const f=filieresDe(i);return f.includes(V.fil)||(V.communs&&!f.length);})())&&(!V.theme||i.theme===V.theme)&&(!src||i.source===src)&&(!q||sans(i.titre+" "+(i.resume||"")+" "+(i.note||"")).includes(q))&&(!avecPeriode||!i.date||Date.parse(i.date)>=lim));}
+function formRet(i){const f=filieresDe(i);return `<form class="ret" data-url="${esc(i.url)}"><textarea name="resume" aria-label="Résumé">${esc(resumeDe(i))}</textarea>
+    <div class="cks">${Object.entries(FIL).map(([k,[l]])=>`<label><input type="checkbox" name="fil" value="${k}"${f.includes(k)?" checked":""}> ${l}</label>`).join("")}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><button type="submit" class="mini">Enregistrer</button><button type="button" class="mini" data-retcancel="1">Annuler</button>
+      ${V.ret[cleUrl(i.url)]?`<button type="button" class="mini" data-retreset="${esc(i.url)}">Revenir au texte d'origine</button>`:""}</div></form>`;}
 function carte(i,pin){const c=THEMES[i.theme]||"#76857C",epingle=V.pins.find(p=>cleUrl(p.url)===cleUrl(i.url)),recent=i.date&&Date.now()-Date.parse(i.date)<2*864e5;
   const d=pin?i.publie_le:i.date;
-  return `<article class="art" style="--c:${c}"><div class="m"><span class="pill" style="color:${c}">${esc(i.theme||"—")}</span><span>${esc(i.source||"")}</span>${d?`<span>· ${dt(d)}</span>`:""}${recent&&!pin?'<span class="pill new">nouveau</span>':""}${!pin&&epingle?'<span class="pill pin">dans la sélection</span>':""}</div>
+  const F=filieresDe(i),res=resumeDe(i),mq=masque(i),ed=V.resp&&V.editUrl===i.url;
+  return `<article class="art${mq?" masque":""}" style="--c:${c}"><div class="fil">${F.length?F.map(k=>`<span style="--fc:${FIL[k][1]}">${FIL[k][0]}</span>`).join(""):'<span style="--fc:#76857C">Toutes filières</span>'}${mq?'<span style="--fc:#A8412F">masquée</span>':""}</div><div class="m"><span class="pill" style="color:${c}">${esc(i.theme||"—")}</span><span>${esc(i.source||"")}</span>${d?`<span>· ${dt(d)}</span>`:""}${recent&&!pin?'<span class="pill new">nouveau</span>':""}${!pin&&epingle?'<span class="pill pin">dans la sélection</span>':""}</div>
     <h3><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.titre)}</a></h3>
-    ${i.resume?`<p>${esc(i.resume)}</p>`:""}${pin&&i.note?`<div class="note">${esc(i.note)}</div>`:""}
+    ${ed?formRet(i):res?`<p>${esc(res)}</p>`:""}${pin&&i.note?`<div class="note">${esc(i.note)}</div>`:""}
     <div class="tools">${pin?`<span class="hint">Ajouté par ${esc(i.ajoute_nom||i.ajoute_par)}</span>${i.ajoute_par===V.moi||V.resp?`<button type="button" class="mini del" data-unpin="${i.id}">Retirer</button>`:""}`
-      :epingle?"":`<button type="button" class="mini" data-pin="${esc(i.url)}">Ajouter à la sélection</button>`}</div></article>`;}
+      :epingle?"":`<button type="button" class="mini" data-pin="${esc(i.url)}">Ajouter à la sélection</button>`}
+      ${V.resp&&!ed?`<button type="button" class="mini" data-retedit="${esc(i.url)}">Résumé et filières</button>${res?`<button type="button" class="mini del" data-retsuppr="${esc(i.url)}">Supprimer le résumé</button>`:""}<button type="button" class="mini${mq?"":" del"}" data-retmasque="${esc(i.url)}">${mq?"Réafficher":"Masquer"}</button>`:""}</div></article>`;}
 function render(){
   const srcs=[...new Set([...V.items.map(i=>i.source),...V.pins.map(p=>p.source)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
   const cur=$("#fSrc").value;$("#fSrc").innerHTML='<option value="">Toutes</option>'+srcs.map(s=>`<option${s===cur?" selected":""}>${esc(s)}</option>`).join("");
   const base=V.onglet==="pin"?V.pins.map(p=>({...p,date:p.publie_le||p.cree_le})):V.items;
   $("#themes").innerHTML=[["","Tous les thèmes"],...Object.keys(THEMES).map(t=>[t,t])].map(([k,l])=>`<button type="button" data-t="${esc(k)}" aria-pressed="${V.theme===k}" style="--c:${THEMES[k]||"var(--accent)"}">${esc(l)} <span class="sub">${k?base.filter(i=>i.theme===k).length:base.length}</span></button>`).join("");
+  const nb=k=>base.filter(i=>(V.resp||!masque(i))&&(k?filieresDe(i).includes(k):true)).length;
+  $("#filieres").innerHTML=[["","Toutes les filières","#18241E"],...Object.entries(FIL).map(([k,[l,c]])=>[k,l,c])].map(([k,l,c])=>`<button type="button" data-fil="${k}" aria-pressed="${V.fil===k}" style="--fc:${c}">${l} <span style="opacity:.75;font-weight:500">${nb(k)}</span></button>`).join("")
+    +(V.fil?`<label><input type="checkbox" id="communs"${V.communs?" checked":""}> inclure les actualités communes à toutes les filières</label>`:"");
   const A=filtre(V.items,true),P=filtre(V.pins.map(p=>({...p,date:p.publie_le||p.cree_le})),false);
   $("#nActu").textContent=V.items.length||"";$("#nPin").textContent=V.pins.length||"";
   $("#flux").innerHTML=A.length?A.map(i=>carte(i,false)).join(""):`<p class="empty">${V.items.length?"Aucune actualité pour ces filtres.":"Aucune actualité chargée pour l'instant."}</p>`;
   $("#pins").innerHTML=P.length?P.map(i=>carte(i,true)).join(""):'<p class="empty">La sélection de l\'équipe est vide : cliquez sur « Ajouter à la sélection » sous une actualité, ou ajoutez un article trouvé ailleurs.</p>';
   $("#tSrc").innerHTML=V.sources.map(s=>{const e=V.etat.find(x=>x.id===s.id);
-    return `<tr><td><b>${esc(s.nom)}</b><br><a href="${esc(s.site||s.url)}" target="_blank" rel="noopener" class="hint">${esc((s.site||s.url).replace(/^https?:\/\//,""))}</a></td><td>${esc(s.theme)}</td><td class="hint">${esc(s.filtre)||"—"}</td>
+    return `<tr><td><b>${esc(s.nom)}</b><br><a href="${esc(s.site||s.url)}" target="_blank" rel="noopener" class="hint">${esc((s.site||s.url).replace(/^https?:\/\//,""))}</a></td><td>${esc(s.theme)}<br><span class="hint">${(s.filieres||[]).length?(s.filieres||[]).map(k=>FIL[k]?FIL[k][0]:k).join(", "):"toutes filières"}</span></td><td class="hint">${esc(s.filtre)||"—"}</td>
       <td>${!s.actif?'<span class="hint">désactivée</span>':e?(e.ok?`<span class="ok">✓ ${e.nb} article${e.nb>1?"s":""}</span>`:`<span class="ko" title="${esc(e.erreur)}">injoignable</span>`):'<span class="hint">…</span>'}</td>
       <td style="white-space:nowrap">${V.resp?`<button type="button" class="mini" data-sedit="${s.id}">Modifier</button> <button type="button" class="mini" data-sact="${s.id}">${s.actif?"Désactiver":"Activer"}</button> <button type="button" class="mini del" data-sdel="${s.id}">Supprimer</button>`:""}</td></tr>`;}).join("")
     +(V.resp?`<tr><td colspan="5"><button type="button" class="mini" id="srcNew">+ Ajouter une source</button></td></tr>`:"");
 }
+async function retoucher(url,champs){const r=V.ret[cleUrl(url)];
+  try{if(r)await api("/rest/v1/veille_retouches?url=eq."+encodeURIComponent(r.url),{method:"PATCH",body:Object.assign({le:new Date().toISOString()},champs)});
+    else await api("/rest/v1/veille_retouches",{method:"POST",body:Object.assign({url},champs)});
+    V.editUrl=null;await chargerRet();render();}catch(e){toast(e.message);}}
+document.addEventListener("submit",e=>{const f=e.target.closest("form.ret");if(!f)return;e.preventDefault();const fd=new FormData(f);
+  retoucher(f.dataset.url,{resume:fd.get("resume").trim(),filieres:fd.getAll("fil")});});
 async function epingler(url){const i=V.items.find(x=>x.url===url);if(!i)return;
   try{await api("/rest/v1/veille_articles",{method:"POST",body:{url:i.url,titre:i.titre,source:i.source,theme:i.theme,publie_le:i.date,resume:i.resume||"",ajoute_nom:$("#who").textContent}});
     await chargerPins();render();toast("Ajouté à la sélection de l'équipe");}catch(e){toast(e.message.includes("duplicate")?"Déjà dans la sélection.":e.message);}}
 document.addEventListener("click",async e=>{const t=e.target;
   const o=t.closest("[data-o]");if(o){onglet(o.dataset.o);return;}
+  const fb=t.closest("[data-fil]");if(fb){V.fil=fb.dataset.fil;ls("veille.fil",V.fil);render();return;}
+  if(t.id==="communs"){V.communs=t.checked;ls("veille.communs",V.communs);render();return;}
+  const re=t.closest("[data-retedit]");if(re){V.editUrl=re.dataset.retedit;render();return;}
+  if(t.closest("[data-retcancel]")){V.editUrl=null;render();return;}
+  const rr=t.closest("[data-retreset]");if(rr){const r=V.ret[cleUrl(rr.dataset.retreset)];try{await api("/rest/v1/veille_retouches?url=eq."+encodeURIComponent(r.url),{method:"DELETE"});V.editUrl=null;await chargerRet();render();toast("Texte d'origine rétabli");}catch(err){toast(err.message);}return;}
+  const rs=t.closest("[data-retsuppr]");if(rs){await retoucher(rs.dataset.retsuppr,{resume:""});return;}
+  const rm=t.closest("[data-retmasque]");if(rm){const u=rm.dataset.retmasque,r=V.ret[cleUrl(u)];await retoucher(u,{masque:!(r&&r.masque)});return;}
   const th=t.closest("[data-t]");if(th){V.theme=th.dataset.t;render();return;}
   const p=t.closest("[data-pin]");if(p){p.disabled=true;await epingler(p.dataset.pin);return;}
   const u=t.closest("[data-unpin]");if(u){if(u.dataset.sur!=="1"){u.dataset.sur="1";u.textContent="Confirmer";return;}
     try{await api("/rest/v1/veille_articles?id=eq."+u.dataset.unpin,{method:"DELETE"});await chargerPins();render();}catch(err){toast(err.message);}return;}
   if(t.id==="btnAdd"){$("#add").hidden=!$("#add").hidden;return;}
   if(t.id==="addClose"){$("#add").hidden=true;return;}
-  if(t.id==="srcNew"){V.edit=null;$("#fSrcEd").reset();$("#srcTitre").textContent="Ajouter une source";$("#srcForm").hidden=false;return;}
+  if(t.id==="srcNew"){V.edit=null;$("#fSrcEd").reset();srcFil([]);$("#srcTitre").textContent="Ajouter une source";$("#srcForm").hidden=false;return;}
   if(t.id==="srcAnnuler"){$("#srcForm").hidden=true;return;}
-  const se=t.closest("[data-sedit]");if(se){const s=V.sources.find(x=>x.id===+se.dataset.sedit);V.edit=s.id;const f=$("#fSrcEd");["nom","url","site","theme","filtre"].forEach(k=>f[k].value=s[k]||"");$("#srcTitre").textContent="Modifier « "+s.nom+" »";$("#srcForm").hidden=false;f.nom.focus();return;}
+  const se=t.closest("[data-sedit]");if(se){const s=V.sources.find(x=>x.id===+se.dataset.sedit);V.edit=s.id;const f=$("#fSrcEd");["nom","url","site","theme","filtre"].forEach(k=>f[k].value=s[k]||"");srcFil(s.filieres||[]);$("#srcTitre").textContent="Modifier « "+s.nom+" »";$("#srcForm").hidden=false;f.nom.focus();return;}
   const sa=t.closest("[data-sact]");if(sa){const s=V.sources.find(x=>x.id===+sa.dataset.sact);try{await api("/rest/v1/veille_sources?id=eq."+s.id,{method:"PATCH",body:{actif:!s.actif}});await chargerSources();render();chargerFlux();}catch(err){toast(err.message);}return;}
   const sd=t.closest("[data-sdel]");if(sd){if(sd.dataset.sur!=="1"){sd.dataset.sur="1";sd.textContent="Confirmer";return;}
     try{await api("/rest/v1/veille_sources?id=eq."+sd.dataset.sdel,{method:"DELETE"});await chargerSources();render();}catch(err){toast(err.message);}return;}
@@ -206,7 +246,8 @@ document.addEventListener("click",async e=>{const t=e.target;
 $("#fAdd").onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));if(!d.publie_le)delete d.publie_le;d.ajoute_nom=$("#who").textContent;
   try{await api("/rest/v1/veille_articles",{method:"POST",body:d});e.target.reset();$("#add").hidden=true;await chargerPins();onglet("pin");toast("Article ajouté à la sélection");}
   catch(err){toast(err.message.includes("duplicate")?"Cet article est déjà dans la sélection.":err.message);}};
-$("#fSrcEd").onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));
+function srcFil(sel){$("#srcFil").innerHTML=Object.entries(FIL).map(([k,[l]])=>`<label><input type="checkbox" name="fil" value="${k}"${sel.includes(k)?" checked":""}> ${l}</label>`).join("");}
+$("#fSrcEd").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),d=Object.fromEntries(fd);delete d.fil;d.filieres=fd.getAll("fil");
   try{if(V.edit)await api("/rest/v1/veille_sources?id=eq."+V.edit,{method:"PATCH",body:d});else await api("/rest/v1/veille_sources",{method:"POST",body:Object.assign(d,{ordre:V.sources.length+1})});
     $("#srcForm").hidden=true;await chargerSources();render();chargerFlux();toast("Source enregistrée");}catch(err){toast(err.message.includes("duplicate")?"Ce flux existe déjà.":err.message);}};
 $("#q").oninput=render;$("#fSrc").onchange=render;$("#fPer").onchange=render;
