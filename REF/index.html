@@ -34,6 +34,9 @@ button:disabled{opacity:.5;cursor:default}
 .info dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:8px 0 0;font-size:13.5px}.info dt{color:var(--ink-3)}.info dd{margin:0}
 .pill{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 8px;background:#EEF2EC;color:var(--ink-2)}
 .pill.warn{background:var(--warn-soft);color:var(--warn)}
+button.mini{font-size:12px;padding:3px 9px;background:var(--surface);color:var(--accent);border:1px solid var(--line)}
+details.notes{margin-top:8px;font-size:13px;color:var(--ink-2)}details.notes summary{cursor:pointer;color:var(--accent)}details.notes ul{margin:6px 0 0;padding-left:18px}
+@media print{details.notes,button.mini{display:none}}
 details.n1{border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:0 0 10px}
 details.n1>summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:baseline}
 details.n1>summary::-webkit-details-marker{display:none}
@@ -68,7 +71,7 @@ mark{background:#FFE9A8;padding:0 1px}
 <main>
   <div class="head">
     <div class="t"><span class="eyebrow">Kerplouz LaSalle · Toutes formations</span><h1>Référentiels des diplômes</h1></div>
-    <div class="me"><span id="who"></span><a href="/">← Outils</a></div>
+    <div class="me"><span id="who"></span><a href="/#outils">← Accueil</a></div>
   </div>
   <div class="bar noprint" id="bar" hidden>
     <label for="selRef">Diplôme</label><select id="selRef"></select>
@@ -145,19 +148,22 @@ function render(){
   $("#info").innerHTML=`<h2>${esc(r.libelle)}</h2>${r.fictif?'<span class="pill warn">référentiel d\'essai</span> ':""}<span class="pill">${esc(FIL[r.niveau]||r.niveau)}</span>
     ${r.description?`<p class="desc" style="margin-top:8px">${esc(r.description)}</p>`:""}
     <dl>${r.arrete?`<dt>Arrêté</dt><dd>${esc(r.arrete)}</dd>`:""}${r.version?`<dt>Version</dt><dd>${esc(r.version)}</dd>`:""}
-      <dt>Source</dt><dd>${r.chlorofil?`<a href="${esc(r.chlorofil)}" target="_blank" rel="noopener">Chlorofil ↗</a>`:`Chlorofil${R.resp?' <span class="pill">lien à renseigner dans « Modifier »</span>':""}`}</dd>
-      <dt>Contenu</dt><dd>${R.n1.length} ${esc(L1)} · ${R.n2.length} ${esc(pl(L2))} · ${R.n3.length} ${esc(pl(L3))}</dd></dl>`;
+      <dt>Source</dt><dd>${r.chlorofil?`<a href="${esc(r.chlorofil)}" target="_blank" rel="noopener">Chlorofil ↗</a>`:`Chlorofil${R.resp?' <span class="pill">lien à renseigner dans « Modifier »</span>':""}`}${r.pdf?` · <a href="${esc(r.pdf)}" target="_blank" rel="noopener">Référentiel officiel (PDF) ↗</a>`:""}</dd>
+      <dt>Textes</dt><dd>${r.verifie?'<span class="pill">vérifiés sur le texte officiel</span>':'<span class="pill warn">à relire sur le PDF officiel</span> <span class="hint">les intitulés sont exacts, certaines phrases des critères peuvent être condensées</span>'}${R.resp?` <button type="button" class="mini" id="btnVerif">${r.verifie?"Remettre « à relire »":"Marquer comme vérifiés"}</button>`:""}</dd>
+      <dt>Contenu</dt><dd>${R.n1.length} ${esc(R.n1.length>1&&L1!=="UC"?pl(L1):L1)} · ${R.n2.length} ${esc(pl(L2))} · ${R.n3.length} ${esc(pl(L3))}</dd></dl>`;
+  if(r.notes)$("#info").insertAdjacentHTML("beforeend",`<details class="notes"><summary>Historique du diplôme et remarques</summary><ul>${r.notes.split("\n").filter(Boolean).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details>`);
+  const bv=$("#btnVerif");if(bv)bv.onclick=async()=>{bv.disabled=true;try{await rpc("ref_verifier",{p_ref:r.code,p_ok:!r.verifie});r.verifie=!r.verifie;render();}catch(e){statut(e.message,true);bv.disabled=false;}};
   if(!R.n1.length){$("#arbre").innerHTML=`<p class="empty">Ce référentiel est vide.${R.resp?" Utilisez « Importer » pour le remplir depuis un tableur.":""}</p>`;return;}
   const hit=(...t)=>!qs||t.some(x=>sans(x).includes(qs));
-  let h="",n=0;
+  let h="",n=0;const avecInd=R.n3.some(x=>x.indicateur&&x.indicateur.trim());
   for(const u of R.n1.slice().sort(byOrd)){
     const cis=R.n2.filter(c=>c.uc_id===u.id).sort(byOrd);let body="",nb=0;
     for(const c of cis){const crs=R.n3.filter(x=>x.ci_id===c.id).sort(byOrd);
       const vis=crs.filter(x=>hit(x.nom,x.indicateur)||hit(c.code,c.nom,c.description)||hit(u.code,u.nom,u.description));
       if(q&&!vis.length&&!hit(c.code,c.nom,c.description))continue;nb++;
       body+=`<div class="n2"><h3><span class="code">${surligne(c.code,q)}</span>${surligne(c.nom,q)}</h3>${c.description?`<p class="desc">${surligne(c.description,q)}</p>`:""}
-        ${vis.length?`<table><colgroup><col style="width:38%"><col></colgroup><thead><tr><th>${esc(L3)}</th><th>Indicateurs</th></tr></thead><tbody>${vis.map(x=>{const [t,...d]=String(x.nom).split("\n");
-          return `<tr><td><span class="t">${surligne(t,q)}</span>${d.length?"<br>"+surligne(d.join(" "),q):""}</td><td class="ind">${surligne(x.indicateur,q)}</td></tr>`;}).join("")}</tbody></table>`:""}</div>`;}
+        ${vis.length?`<table>${avecInd?'<colgroup><col style="width:38%"><col></colgroup>':""}<thead><tr><th>${esc(L3)}s</th>${avecInd?"<th>Indicateurs</th>":""}</tr></thead><tbody>${vis.map(x=>{const [t,...d]=String(x.nom).split("\n");
+          return `<tr><td><span class="t">${surligne(t,q)}</span>${d.length?"<br>"+surligne(d.join(" "),q):""}</td>${avecInd?`<td class="ind">${surligne(x.indicateur,q)}</td>`:""}</tr>`;}).join("")}</tbody></table>`:""}</div>`;}
     if(q&&!nb&&!hit(u.code,u.nom,u.description))continue;n++;
     h+=`<details class="n1"${q||R.tout?" open":""}><summary><span class="code">${surligne(u.code,q)}</span><span>${surligne(u.nom,q)}</span><span class="cnt">${cis.length} ${esc(cis.length>1?pl(L2):L2.toLowerCase())}</span></summary>
       <div class="n1body">${u.description?`<p class="desc">${surligne(u.description,q)}</p>`:""}${body||`<p class="hint">Aucune ${esc(L2.toLowerCase())}.</p>`}</div></details>`;}
