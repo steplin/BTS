@@ -197,8 +197,9 @@ function onglet(o){S.onglet=o;ls("suivi.onglet",o);$$("[data-o]").forEach(b=>b.s
 
 /* ---------- Fiche de suivi ---------- */
 async function ouvrir(id){S.app=S.liste.find(a=>a.id===id);if(!S.app)return;S.edit=null;
-  try{S.notes=await rpc("suivi_notes_de",{p_app:id})||[];}catch(e){toast(e.message);return;}
-  fiche();if(!$("#dlg").open)$("#dlg").showModal();}
+  S.notes=null;fiche();if(!$("#dlg").open)$("#dlg").showModal();
+  try{S.notes=await rpc("suivi_notes_de",{p_app:id})||[];}catch(e){S.notes=[];toast(e.message);}
+  if(S.app&&S.app.id===id)fiche();}
 function formNote(n){n=n||{type:"entretien",le:auj()};
   return `<form class="note noprint" id="fNote">
     <label>Type<select name="type">${Object.entries(TYPES).map(([k,[l]])=>`<option value="${k}"${n.type===k?" selected":""}>${l}</option>`).join("")}</select></label>
@@ -210,7 +211,8 @@ function formNote(n){n=n||{type:"entretien",le:auj()};
     <label class="ck"><input type="checkbox" name="confidentiel"${n.confidentiel?" checked":""}> Confidentielle</label>
     <div class="large" style="display:flex;gap:8px"><button type="submit">${n.id?"Enregistrer la modification":"Ajouter au suivi"}</button>${n.id?'<button type="button" class="ghost" id="annulerEdit">Annuler</button>':""}</div>
   </form>`;}
-function fiche(){const a=S.app,pct=a.uc_total?Math.round(100*a.uc_acquises/a.uc_total):null;
+function fiche(){if(S.notes===null){const a=S.app;$("#fiche").innerHTML=`<div class="fhead"><div><span class="eyebrow">Fiche de suivi · ${esc(a.libelle)}</span><h2>${esc(a.nom)} ${esc(a.prenom)}</h2></div><div class="noprint"><button type="button" class="ghost" id="btnFermer">Fermer</button></div></div><p class="empty">Chargement du suivi…</p>`;return;}
+  const a=S.app,pct=a.uc_total?Math.round(100*a.uc_acquises/a.uc_total):null;
   $("#fiche").innerHTML=`<div class="fhead"><div><span class="eyebrow">Fiche de suivi · ${esc(a.libelle)}</span><h2>${esc(a.nom)} ${esc(a.prenom)}${a.fictif?' <span class="pill">fictif</span>':""}</h2></div>
       <div class="noprint" style="display:flex;gap:6px"><button type="button" class="ghost" id="btnImpr">Imprimer</button><button type="button" class="ghost" id="btnFermer">Fermer</button></div></div>
     <dl class="fdl"><dt>Formation</dt><dd>${esc(a.libelle)} · cohorte ${esc(a.cohorte)} (fin ${jr(a.fin)})</dd>
