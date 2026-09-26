@@ -1498,7 +1498,7 @@ majRelBtn();
    synchronisées dans la base (bts_affectations) par le coordinateur, la base contrôle chaque enregistrement. */
 const Saisie=(()=>{
   const S={promo:null,promos:[],coord:false,me:null,apps:[],affs:[],saisies:{},draft:{},code:null,app:null,
-    formateurs:null,ctab:"dash",epr:{},loaded:false,loading:false,timers:{},busy:{},errs:{},status:{}};
+    formateurs:null,ctab:(new URLSearchParams(location.search).get("ctab")||"dash").replace(/[^a-z]/g,""),epr:{},loaded:false,loading:false,timers:{},busy:{},errs:{},status:{}};
   const LV=["--","-","+","++"],LVT=["Insuffisant","Fragile","Satisfaisant","Très satisfaisant"];
   const key=(c,a)=>c+"|"+a;
   const niveau=(n,b)=>{if(n==null||!(b>0))return -1;const r=n/b;return r<0.25?0:r<0.5?1:r<0.75?2:3;};
