@@ -234,7 +234,7 @@ function toast(m){const t=document.createElement("div");t.className="toast";t.te
 function statut(m,err){const s=$("#status");s.textContent=m||"";s.classList.toggle("err",!!err);}
 
 /* ---------- État ---------- */
-const S={classes:[],classe:null,ref:null,ucs:[],cis:[],crs:[],epreuves:[],epCis:[],cands:[],valid:[],saisies:new Map(),vue:"doc4",zone:"tdb",droits:{},aff:[],affPlan:[],cand:null,epr:null,moi:""};
+const S={classes:[],classe:null,ref:null,ucs:[],cis:[],crs:[],epreuves:[],epCis:[],cands:[],valid:[],saisies:new Map(),vue:"doc4",zone:"tdb",tdb:ls("uc.tdb")||"epr",droits:{},aff:[],affPlan:[],cand:null,epr:null,moi:""};
 const kS=(c,n,r)=>c+"|"+n+"|"+r;
 const byOrd=(a,b)=>(a.ordre-b.ordre)||String(a.code).localeCompare(String(b.code),"fr",{numeric:true});
 
@@ -438,30 +438,41 @@ function avMes(e,cands){let f=0,t=0;const cis=cisEpreuve(e.id).filter(ci=>peut("
       for(const cr of crsDe(ci)){t++;if(rempli(c.id,"cr",cr.id))f++;}t++;if(rempli(c.id,"ci",ci.id))f++;}
     if(peut("epreuve",e.id)){t++;if(rempli(c.id,"epreuve",e.id))f++;}}
   return [f,t];}
+// Tableau de bord en onglets : Mes épreuves · Mes UC · Résultats · Avancement
+const TDB=[["epr","Mes épreuves"],["uc","Propositions par UC"],["res","Résultats"],["av","Avancement par candidat"]];
 function renderTdb(){
-  const D=S.droits||{},mes=(S.aff||[]).filter(a=>a.cohorte===S.cohorte);
-  const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes,ref=S.classe.groupes.some(g=>g.referent);
-  const intro=mes.length?`<h2 class="h2">Mes UC et mes épreuves <small>cohorte ${esc(S.cohorte)}</small></h2><div class="chips">${
-      mes.map(a=>`<span>${a.role==="uc"?"UC":"Responsable de l'épreuve"} <b>${esc(a.code)}</b> ${esc(a.nom)}</span>`).join("")}</div>`
-    :`<p class="meta" style="margin:0 0 12px">${D.admin?"Administrateur : vous voyez et saisissez toutes les UC.":"Aucune UC de cette cohorte ne vous est affectée : vous consultez la classe"+(ref?" en tant que référent (dates et convocations dans « Coordination »).":".")}</p>`;
+  const D=S.droits||{},mes=(S.aff||[]).filter(a=>a.cohorte===S.cohorte),auj=AUJ();
+  const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes,ref=S.classe.groupes.some(g=>g.referent),L=candsVis();
   const eps=S.epreuves.filter(e=>peut("epreuve",e.id)||cisEpreuve(e.id).some(ci=>peut("ci",ci.id)));
-  let t=`<h2 class="h2">${mes.length?"Mes épreuves":"Épreuves du plan"}</h2>`;
-  if(!eps.length)t+=`<p class="empty">Aucune épreuve à saisir pour vous dans ce plan.</p>`;
-  else{t+=`<table class="list"><thead><tr><th>Épreuve</th><th>Capacités à saisir</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Mes saisies</th><th></th></tr></thead><tbody>`;
-    for(const e of eps)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,n]=avMes(e,cg);
-      t+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}${D.epreuves&&D.epreuves.includes(e.id)?' <span class="acq oui">responsable</span>':""}</td>
-        <td rowspan="${G.length}">${esc(cisEpreuve(e.id).filter(ci=>peut("ci",ci.id)).map(ci=>ci.code).join(", "))}</td>`:""}
-        ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}<td>${d.jour?esc(frDate(d.jour))+" "+esc((d.heure||"08:15").replace(":","h")):'<span class="meta">à fixer</span>'}</td>
-        <td>${barre(f,n)}</td><td style="text-align:right"><button type="button" class="small" data-saisir="${e.id}" data-g="${esc(g.lettre)}">Saisir</button></td></tr>`;});
-    t+=`</tbody></table>`;}
-  const ucs=S.ucs.filter(u=>peut("uc",u.id)),L=candsVis();
-  if(ucs.length){t+=`<h2 class="h2">Propositions par UC <small>document 5</small></h2><table class="list"><thead><tr><th>UC</th><th>Propositions rédigées</th><th></th></tr></thead><tbody>${
-    ucs.map(u=>{const a=L.filter(c=>!validation(c.id,u.id)),f=a.filter(c=>rempli(c.id,"uc",u.id)).length;
-      return `<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${barre(f,a.length)}</td><td style="text-align:right"><button type="button" class="ghost small" data-go="doc5" data-c="${L[0]?L[0].id:""}">Document 5</button></td></tr>`;}).join("")}</tbody></table>`;}
-  const auj=new Date().toISOString().slice(0,10),proch=S.dates.filter(d=>d.jour&&d.jour>=auj&&eps.some(e=>e.id===d.epreuve_id)).sort((a,b)=>(a.jour+a.heure).localeCompare(b.jour+b.heure)).slice(0,6);
-  if(proch.length)t+=`<h2 class="h2">Prochaines épreuves</h2><ul>${proch.map(d=>{const e=S.epreuves.find(x=>x.id===d.epreuve_id);
-    return `<li><b>${esc(frDate(d.jour))}</b> ${esc((d.heure||"08:15").replace(":","h"))} · ${esc(e.code)} ${esc(e.nom)} · ${esc(d.classe)} · ${esc(d.lieu||"")}</li>`;}).join("")}</ul>`;
-  $("#view").innerHTML=intro+t+htmlResultats();
+  if(!TDB.some(x=>x[0]===S.tdb))S.tdb="epr";
+  const onglets=`<div class="seg tdbtabs" role="tablist" style="margin:0 0 14px">${TDB.map(([k,l])=>`<button type="button" role="tab" data-tdb="${k}" aria-pressed="${S.tdb===k}">${esc(l)}</button>`).join("")}</div>`;
+  const intro=mes.length?`<div class="chips">${mes.map(a=>`<span>${a.role==="uc"?"UC":"Responsable de l'épreuve"} <b>${esc(a.code)}</b> ${esc(a.nom)}</span>`).join("")}</div>`
+    :`<p class="meta" style="margin:0 0 12px">${D.admin?"Administrateur : vous voyez et saisissez toutes les UC.":"Aucune UC de cette cohorte ne vous est affectée : vous consultez la classe"+(ref?" en tant que référent (dates dans « Coordination »).":".")}</p>`;
+  let t="";
+  if(S.tdb==="epr"){
+    t=intro;
+    if(!eps.length)t+=`<p class="empty">Aucune épreuve à saisir pour vous dans ce plan.</p>`;
+    else{t+=`<table class="list"><thead><tr><th>Épreuve</th><th>Capacités à saisir</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Mes saisies</th><th></th></tr></thead><tbody>`;
+      for(const e of eps)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,n]=avMes(e,cg);
+        t+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}${D.epreuves&&D.epreuves.includes(e.id)?' <span class="acq oui">responsable</span>':""}</td>
+          <td rowspan="${G.length}">${esc(cisEpreuve(e.id).filter(ci=>peut("ci",ci.id)).map(ci=>ci.code).join(", "))}</td>`:""}
+          ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}<td>${d.jour?esc(frDate(d.jour))+" "+esc((d.heure||"08:15").replace(":","h")):'<span class="meta">à fixer</span>'}</td>
+          <td>${barre(f,n)}</td><td style="text-align:right"><button type="button" class="small" data-saisir="${e.id}" data-g="${esc(g.lettre)}">Saisir</button></td></tr>`;});
+      t+=`</tbody></table>`;}
+    const proch=S.dates.filter(d=>d.jour&&d.jour>=auj&&eps.some(e=>e.id===d.epreuve_id)).sort((a,b)=>(a.jour+a.heure).localeCompare(b.jour+b.heure)).slice(0,6);
+    if(proch.length)t+=`<h2 class="h2" style="margin-top:22px">Prochaines épreuves</h2><ul>${proch.map(d=>{const e=S.epreuves.find(x=>x.id===d.epreuve_id);
+      return `<li><b>${esc(frDate(d.jour))}</b> ${esc((d.heure||"08:15").replace(":","h"))} · ${esc(e.code)} ${esc(e.nom)} · ${esc(d.classe)} · ${esc(d.lieu||"")}</li>`;}).join("")}</ul>`;
+  }else if(S.tdb==="uc"){
+    const ucs=S.ucs.filter(u=>peut("uc",u.id));
+    t=!ucs.length?`<p class="empty">Aucune UC à proposer pour vous dans ce plan.</p>`:`<table class="list"><thead><tr><th>UC</th><th>Propositions rédigées</th><th></th></tr></thead><tbody>${
+      ucs.map(u=>{const a=L.filter(c=>!validation(c.id,u.id)),f=a.filter(c=>rempli(c.id,"uc",u.id)).length;
+        return `<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${barre(f,a.length)}</td><td style="text-align:right"><button type="button" class="ghost small" data-go="doc5" data-c="${L[0]?L[0].id:""}">Document 5</button></td></tr>`;}).join("")}</tbody></table>`;
+  }else{
+    const h=htmlResultats();t=h?h.split('<h2 class="h2">Avancement des saisies par candidat</h2>')[S.tdb==="res"?0:1]||"":"";
+    t=(S.tdb==="res"?t.replace(/<h2 class="h2">Résultats : synthèse par UC[\s\S]*?<\/h2>/,""):t)||`<p class="empty">Aucun candidat.</p>`;
+    if(S.tdb==="res"&&L.length)t+=`<p class="meta">Proposition de l'équipe (validation / non-validation) ; « Validée » et « VAA » : UC déjà acquises.</p>`;
+  }
+  $("#view").innerHTML=onglets+t;
 }
 /* ---------- Calendrier des épreuves (toutes mes classes UC) ---------- */
 async function renderCal(){
@@ -686,6 +697,7 @@ document.addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
   if(b.dataset.z){await toutEnregistrer();S.zone=b.dataset.z;history.replaceState(null,"","?vue="+(S.zone==="saisie"?S.vue:S.zone));render();}
   else if(b.dataset.v){await toutEnregistrer();S.vue=b.dataset.v;history.replaceState(null,"","?vue="+S.vue);render();}
+  else if(b.dataset.tdb){S.tdb=b.dataset.tdb;ls("uc.tdb",S.tdb);renderTdb();}
   else if(b.dataset.saisir){S.zone="saisie";S.vue="doc4";S.epr=+b.dataset.saisir;S.grp=b.dataset.g||"";$("#selGrp").value=S.grp;majCands();render();window.scrollTo(0,0);}
   else if(b.dataset.go){await toutEnregistrer();if(b.dataset.c)S.cand=b.dataset.c;S.zone="saisie";S.vue=b.dataset.go;render();window.scrollTo(0,0);}
   else if(b.id==="prev"||b.id==="next"){await toutEnregistrer();const L=candsVis(),i=L.findIndex(c=>c.id===S.cand),j=i+(b.id==="next"?1:-1);
