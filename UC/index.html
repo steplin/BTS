@@ -248,6 +248,7 @@ async function init(){
   }catch(e){return erreur(e);}
   const q0=new URLSearchParams(location.search).get("vue")||"";
   S.zone=["doc4","doc5"].includes(q0)?"saisie":["tdb","coord","cal","saisie"].includes(q0)?q0:"tdb";if(q0==="doc5")S.vue="doc5";
+  {const og=new URLSearchParams(location.search).get("ong");if(og&&/^[a-z]+$/.test(og))S.ong[S.zone]=og;}
   $("#zones").hidden=false;$('[data-z="coord"]').hidden=!(S.resp||S.classes.some(c=>c.referent||c.coord));
   const avec=S.classes.filter(c=>c.plan_id);
   if(S.zone==="cal"&&!avec.length)return render();
