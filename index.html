@@ -96,6 +96,8 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
 .actus li a{color:var(--ink);font-weight:500;text-decoration:none}.actus li a:hover{color:var(--accent);text-decoration:underline}
 .actus .level-h a{color:#6B5CA5;font-weight:600;text-decoration:none}
 .actus li span{font-size:12px;color:var(--ink-3)}
+.actus li p{margin:2px 0 0;font-size:12.5px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#veilleFil{display:flex;flex-direction:column;gap:26px}
 @media (max-width:640px){.esp{padding:8px 10px;font-size:13px}}
 @media (prefers-reduced-motion:reduce){.tile,.espcard{transition:none}}
 </style></head><body>
@@ -363,27 +365,45 @@ function renderDash(){
   const EV=espacesVus();if(!EV.some(e=>e.id===espace))espace=(EV[0]||{id:"outils"}).id;
   navEsp(EV);
   document.body.dataset.espace=espace;
-  const T=visiblesEsp(espace),F=Object.keys(FORMS).filter(k=>T.some(t=>t.niv===k));
+  const T=visiblesEsp(espace);let F=Object.keys(FORMS).filter(k=>T.some(t=>t.niv===k));
+  if(espace==="veille")F=[...mesFilieres(),"tous"];
   if(filtre!=="all"&&!F.includes(filtre))filtre="all";
   $("#tabs").innerHTML=[["all","Toutes les formations","var(--ink-3)"],...F.map(k=>[k,FORMS[k].court,FORMS[k].c])].map(([id,n,c])=>`<button type="button" class="tab" aria-pressed="${filtre===id}" data-f="${id}" style="--c:${c}"><span class="sw"></span>${n}</button>`).join("");
   $("#tabs").hidden=F.length<2;
   const E=ESPACES.find(e=>e.id===espace);
-  $("#levels").innerHTML=`<p class="espintro">${E.d}</p>`+F.filter(k=>filtre==="all"||filtre===k).map(k=>{const f=FORMS[k],L=T.filter(t=>t.niv===k);
+  $("#levels").innerHTML=`<p class="espintro">${E.d}</p>`+(espace==="veille"?`<div id="veilleFil"></div>`:"")+F.filter(k=>espace!=="veille"||k==="tous").filter(k=>filtre==="all"||filtre===k).map(k=>{const f=FORMS[k],L=T.filter(t=>t.niv===k);
     return `<section class="level" style="--c:${f.c}" aria-labelledby="h-${k}"><div class="level-h"><h2 id="h-${k}">${f.nom}</h2><span class="niv">${f.niv}</span><span class="sub">${f.sub}</span></div>
       <div class="tiles">${L.map(tuile).join("")}</div></section>`;}).join("")
-    +(espace==="veille"?`<section class="actus" id="actus" hidden><div class="level-h" style="--c:#6B5CA5"><h2>Dernières actualités</h2><span class="sub"><a href="/VEILLE/">Toute la veille →</a></span></div><ul id="actusL"></ul></section>`:"");
+    ;
   extrasAccueil();
 }
 /* Accueil : chiffres utiles et dernières actualités */
-let EXTRAS=null;
-function extrasAccueil(){if(!EXTRAS)EXTRAS=chargerExtras();else EXTRAS.then(afficherActus);}
+let EXTRAS=null,VEILLE_D=null;
+const MOTS=[[/\bcapa\b|jardinier paysagiste/i,["capa"]],[/\bbpa\b/i,["bpa"]],[/\bbp\b|brevet professionnel/i,["bp"]],[/\bbtsa?\b|technicien sup/i,["btsa"]],[/arbor|élag|elag|grimp|\barbres?\b/i,["cs"]],[/exploitation agricole|agricult|élevage|\bpac\b|maraîch|installation agricole/i,["bprea"]],[/paysag|espaces? verts?|jardin/i,["capa","bpa","bp","btsa"]]];
+const cleUrl=u=>String(u||"").replace(/[?&]utm_[^&#]*/g,"").replace(/#.*$/,"");
+function mesFilieres(){const d=apercu||droits||{};const all=Object.keys(REFS);return d.admin&&!apercu?all:all.filter(k=>(d.niveaux||[]).includes(k));}
+function filDe(i){const r=VEILLE_D.ret[cleUrl(i.url)];if(r&&r.filieres)return r.filieres;const f=new Set(i.filieres||[]);const t=(i.titre||"")+" "+(i.resume||"");const spec=MOTS.slice(0,-1).filter(([re])=>re.test(t));spec.forEach(([re,l])=>l.forEach(x=>f.add(x)));if(!spec.length&&MOTS[MOTS.length-1][0].test(t))MOTS[MOTS.length-1][1].forEach(x=>f.add(x));return [...f];}
+function resDe(i){const r=VEILLE_D.ret[cleUrl(i.url)];return r&&r.resume!=null?r.resume:(i.resume||"");}
+function renderVeilleFil(){const box=$("#veilleFil");if(!box)return;
+  if(!VEILLE_D){box.innerHTML='<p class="note" style="text-align:left">Chargement des actualités…</p>';return;}
+  const I=VEILLE_D.items.filter(i=>{const r=VEILLE_D.ret[cleUrl(i.url)];return !(r&&r.masque);});
+  const li=i=>{const r=resDe(i);return `<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.titre)}</a><span>${esc(i.source)}${i.date?" · "+new Date(i.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):""}</span>${r?`<p>${esc(r)}</p>`:""}</li>`;};
+  const ks=mesFilieres().filter(k=>filtre==="all"||filtre===k);
+  let h=ks.map(k=>{const f=FORMS[k],L=I.filter(i=>filDe(i).includes(k)).slice(0,6);
+    return `<section class="level actus" style="--c:${f.c}"><div class="level-h"><h2>${f.nom}</h2><span class="niv">${f.niv}</span><span class="sub"><a href="/VEILLE/?fil=${k}" style="color:${f.c}">Toute la veille ${f.court} →</a></span></div>
+      ${L.length?`<ul>${L.map(li).join("")}</ul>`:'<p class="note" style="text-align:left">Aucune actualité récente pour cette filière.</p>'}</section>`;}).join("");
+  if(filtre==="all"||filtre==="tous"){const C=I.filter(i=>!filDe(i).length).slice(0,6);
+    if(C.length)h+=`<section class="level actus" style="--c:#4A5A51"><div class="level-h"><h2>Formation, apprentissage et réglementation</h2><span class="niv">Toutes filières</span><span class="sub"><a href="/VEILLE/" style="color:#4A5A51">Toute la veille →</a></span></div><ul>${C.map(li).join("")}</ul></section>`;}
+  box.innerHTML=h;}
+function extrasAccueil(){if(!EXTRAS)EXTRAS=chargerExtras();renderVeilleFil();}
 function afficherActus(L){if(!L||!L.length||!$("#actusL"))return;$("#actusL").innerHTML=L.map(i=>`<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.titre)}</a><span>${esc(i.source)}${i.date?" · "+new Date(i.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):""}</span></li>`).join("");$("#actus").hidden=false;}
 async function chargerExtras(){const s=await session();if(!s)return;const out=outilsVus(),adm=droits&&droits.admin&&!apercu;
   if(adm||out.has("suivi")){try{const a=await api("/rest/v1/rpc/suivi_actions",{method:"POST",body:{},token:s.access_token})||[];const auj=new Date().toISOString().slice(0,10),r=a.filter(x=>x.echeance&&x.echeance<auj).length;
     BADGES.suivi=a.length?`<span class="badge${r?" warn":""}" title="${a.length} action(s) ouverte(s)${r?", dont "+r+" en retard":""}">${a.length}</span>`:"";navEsp();}catch(e){}}
-  if(adm||out.has("veille")){try{const r=await fetch("/api/veille",{credentials:"same-origin"});if(!r.ok)return;const d=await r.json(),L=(d.items||[]).slice(0,6);if(!L.length)return;
+  if(adm||out.has("veille")){try{const r=await fetch("/api/veille",{credentials:"same-origin"});if(!r.ok)return;const d=await r.json(),L=(d.items||[]).slice(0,6);let ret=[];try{ret=await api("/rest/v1/veille_retouches",{token:s.access_token})||[];}catch(e){}
+    VEILLE_D={items:d.items||[],ret:Object.fromEntries(ret.map(x=>[cleUrl(x.url),x]))};renderVeilleFil();if(!L.length)return;
     const n2=(d.items||[]).filter(i=>i.date&&Date.now()-Date.parse(i.date)<7*864e5).length;BADGES.veille=n2?`<span class="badge" title="${n2} article(s) cette semaine">${n2}</span>`:"";navEsp();
-    afficherActus(L);return L;}catch(e){}}
+    return L;}catch(e){}}
 }
 function allerEsp(id,push){espace=id;filtre="all";try{localStorage.setItem("kep.espace",id);}catch(e){}if(push!==false)history.replaceState(null,"","#"+id);renderDash();window.scrollTo({top:0});}
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(h&&h!==espace)allerEsp(h,false);});
