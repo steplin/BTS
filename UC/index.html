@@ -80,6 +80,29 @@ textarea:focus{background:#fff}
 .sug li small{display:block;color:var(--ink-3);margin-top:3px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:9px;padding:9px 14px;font-size:13.5px;z-index:60;max-width:90vw}
 .print-only{display:none}
+/* Format officiel des documents 4 et 5 (export EvalUc / DRAAF-SRFD Bretagne) */
+@font-face{font-family:"DejaVu Sans Condensed";src:url(/fonts/DejaVuSansCondensed.woff) format("woff");font-weight:400}
+@font-face{font-family:"DejaVu Sans Condensed";src:url(/fonts/DejaVuSansCondensed-Bold.woff) format("woff");font-weight:700}
+@font-face{font-family:"DejaVu Serif Condensed";src:url(/fonts/DejaVuSerifCondensed.woff) format("woff");font-weight:400}
+@font-face{font-family:"DejaVu Serif Condensed";src:url(/fonts/DejaVuSerifCondensed-Bold.woff) format("woff");font-weight:700}
+@font-face{font-family:"DejaVu Serif Condensed";src:url(/fonts/DejaVuSerifCondensed-Italic.woff) format("woff");font-style:italic}
+.off{--vert:#3C7D15;font-family:"DejaVu Sans Condensed","Arial Narrow",Arial,sans-serif;color:#000}
+.off .dhead{font:italic 12px "DejaVu Serif Condensed",Georgia,serif;color:#000;margin:0 0 10px}.off .dhead .c{text-align:center}.off .dhead .r{text-align:right}
+.off .dbox{margin:0 0 14px}.off .dbox td{border:1px solid #000;padding:4px 8px;font:700 14px "DejaVu Serif Condensed",Georgia,serif;text-align:center;width:40%}.off .dbox td+td{width:60%}
+.off .dtitre{font:700 14px "DejaVu Sans Condensed",Arial,sans-serif;text-align:left;border:0;background:none;padding:0;margin:0 0 8px}
+.off .dinfo{margin:0 0 16px}.off .dinfo td{border:1px solid #000;padding:2px 4px;vertical-align:middle;background:none}
+.off .doc th{background:var(--vert);color:#fff;font-weight:700;text-align:center;vertical-align:middle;border:1px solid #000;padding:5px 4px}
+.off .doc td{border:1px solid #000;vertical-align:middle;background:none}
+.off .doc td.c{text-align:center}
+.off .doc .crt{font-weight:400}
+.off .doc td.rap{padding:0}.off .rc{padding:3px 4px;border-top:1px solid #000}.off .rc:first-child{border-top:0}
+.off .dtot{margin-top:22px}.off .dtot th{font-size:12.5px;background:var(--vert);color:#fff;text-align:left;font-weight:700;padding:5px 4px;border:1px solid #000}.off .dtot td{border:1px solid #000;padding:4px;height:70px;vertical-align:top}
+.off .sign{display:flex;gap:20%;margin:18px 0 0;font:14px "DejaVu Serif Condensed",Georgia,serif}
+.meta .edit{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:2px 9px;text-decoration:none;font-weight:600}
+.meta .edit:disabled{opacity:.45;cursor:not-allowed}
+.cell.edit textarea{background:#fff;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.cell textarea[readonly]{background:#F7F8F6;cursor:default}
+.bloc{color:#A33;font-size:11px}
 @media (max-width:760px){
   .doc,.doc thead,.doc tbody,.doc tr,.doc td{display:block;width:100%}
   .doc thead{display:none}
@@ -88,7 +111,7 @@ textarea:focus{background:#fff}
   .prog i{width:70px}
 }
 @media print{
-  @page{margin:10mm 10mm 14mm;@bottom-left{content:"UFA Kerplouz LaSalle Auray";font:9pt sans-serif}@bottom-right{content:counter(page) " / " counter(pages);font:9pt sans-serif}}
+  @page{margin:9mm 8mm 13mm;@bottom-left{content:"UFA Kerplouz LaSalle - AURAY";font:10.5pt "DejaVu Serif Condensed",Georgia,serif}@bottom-right{content:counter(page) "/" counter(pages);font:10.5pt "DejaVu Serif Condensed",Georgia,serif}}
   body{background:#fff;padding:0;font-size:10.5pt}
   main{max-width:none;padding:0}
   .noprint,.head,.bar,.banner,.meta,.toast{display:none!important}
@@ -97,7 +120,14 @@ textarea:focus{background:#fff}
   .print-only{display:block;white-space:pre-wrap}
   .doc th,.doc td{border-color:#000}
   .doc tr{break-inside:avoid}
-  .d5 th,.d5 td{padding:3px 5px!important;font-size:9pt!important;line-height:1.3}
+  .off{font-size:8.5pt;line-height:1.28}
+  .off .dhead{font-size:9pt;margin-bottom:8pt}.off .dbox td{font-size:10.5pt;padding:2pt 6pt}.off .dbox{margin-bottom:10pt}
+  .off .dtitre{font-size:10.5pt;margin:0 0 6pt}.off .dinfo{font-size:9pt;margin-bottom:10pt}.off .dinfo td{padding:0 3pt}
+  .off .doc th{font-size:8.5pt;padding:3pt 2pt}.off .doc td{font-size:8.5pt;padding:1pt 2pt}.off .rc{padding:1pt 2pt}
+  .off .dtot{margin-top:16pt}.off .dtot th{font-size:8.5pt;padding:3pt 2pt}.off .dtot td{height:14mm;font-size:8.5pt}
+  .off .sign{font-size:10.5pt;margin-top:14pt}
+  .off .doc .ind{color:#000}.off .print-only{white-space:pre-wrap}
+  .off .doc th,.off .dtot th{background:#3C7D15!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .ptitle{display:block!important;text-align:center;font-weight:700;border:1px solid #000;padding:5px;margin:4px 0 8px}
 }
 .dhead{width:100%;font-size:12px;font-style:italic;color:var(--ink-2);margin-bottom:6px}
@@ -329,21 +359,29 @@ function avancementEpreuve(ep,cands){let f=0,t=0;const cis=cisEpreuve(ep.id);
 function renderListe(){
   const L=candsVis(),grpCol=S.classe.groupes.length>1;
   const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes;
-  let ep=`<h2 class="h2">Épreuves du plan${S.plan.agree_le?" agréé le "+esc(frDate(S.plan.agree_le)):""} <small>cohorte ${esc(S.cohorte)}</small></h2>
-    <table class="list dash"><thead><tr><th>Épreuve</th><th>Responsable</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Heure</th><th>Min./cand.</th><th>Lieu</th><th>Saisies</th><th>Convocations</th></tr></thead><tbody>`;
+  let ep=`<h2 class="h2">Épreuves du plan${S.plan.agree_le?" agréé le "+esc(frDate(S.plan.agree_le)):""} <small>cohorte ${esc(S.cohorte)} · date fixée dans une période agréée, au plus tard 15 jours avant</small></h2>
+    <table class="list dash"><thead><tr><th>Épreuve</th><th>Périodes agréées</th><th>Responsable</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Heure</th><th>Min./cand.</th><th>Lieu</th><th>Saisies</th></tr></thead><tbody>`;
   for(const e of S.epreuves)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,t]=avancementEpreuve(e,cg),ed=g.referent;
     const k=`data-ep="${e.id}" data-cl="${esc(g.code)}"`;
-    ep+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td><td rowspan="${G.length}">${esc(nomPers(e.responsable))||"—"}</td>`:""}
+    ep+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td><td rowspan="${G.length}" class="per">${perTxt(e)||'<span class="meta">non renseignées</span>'}</td>
+        <td rowspan="${G.length}">${esc(nomPers(e.responsable))||"—"}</td>`:""}
       ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}
-      <td>${ed?`<input type="date" ${k} data-d="jour" value="${esc(d.jour||"")}" aria-label="Date ${esc(e.code)}">`:esc(frDate(d.jour))||"—"}</td>
+      <td>${ed?`<input type="date" ${k} data-d="jour" value="${esc(d.jour||"")}" aria-label="Date ${esc(e.code)}">`:esc(frDate(d.jour))||"—"}<div>${echeance(e,d)}</div></td>
       <td>${ed?`<input type="time" ${k} data-d="heure" value="${esc(d.heure||"08:15")}" aria-label="Heure ${esc(e.code)}">`:esc((d.heure||"08:15").replace(":","h"))}</td>
       <td>${ed?`<input type="number" min="0" step="5" style="width:70px" ${k} data-d="duree" value="${esc(d.duree||0)}" aria-label="Minutes par candidat">`:esc(d.duree||"—")}</td>
       <td>${ed?`<input type="text" ${k} data-d="lieu" value="${esc(d.lieu||"")}" placeholder="UFA Kerplouz LaSalle Auray" aria-label="Lieu">`:esc(d.lieu||"UFA Kerplouz LaSalle Auray")}</td>
-      <td>${barre(f,t)}</td>
-      <td>${d.convoc_le?`<span class="pill ok">✓ faites le ${esc(new Date(d.convoc_le).toLocaleDateString("fr-FR"))}</span>${ed?` <button type="button" class="ghost small" data-convno ${k}>Annuler</button>`:""}`
-        :ed?`<button type="button" class="small" data-conv ${k} ${d.jour&&cg.length?"":"disabled"} title="${d.jour?"":"Fixez d'abord la date"}">Convocations</button> <button type="button" class="ghost small" data-convok ${k}>Marquer faites</button>`:"à faire"}</td></tr>`;});
+      <td>${barre(f,t)}</td></tr>`;});
   ep+=`</tbody></table>`;
   if(!S.epreuves.length)ep=`<p class="empty">Aucune épreuve dans le plan d'évaluation.</p>`;
+  // Convocations : une par candidat et par session de formation (semaine au CFA), toutes les épreuves de la session
+  const SS=sessions(G);
+  const conv=`<h2 class="h2">Convocations par session de formation <small>une convocation par apprenti reprenant toutes les épreuves de la session</small></h2>${!SS.length?`<p class="meta" style="margin:0 0 18px">Aucune date fixée pour l'instant.</p>`:
+    `<table class="list"><thead><tr>${G.length>1?"<th>Groupe</th>":""}<th>Session</th><th>Épreuves</th><th>Convocations</th><th></th></tr></thead><tbody>${SS.map(x=>{
+      const faites=x.items.every(it=>it.d.convoc_le),ed=x.g.referent,k=`data-cl="${esc(x.g.code)}" data-lundi="${x.lundi}"`,lim=ajout(x.items[0].d.jour,-15),auj=AUJ();
+      return `<tr>${G.length>1?`<td>${esc(x.g.lettre)}</td>`:""}<td>semaine du ${esc(frDate(x.lundi))}</td>
+        <td>${x.items.map(it=>`<b>${esc(it.e.code)}</b> ${esc(new Date(it.d.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}))} ${esc((it.d.heure||"08:15").replace(":","h"))}`).join("<br>")}</td>
+        <td>${faites?`<span class="acq oui">faites</span>`:`<span class="acq${lim<=auj?" non":""}">à envoyer avant le ${esc(frDate(lim))}</span>`}</td>
+        <td style="text-align:right;white-space:nowrap">${ed?`<button type="button" class="small" data-convs ${k}>Convocations</button> ${faites?`<button type="button" class="ghost small" data-convsno ${k}>Annuler</button>`:`<button type="button" class="ghost small" data-convsok ${k}>Marquer faites</button>`}`:""}</td></tr>`;}).join("")}</tbody></table>`}`;
   const cand=!L.length?`<p class="empty">Aucun candidat dans ce groupe.</p>`:`<h2 class="h2">Candidats</h2><table class="list"><thead><tr><th>Candidat</th>${grpCol?"<th>Groupe</th>":""}<th>Document 4 (saisies)</th><th>Document 5 (propositions par UC)</th><th></th></tr></thead><tbody>${
     L.map(c=>{const p=progression(c.id);return `<tr><td><b>${esc(c.nom)}</b> ${esc(c.prenom)}${c.fictif?' <small style="color:var(--ink-3)">(fictif)</small>':""}</td>${grpCol?`<td>${esc(c.groupe)}</td>`:""}
       <td>${barre(p.fait4,p.tot4)}</td><td>${barre(p.fait5,p.tot5)}</td>
@@ -362,8 +400,25 @@ function renderListe(){
     <div style="overflow-x:auto"><table class="list"><thead><tr><th>Candidat</th>${S.ucs.map(u=>`<th title="${esc(u.nom)}">${esc(u.code)}</th>`).join("")}</tr></thead><tbody>${
     L.map(c=>`<tr><td>${esc(c.nom+" "+c.prenom)}${grpCol?` <small>(${esc(c.groupe)})</small>`:""}</td>${S.ucs.map(u=>{const t=etatUC(c.id,u);
       return `<td><span class="acq${/^Validation|^Validée|^VAA/.test(t)?" oui":/^Non/.test(t)?" non":""}">${esc(t==="—"?"en cours":t.replace(" proposée",""))}</span></td>`;}).join("")}</tr>`).join("")}</tbody></table></div>`;
-  $("#view").innerHTML=edi+ep+aff+syn+cand;
+  $("#view").innerHTML=edi+ep+conv+aff+syn+cand;
 }
+/* ---------- Périodes agréées, échéances (15 jours avant) et sessions de formation ---------- */
+const periodes=e=>[[e.p1_du,e.p1_au],[e.p2_du,e.p2_au],[e.p3_du,e.p3_au]].filter(p=>p[0]).map(p=>({du:p[0],au:p[1]||p[0]}));
+const fr2=iso=>new Date(iso+"T12:00:00").toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
+const perTxt=e=>periodes(e).map(p=>p.du===p.au?"le "+esc(frDate(p.du)):"du "+esc(fr2(p.du))+" au "+esc(frDate(p.au))).join("<br>");
+const dansPeriode=(e,j)=>{const P=periodes(e);return !P.length||P.some(p=>j>=p.du&&j<=p.au);};
+const ajout=(iso,n)=>{const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return d.toLocaleDateString("sv-SE");};
+const AUJ=()=>new Date().toLocaleDateString("sv-SE");
+function echeance(e,d){const auj=AUJ();
+  if(!d.jour){const p=periodes(e).map(x=>x.du).filter(x=>x>=auj).sort()[0];if(!p)return "";const lim=ajout(p,-15);
+    return `<span class="acq${lim<=auj?" non":""}">à fixer avant le ${esc(frDate(lim))}</span>`;}
+  return d.jour<ajout(auj,15)&&d.jour>=auj&&!d.convoc_le?`<span class="acq non">moins de 15 jours</span>`:"";}
+const lundiDe=iso=>{const d=new Date(iso+"T12:00:00"),w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d.toLocaleDateString("sv-SE");};
+function sessions(G){const R=[];
+  for(const g of G)for(const e of S.epreuves){const d=dateDe(e.id,g.code);if(!d.jour)continue;const l=lundiDe(d.jour);
+    let x=R.find(y=>y.g.code===g.code&&y.lundi===l);if(!x){x={g,lundi:l,items:[]};R.push(x);}x.items.push({e,d});}
+  R.forEach(x=>x.items.sort((a,b)=>(a.d.jour+a.d.heure).localeCompare(b.d.jour+b.d.heure)));
+  return R.sort((a,b)=>a.lundi.localeCompare(b.lundi)||a.g.code.localeCompare(b.g.code));}
 /* ---------- Tableau de bord du formateur ---------- */
 function avMes(e,cands){let f=0,t=0;const cis=cisEpreuve(e.id).filter(ci=>peut("ci",ci.id));
   for(const c of cands){for(const ci of cis){if(validation(c.id,ci.uc_id))continue;
@@ -437,118 +492,137 @@ function grilleUC(){const L=tousCands(),P=S.plan||{};
 const tDate=new Map();
 function majDate(inp){const ep=+inp.dataset.ep,cl=inp.dataset.cl,k=ep+"|"+cl;clearTimeout(tDate.get(k));
   tDate.set(k,setTimeout(async()=>{const row=[...document.querySelectorAll(`[data-ep="${ep}"][data-cl="${cl}"][data-d]`)],v={};row.forEach(x=>v[x.dataset.d]=x.value);
+    const e=S.epreuves.find(x=>x.id===ep);
+    if(v.jour&&!dansPeriode(e,v.jour)){statut("Date hors des périodes agréées pour "+e.code+" : "+periodes(e).map(p=>frDate(p.du)+" – "+frDate(p.au)).join(", "),true);return;}
     statut("Enregistrement…");
     try{await rpc("uc_fixer_date",{p_epreuve:ep,p_classe:cl,p_jour:v.jour||null,p_heure:v.heure||"08:15",p_duree:+v.duree||0,p_lieu:v.lieu||""});
       const d=S.dates.find(x=>x.epreuve_id===ep&&x.classe===cl);const n={epreuve_id:ep,classe:cl,jour:v.jour||null,heure:v.heure||"08:15",duree:+v.duree||0,lieu:v.lieu||"UFA Kerplouz LaSalle Auray"};
-      d?Object.assign(d,n):S.dates.push(n);statut("Enregistré");
-      const bt=document.querySelector(`[data-conv][data-ep="${ep}"][data-cl="${cl}"]`);if(bt)bt.disabled=!v.jour;}
-    catch(e){statut("Non enregistré : "+e.message,true);}},700));}
-async function marquer(ep,cl,faites){try{const r=await rpc("uc_convocations",{p_epreuve:ep,p_classe:cl,p_faites:faites});
-    const d=S.dates.find(x=>x.epreuve_id===ep&&x.classe===cl);if(d)d.convoc_le=r.convoc_le;else S.dates.push({epreuve_id:ep,classe:cl,convoc_le:r.convoc_le});renderListe();}
-  catch(e){toast(e.message);}}
+      d?Object.assign(d,n):S.dates.push(n);S.cal=null;
+      statut(v.jour&&v.jour<ajout(AUJ(),15)?"Enregistré — attention : moins de 15 jours avant l'épreuve":"Enregistré",v.jour&&v.jour<ajout(AUJ(),15));
+      if(inp.dataset.d==="jour")renderListe();}
+    catch(e){statut("Non enregistré : "+e.message.replace(/^PERIODE : /,""),true);}},700));}
+async function marquer(ep,cl,faites){const r=await rpc("uc_convocations",{p_epreuve:ep,p_classe:cl,p_faites:faites});
+  const d=S.dates.find(x=>x.epreuve_id===ep&&x.classe===cl);if(d)d.convoc_le=r.convoc_le;else S.dates.push({epreuve_id:ep,classe:cl,convoc_le:r.convoc_le});}
+async function marquerSession(cl,lundi,faites){const x=sessions(S.classe.groupes).find(y=>y.g.code===cl&&y.lundi===lundi);if(!x)return;
+  try{for(const it of x.items)await marquer(it.e.id,cl,faites);S.cal=null;renderListe();}catch(e){toast(e.message);}}
 const hPassage=(h,i,du)=>{const [a,b]=(h||"08:15").split(":").map(Number),t=a*60+b+i*(+du||0);return String(Math.floor(t/60)).padStart(2,"0")+"h"+String(t%60).padStart(2,"0");};
-function convocations(ep,cl){const e=S.epreuves.find(x=>x.id===ep),g=S.classe.groupes.find(x=>x.code===cl),d=dateDe(ep,cl),cg=S.cands.filter(c=>c.groupe===g.lettre);
-  const jourL=d.jour?new Date(d.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
-  const auj=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
-  const cis=cisEpreuve(ep),ucs=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()];
+function convocationsSession(cl,lundi){const x=sessions(S.classe.groupes).find(y=>y.g.code===cl&&y.lundi===lundi);if(!x)return;
+  const g=x.g,cg=S.cands.filter(c=>c.groupe===g.lettre).sort((a,b)=>(a.ordre-b.ordre)||a.nom.localeCompare(b.nom));
+  const jL=iso=>new Date(iso+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const auj=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}),fin=x.items[x.items.length-1].d.jour;
+  const ucsDe=e=>[...new Map(cisEpreuve(e.id).map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code).join(", ");
   $("#conv").innerHTML=cg.map((c,i)=>`<section class="cpage">
     <p class="cetab">UFA Kerplouz LaSalle Auray</p><p class="cdest"><b>${esc(c.prenom+" "+c.nom.toUpperCase())}</b></p>
     <p class="cdate">Kerplouz, le ${esc(auj)}</p>
-    <p><b>Objet : convocation à une épreuve certificative — ${esc(S.ref.libelle||"")}</b></p>
+    <p><b>Objet : convocation aux épreuves certificatives — ${esc(S.ref.libelle||"")}</b></p>
     <p>Madame, Monsieur,</p>
-    <p>Vous êtes convoqué·e à l'épreuve certificative suivante, dans le cadre de votre formation (cohorte ${esc(S.cohorte)}) :</p>
-    <table class="ctab"><tr><th>Épreuve</th><td>${esc(e.code+" — "+e.nom)}</td></tr>
-      ${e.situation?`<tr><th>Situation support</th><td>${esc(e.situation)}</td></tr>`:""}
-      <tr><th>UC concernée(s)</th><td>${esc(ucs.map(u=>u.code+" "+u.nom).join(" ; "))}</td></tr>
-      <tr><th>Date</th><td>${esc(jourL)}</td></tr><tr><th>Heure de passage</th><td>${esc(hPassage(d.heure,i,d.duree))}</td></tr>
-      <tr><th>Lieu</th><td>${esc(d.lieu||"UFA Kerplouz LaSalle Auray")}</td></tr>
-      ${e.nature?`<tr><th>Modalités</th><td>${esc(e.nature)}</td></tr>`:""}${e.responsable?`<tr><th>Responsable de l'épreuve</th><td>${esc(nomPers(e.responsable))}</td></tr>`:""}</table>
+    <p>Vous êtes convoqué·e aux épreuves certificatives suivantes, lors de la session de formation au CFA ${x.items[0].d.jour===fin?"du "+esc(jL(fin)):"du "+esc(jL(x.items[0].d.jour))+" au "+esc(jL(fin))} (cohorte ${esc(S.cohorte)}, groupe ${esc(g.lettre||g.code)}) :</p>
+    <table class="ctab ctab5"><tr><th>Date</th><th>Heure de passage</th><th>Épreuve</th><th>UC</th><th>Lieu</th><th>Modalités</th></tr>
+      ${x.items.map(it=>`<tr><td>${esc(jL(it.d.jour))}</td><td>${esc(hPassage(it.d.heure,i,it.d.duree))}</td><td><b>${esc(it.e.code)}</b> ${esc(it.e.nom)}${it.e.responsable?`<br><small>Responsable : ${esc(nomPers(it.e.responsable))}</small>`:""}</td>
+        <td>${esc(ucsDe(it.e))}</td><td>${esc(it.d.lieu||"UFA Kerplouz LaSalle Auray")}</td><td>${esc(it.e.nature||"")}</td></tr>`).join("")}</table>
     <p>Merci de vous présenter 10 minutes avant l'heure indiquée, muni·e de la présente convocation. Toute absence doit être justifiée auprès du centre de formation.</p>
     <p>Nous vous prions d'agréer nos salutations distinguées.</p>
     <p class="csign">${esc(S.moi)}</p></section>`).join("");
   $("#pageSize").textContent="@page{size:A4 portrait}";document.body.classList.add("print-conv");window.print();document.body.classList.remove("print-conv");
-  if(!d.convoc_le&&confirm("Noter les convocations de "+e.code+" (groupe "+(g.lettre||g.code)+") comme faites ?"))marquer(ep,cl,true);}
-const badge=a=>`<span class="acq${a===true?" oui":a===false?" non":""}">${a===true?"Acquis":a===false?"Non acquis":"En attente des critères"}</span>`;
+  if(!x.items.every(it=>it.d.convoc_le)&&confirm("Noter les convocations de la session du "+frDate(lundi)+" (groupe "+(g.lettre||g.code)+") comme faites ?"))marquerSession(cl,lundi,true);}
+/* ---------- Cellules d'appréciation : lecture seule, bouton « Modifier », ordre de saisie ---------- */
+const LIB={ci:{oui:"Acquis",non:"Non acquis",att:"En attente des critères"},uc:{oui:"Proposition : validation",non:"Proposition : non-validation",att:"En attente des capacités"}};
+const badge=(a,n="ci")=>{const L=LIB[n]||LIB.ci;return `<span class="acq${a===true?" oui":a===false?" non":""}">${a===true?L.oui:a===false?L.non:L.att}</span>`;};
+const complet=(c,n,r)=>{const s=sai(c,n,r);return !!(s&&s.texte.trim()&&s.acquis!=null);};
+function verrou(c,n,r){
+  if(n==="ci"){const ci=S.cis.find(x=>x.id===r),crs=ci?crsDe(ci):[];
+    if(crs.length&&!crs.every(cr=>complet(c,"cr",cr.id)))return "Complétez d'abord l'appréciation et l'acquis de chaque critère.";}
+  if(n==="uc"){const cis=S.cis.filter(x=>x.uc_id===r);
+    if(!cis.every(ci=>complet(c,"ci",ci.id)))return "Complétez d'abord toutes les capacités intermédiaires de l'UC.";}
+  return "";}
 function champ(c,n,r,opts={}){
-  const s=sai(c,n,r)||{},id=`t_${n}_${r}`,ok=peut(n,r),imp=opts.imprimer||(opts.auto?{oui:"Acquis",non:"Non acquis"}:null);
-  const acq=opts.auto?`<span data-auto="${c}|${r}">${badge(s.acquis??null)}</span>`
-    :opts.acquis&&ok?`<select data-acq aria-label="${esc(opts.acquis.label)}">
+  const s=sai(c,n,r)||{},id=`t_${n}_${r}`,ok=peut(n,r),auto=opts.auto,bloc=ok?verrou(c,n,r):"";
+  const imp=auto==="uc"?IMP_UC:auto==="ci"?IMP_CR:(opts.imprimer||null);
+  const acq=auto?`<span data-auto="${auto}|${c}|${r}">${badge(s.acquis??null,auto)}</span>`
+    :opts.acquis&&ok?`<select data-acq disabled aria-label="${esc(opts.acquis.label)}">
       <option value="">${esc(opts.acquis.vide)}</option><option value="1" ${s.acquis===true?"selected":""}>${esc(opts.acquis.oui)}</option><option value="0" ${s.acquis===false?"selected":""}>${esc(opts.acquis.non)}</option></select>`
     :opts.acquis&&s.acquis!=null?`<span class="acq ${s.acquis?"oui":"non"}">${esc(s.acquis?opts.acquis.oui:opts.acquis.non)}</span>`:"";
   return `<div class="cell${ok?"":" ro"}" data-c="${c}" data-n="${n}" data-r="${r}"${imp?` data-po="${esc(imp.oui)}" data-pn="${esc(imp.non)}"`:""}>
-    <textarea id="${id}" aria-label="${esc(opts.aria||"Appréciation")}" placeholder="${esc(ok?(opts.ph||"Appréciation"):"")}"${ok?"":` readonly title="Saisie réservée aux formateurs affectés à cette UC et au responsable de l'épreuve"`}>${esc(s.texte||"")}</textarea>
+    <textarea id="${id}" readonly aria-label="${esc(opts.aria||"Appréciation")}" placeholder="${ok&&!bloc?"« Modifier » pour saisir":""}"${ok?"":` title="Saisie réservée aux formateurs affectés à cette UC et au responsable de l'épreuve"`}>${esc(s.texte||"")}</textarea>
     <div class="print-only">${imp&&s.acquis!=null?esc(s.acquis?imp.oui:imp.non)+"\n":""}${esc(s.texte||"")}</div>
-    <div class="meta">${acq}${ok?`<button type="button" data-sug>Appréciations déjà utilisées</button>`:""}<span data-m>${s.maj_nom?"par "+esc(s.maj_nom)+", "+frDH(s.maj_le):""}</span></div></div>`;
+    <div class="meta">${acq}${ok?`<button type="button" class="edit" data-edit${bloc?" disabled":""} title="${esc(bloc)}">Modifier</button><button type="button" data-sug hidden>Appréciations déjà utilisées</button>`:""}<span data-m>${s.maj_nom?"par "+esc(s.maj_nom)+", "+frDH(s.maj_le):""}</span><span class="bloc" data-bloc>${esc(bloc)}</span></div></div>`;
 }
-// Capacité intermédiaire : suit les critères (réponse de la base après chaque critère)
-function majAuto(c,ci){const s=sai(c,"ci",ci)||{},a=s.acquis??null;
-  $$(`[data-auto="${c}|${ci}"]`).forEach(el=>el.innerHTML=badge(a));
-  $$(`.cell[data-c="${c}"][data-n="ci"][data-r="${ci}"] .print-only`).forEach(el=>el.textContent=(a!=null?(a?"Acquis":"Non acquis")+"\n":"")+(s.texte||""));}
+async function basculer(cell,on){
+  const ta=cell.querySelector("textarea"),sel=cell.querySelector("[data-acq]"),bt=cell.querySelector("[data-edit]"),sg=cell.querySelector("[data-sug]");
+  if(on){if(bt.disabled)return;cell.classList.add("edit");ta.readOnly=false;if(sel)sel.disabled=false;if(sg)sg.hidden=false;bt.textContent="Terminer";ta.focus();}
+  else{await enregistrer(cell);cell.classList.remove("edit");ta.readOnly=true;if(sel)sel.disabled=true;if(sg)sg.hidden=true;bt.textContent="Modifier";majVerrous();}}
+function majVerrous(){$$('.cell[data-n="ci"],.cell[data-n="uc"]').forEach(cell=>{if(cell.classList.contains("edit")||cell.classList.contains("ro"))return;
+  const b=verrou(cell.dataset.c,cell.dataset.n,+cell.dataset.r),bt=cell.querySelector("[data-edit]"),m=cell.querySelector("[data-bloc]"),ta=cell.querySelector("textarea");
+  if(bt){bt.disabled=!!b;bt.title=b;}if(m)m.textContent=b;if(ta)ta.placeholder=b?"":"« Modifier » pour saisir";});}
+// Valeur calculée par la base (capacité : critères ; UC : capacités) → pastille et texte imprimé
+function majAuto(n,c,r){const s=sai(c,n,r)||{},a=s.acquis??null,imp=n==="uc"?IMP_UC:IMP_CR;
+  $$(`[data-auto="${n}|${c}|${r}"]`).forEach(el=>el.innerHTML=badge(a,n));
+  $$(`.cell[data-c="${c}"][data-n="${n}"][data-r="${r}"] .print-only`).forEach(el=>el.textContent=(a!=null?(a?imp.oui:imp.non)+"\n":"")+(s.texte||""));}
+/* ---------- Documents 4 et 5 au format officiel (DRAAF / SRFD Bretagne, export EvalUc) ---------- */
 const ETAB="UFA Kerplouz LaSalle Auray";
-// En-tête commun (format DRAAF / SRFD Bretagne, repris d'EvalUc) : diplôme, session (cohorte), agrément du plan
 function entete(titre){
   const c=S.cands.find(x=>x.id===S.cand)||{},P=S.plan||{};
-  return `<table class="dhead"><tr><td>Diplôme : ${esc(S.ref.libelle||"")}</td><td style="text-align:center">Session : ${esc(S.cohorte||"")}</td>
-      <td style="text-align:right">Plan d'évaluation agréé le : ${P.agree_le?esc(frDate(P.agree_le)):"__/__/____"}</td></tr></table>
-    <div class="dtitre">${esc(titre)}</div>
-    <table class="dbox"><tr><td style="width:40%">Candidat : <b>${esc((c.nom||"")+" "+(c.prenom||""))}</b></td><td>Diplôme : ${esc(S.ref.libelle||"")}</td></tr></table>
-    <p class="noprint grp">${esc(S.classe.libelle)}${c.groupe?" · groupe "+esc(c.groupe):""} · cohorte ${esc(S.cohorte||"")}</p>`;
+  return `<table class="dhead"><tr><td>Diplôme : ${esc(S.ref.libelle||"")}</td><td class="c">Session : ${esc(S.cohorte||"")}</td>
+      <td class="r">Plan d'évaluation agréé le : ${P.agree_le?esc(frDate(P.agree_le)):""}</td></tr></table>
+    <table class="dbox"><tr><td>Candidat: ${esc(((c.nom||"")+" "+(c.prenom||"")).trim())}</td><td>Diplôme : ${esc(S.ref.libelle||"")}</td></tr></table>
+    <p class="noprint grp">${esc(S.classe.libelle)}${c.groupe?" · groupe "+esc(c.groupe):""} · cohorte ${esc(S.cohorte||"")}</p>
+    <h2 class="dtitre">${esc(titre)}</h2>`;
 }
 const ACQ_CI={label:"Capacité intermédiaire",vide:"Acquis ?",oui:"Acquis",non:"Non acquis"},ACQ_CR={label:"Critère",vide:"Acquis ?",oui:"Acquis",non:"Non acquis"},IMP_CR={oui:"Acquis",non:"Non acquis"};
+const th=h=>`<th>${esc(h).replace(/\n/g,"<br>")}</th>`;
 function renderDoc4(){
   const c=S.cand,ep=S.epreuves.find(e=>e.id===S.epr);
   if(!ep){$("#view").innerHTML=`<p class="empty">Aucune épreuve dans le plan d'évaluation.</p>`;return;}
   const cis=cisEpreuve(ep.id),se=sai(c,"epreuve",ep.id)||{};
-  const ucs=[...new Set(cis.map(ci=>ucDe(ci).code))].join(", "),lcis=cis.map(ci=>ci.code).join(", ");
-  const H=objectifs()?["N° UC + OI de rang 1 + thème de l'OI","Critères / OI de rang 2","Indicateurs","Appréciation (résultats au regard des critères)","Appréciation globale relative à la capacité intermédiaire (OI rang 1)"]
-                     :["Capacités intermédiaires","Critères","Indicateurs","Appréciation (résultats au regard des critères)","Appréciation globale relative à la capacité intermédiaire"];
+  const H=objectifs()?["N° UC + OI de rang 1 + thème de l'OI","Critères / OI de rang 2","Indicateurs","Appréciation\n(Résultat au regard des critères)","Appréciation\nGlobale relative à l'OI de rang 1"]
+                     :["Capacités intermédiaires","Critères","Indicateurs","Appréciation\n(Résultat au regard des critères)","Appréciation\nGlobale relative à la capacité intermédiaire"];
   let rows="";
   for(const ci of cis){const u=ucDe(ci),v=validation(c,u.id),crs=crsDe(ci),n=Math.max(1,crs.length);
     const vtxt=v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
     (crs.length?crs:[null]).forEach((cr,i)=>{
-      rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(ci.code)} ${esc(ci.nom)}</td>`:""}
+      rows+=`<tr>${i===0?`<td rowspan="${n}" data-l="${esc(H[0])}">${esc(u.code)}<br>${esc(ci.code)} ${esc(ci.nom)}</td>`:""}
         <td data-l="${esc(H[1])}">${cr?(objectifs()&&cr.code?esc(cr.code)+" ":"")+crHtml(cr):""}</td><td class="ind" data-l="${esc(H[2])}">${cr?esc(cr.indicateur):""}</td>
         <td data-l="${esc(H[3])}">${v?`<span class="valide">${esc(vtxt)}</span>`:cr?champ(c,"cr",cr.id,{aria:"Appréciation : "+String(cr.nom).split("\n")[0],acquis:ACQ_CR,imprimer:IMP_CR}):""}</td>
-        ${i===0?`<td rowspan="${n}" data-l="${esc(H[4])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,crs.length?{aria:"Appréciation globale "+ci.code,auto:true}:{aria:"Appréciation globale "+ci.code,acquis:ACQ_CI})}</td>`:""}</tr>`;});
+        ${i===0?`<td rowspan="${n}" data-l="${esc(H[4])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,crs.length?{aria:"Appréciation globale "+ci.code,auto:"ci"}:{aria:"Appréciation globale "+ci.code,acquis:ACQ_CI})}</td>`:""}</tr>`;});
   }
-  const ucsL=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code+" "+u.nom).join(" ; "),cisL=cis.map(ci=>ci.code+" "+ci.nom).join(" ; ");
-  $("#view").innerHTML=entete("DOCUMENT 4 : GRILLE D'ÉVALUATION DE L'ÉPREUVE PAR CANDIDAT")+`
-    <table class="dinfo"><tr><th rowspan="6" style="width:14%">Épreuve concernée</th><td style="width:30%">Date d'épreuve :</td>
-        <td><label class="sr" for="dEval">Date d'épreuve</label><input type="date" id="dEval" value="${esc(se.date_eval||"")}"><span class="print-only">${frDate(se.date_eval)}</span></td></tr>
-      <tr><td>N° épreuve :</td><td><b>${esc(ep.code+" "+ep.nom)}</b></td></tr>
+  const ucsL=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code+" "+u.nom).join(", "),cisL=cis.map(ci=>ci.code+" "+ci.nom).join(", ");
+  const pe=peut("epreuve",ep.id);
+  $("#view").innerHTML=`<div class="off d4off">`+entete("DOCUMENT 4 : GRILLE D’EVALUATION DE L’EPREUVE PAR CANDIDAT")+`
+    <table class="dinfo"><colgroup><col style="width:16.3%"><col style="width:40.3%"><col></colgroup>
+      <tr><td rowspan="6">Epreuve concernée</td><td>Date d'épreuve :</td>
+        <td><label class="sr" for="dEval">Date d'épreuve</label><input type="date" id="dEval" value="${esc(se.date_eval||"")}"${pe?"":" disabled"}><span class="print-only">${frDate(se.date_eval)}</span></td></tr>
+      <tr><td>N° épreuve :</td><td>${esc(ep.code+" "+ep.nom)}</td></tr>
       <tr><td>Intitulé de la situation support :</td><td>${esc(ep.situation||"")}</td></tr>
-      <tr><td>UC concernée(s) :</td><td>${esc(ucsL)}</td></tr>
-      <tr><td>${objectifs()?"OI":"OI ou capacité(s) intermédiaire(s)"} concerné(s) :</td><td>${esc(cisL)}</td></tr>
-      <tr><td>Modalités (nature de l'épreuve) :</td><td>${esc(ep.nature||"Pratique et entretien d'évaluation")}</td></tr></table>
-    <table class="doc d4"><colgroup><col style="width:14%"><col style="width:18%"><col style="width:26%"><col style="width:22%"><col style="width:20%"></colgroup>
-    <thead><tr>${H.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows||`<tr><td colspan="5">Aucune capacité rattachée à cette épreuve.</td></tr>`}</tbody></table>
-    <div class="tot"><h3>Appréciation globale relative à l'épreuve</h3>${champ(c,"epreuve",ep.id,{aria:"Appréciation globale de l'épreuve"})}</div>`;
+      <tr><td>UC concernée (s) :</td><td>${esc(ucsL)}</td></tr>
+      <tr><td>${objectifs()?"OI concerné(s) :":"OI ou Capacité(s) intermédiaire(s) concerné(s) :"}</td><td>${esc(cisL)}</td></tr>
+      <tr><td>Modalités (Nature de l'épreuve)</td><td>${esc(ep.nature||"Pratique et entretien d'évaluation")}</td></tr></table>
+    <table class="doc d4"><colgroup><col style="width:16.3%"><col style="width:16.3%"><col style="width:24%"><col style="width:21.7%"><col style="width:21.7%"></colgroup>
+    <thead><tr>${H.map(th).join("")}</tr></thead><tbody>${rows||`<tr><td colspan="5">Aucune capacité rattachée à cette épreuve.</td></tr>`}</tbody></table>
+    <table class="dtot"><tr><th>Appréciation globale relative à l'épreuve</th></tr><tr><td>${champ(c,"epreuve",ep.id,{aria:"Appréciation globale de l'épreuve"})}</td></tr></table></div>`;
 }
 const ACQ_UC={label:"Proposition",vide:"Proposition ?",oui:"Proposée valide",non:"Proposée non valide"},
   IMP_UC={oui:"Proposition : validation de l'UC.",non:"Proposition : non-validation de l'UC."};
 function renderDoc5(){
   const c=S.cand;let rows="";
   const H=["Capacité globale de l'UC",objectifs()?"N° OI rang 1 + thème":"Capacité intermédiaire","N° épreuve","Rappels des critères d'évaluation",
-           objectifs()?"Appréciation globale relative à la capacité intermédiaire (OI rang 1)":"Appréciation globale relative à la capacité intermédiaire",
-           "Proposition argumentée sur la validation de la capacité globale (l'équipe indique sa proposition : validation ou non validation de l'UC et explicite sur quoi se fonde cette proposition)","Avis du jury, date"];
-  for(const u of S.ucs){const cis=S.cis.filter(x=>x.uc_id===u.id).sort(byOrd),v=validation(c,u.id),n=Math.max(1,cis.length);
+           objectifs()?"Appréciation\nGlobale relative à l'OI de rang 1":"Appréciation\nGlobale relative à la capacité intermédiaire",
+           "Proposition argumentée\nsur la validation de la capacité globale","Avis du Jury\ndate"];
+  for(const u of S.ucs){const oe=ci=>{const e=epreuveDe(ci);return e?e.ordre*1000+S.epreuves.indexOf(e):1e9;};
+    const cis=S.cis.filter(x=>x.uc_id===u.id).sort((a,b)=>oe(a)-oe(b)||byOrd(a,b)),v=validation(c,u.id),n=Math.max(1,cis.length);
     const vtxt=v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
     (cis.length?cis:[null]).forEach((ci,i)=>{const ep=ci&&epreuveDe(ci);
-      rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(u.nom)}</td>`:""}
-        <td data-l="${esc(H[1])}">${ci?esc(ci.code+" "+ci.nom):""}</td><td data-l="${esc(H[2])}">${ep?`<span title="${esc(ep.nom)}">${esc(ep.code)}</span>`:""}</td>
-        <td class="ind" data-l="${esc(H[3])}">${ci?crsDe(ci).map(crHtml).join("<br>"):""}</td>
-        <td data-l="${esc(H[4])}">${!ci?"":v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,crsDe(ci).length?{aria:"Appréciation "+ci.code,auto:true}:{aria:"Appréciation "+ci.code,acquis:ACQ_CI})}</td>
-        ${i===0?`<td rowspan="${n}" data-l="${esc(H[5])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"uc",u.id,{aria:"Proposition "+u.code,ph:"Proposition argumentée",acquis:ACQ_UC,imprimer:IMP_UC})}</td>
+      rows+=`<tr>${i===0?`<td rowspan="${n}" data-l="${esc(H[0])}">${esc(u.code+" "+u.nom)}</td>`:""}
+        <td data-l="${esc(H[1])}">${ci?esc(ci.code+" "+ci.nom):""}</td><td class="c" data-l="${esc(H[2])}">${ep?`<span title="${esc(ep.nom)}">${esc(ep.code)}</span>`:""}</td>
+        <td class="rap" data-l="${esc(H[3])}">${ci?crsDe(ci).map(r=>`<div class="rc">${crHtml(r)}</div>`).join(""):""}</td>
+        <td data-l="${esc(H[4])}">${!ci?"":v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,crsDe(ci).length?{aria:"Appréciation "+ci.code,auto:"ci"}:{aria:"Appréciation "+ci.code,acquis:ACQ_CI})}</td>
+        ${i===0?`<td rowspan="${n}" data-l="${esc(H[5])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"uc",u.id,{aria:"Proposition "+u.code,auto:"uc"})}</td>
                   <td rowspan="${n}" data-l="${esc(H[6])}"></td>`:""}</tr>`;});
   }
-  const cc=S.cands.find(x=>x.id===c)||{},P=S.plan||{};
-  $("#view").innerHTML=entete("DOCUMENT 5 : TABLEAU RÉCAPITULATIF PAR CANDIDAT ET PAR UC")+`
-    <table class="dinfo"><tr><td>Nom du candidat : <b>${esc((cc.nom||"")+" "+(cc.prenom||""))}</b></td><td>Cohorte : ${esc(S.cohorte||"")}</td>
-      <td>Date de la présentation au jury : ${P.jury_le?esc(frDate(P.jury_le)):"__/__/____"}</td></tr></table>
-    <table class="doc d5"><colgroup><col style="width:11%"><col style="width:13%"><col style="width:5%"><col style="width:27%"><col style="width:18%"><col style="width:18%"><col style="width:8%"></colgroup>
-    <thead><tr>${H.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
+  $("#view").innerHTML=`<div class="off d5off">`+entete("DOCUMENT 5 : TABLEAU RECAPITULATIF PAR CANDIDAT ET PAR UC")+`
+    <table class="doc d5"><colgroup><col style="width:15.3%"><col style="width:15.3%"><col style="width:7.2%"><col style="width:18.3%"><col style="width:18.4%"><col style="width:18.3%"><col style="width:7.2%"></colgroup>
+    <thead><tr>${H.map(th).join("")}</tr></thead><tbody>${rows}</tbody></table>
+    <p class="sign"><span>Le _______ / _______ / 20_______</span><span>Signature du Président-adjoint du jury</span></p></div>`;
 }
-
 /* ---------- Enregistrement automatique ---------- */
 const timers=new Map(),enCours=new Map();
 function planifier(cell,delai=1200){const k=kS(cell.dataset.c,cell.dataset.n,cell.dataset.r);
@@ -565,10 +639,11 @@ async function enregistrer(cell,extra={}){
   const p=rpc("uc_saisir",{p_candidat:c,p_niveau:n,p_ref:r,p_texte:texte,p_acquis:acquis,p_date:date,p_version:cur.version||null})
     .then(res=>{const aq=res.acquis!==undefined?res.acquis:acquis;
       S.saisies.set(k,Object.assign({},cur,{candidat:c,niveau:n,ref_id:r,texte,acquis:aq,date_eval:date,version:res.version,maj_nom:res.maj_nom,maj_le:res.maj_le}));
-      if(res.ci){const kc=kS(c,"ci",res.ci),o=S.saisies.get(kc);o?o.acquis=res.ci_acquis:S.saisies.set(kc,{candidat:c,niveau:"ci",ref_id:res.ci,texte:"",acquis:res.ci_acquis,version:1});majAuto(c,res.ci);}
-      if(n==="ci")majAuto(c,r);
+      for(const [nv,id,a] of [["ci",res.ci,res.ci_acquis],["uc",res.uc,res.uc_acquis]])if(id){const kx=kS(c,nv,id),o=S.saisies.get(kx);
+        if(o)o.acquis=a;else S.saisies.set(kx,{candidat:c,niveau:nv,ref_id:id,texte:"",acquis:a,version:1});majAuto(nv,c,id);}
+      if(n==="ci"||n==="uc")majAuto(n,c,r);majVerrous();
       const m=cell.querySelector("[data-m]");if(m)m.textContent="par "+res.maj_nom+", "+frDH(res.maj_le);
-      const pr=cell.querySelector(".print-only");if(pr&&n!=="ci")pr.textContent=(cell.dataset.po&&aq!=null?(aq?cell.dataset.po:cell.dataset.pn)+"\n":"")+texte;
+      const pr=cell.querySelector(".print-only");if(pr&&n!=="ci"&&n!=="uc")pr.textContent=(cell.dataset.po&&aq!=null?(aq?cell.dataset.po:cell.dataset.pn)+"\n":"")+texte;
       if(n==="epreuve"){const d=document.querySelector("#dEval+.print-only");if(d)d.textContent=frDate(date);}
       statut("Enregistré");})
     .catch(async e=>{
@@ -576,7 +651,7 @@ async function enregistrer(cell,extra={}){
         toast(`${qui||"Un collègue"} vient de modifier cette appréciation : sa version est affichée, votre texte est copié dans le presse-papiers.`);
         try{await navigator.clipboard.writeText(texte);}catch(_){}
         const d=await api(`/rest/v1/uc_saisies?candidat=eq.${c}&niveau=eq.${n}&ref_id=eq.${r}`);if(d[0])S.saisies.set(k,d[0]);render();statut("");}
-      else statut("Non enregistré : "+e.message,true);})
+      else statut("Non enregistré : "+e.message.replace(/^(ORDRE|DROIT) : /,""),true);})
     .finally(()=>enCours.delete(k));
   enCours.set(k,p);return p;
 }
@@ -601,12 +676,13 @@ document.addEventListener("click",async e=>{
   else if(b.dataset.go){await toutEnregistrer();if(b.dataset.c)S.cand=b.dataset.c;S.zone="saisie";S.vue=b.dataset.go;render();window.scrollTo(0,0);}
   else if(b.id==="prev"||b.id==="next"){await toutEnregistrer();const L=candsVis(),i=L.findIndex(c=>c.id===S.cand),j=i+(b.id==="next"?1:-1);
     if(j>=0&&j<L.length){S.cand=L[j].id;render();}}
-  else if(b.id==="btnPrint"){await toutEnregistrer();$("#pageSize").textContent=`@page{size:${S.vue==="doc5"?"A3 portrait":"A4 landscape"}}`;window.print();}
+  else if(b.id==="btnPrint"){await toutEnregistrer();$("#pageSize").textContent="@page{size:A3 portrait}";window.print();}
   else if(b.hasAttribute("data-sug"))suggestions(b.closest(".cell"));
-  else if(b.hasAttribute("data-conv"))convocations(+b.dataset.ep,b.dataset.cl);
+  else if(b.hasAttribute("data-edit")){const cell=b.closest(".cell");basculer(cell,!cell.classList.contains("edit"));}
+  else if(b.hasAttribute("data-convs"))convocationsSession(b.dataset.cl,b.dataset.lundi);
+  else if(b.hasAttribute("data-convsok"))marquerSession(b.dataset.cl,b.dataset.lundi,true);
+  else if(b.hasAttribute("data-convsno"))marquerSession(b.dataset.cl,b.dataset.lundi,false);
   else if(b.dataset.lot){await toutEnregistrer();b.dataset.lot==="doc5"?lotDoc5():grilleUC();}
-  else if(b.hasAttribute("data-convok"))marquer(+b.dataset.ep,b.dataset.cl,true);
-  else if(b.hasAttribute("data-convno"))marquer(+b.dataset.ep,b.dataset.cl,false);
   else if(b.id==="sugClose")$("#sug").hidden=true;
 });
 async function toutEnregistrer(){await Promise.all($$(".cell").filter(c=>timers.has(kS(c.dataset.c,c.dataset.n,c.dataset.r))).map(c=>enregistrer(c)));}
