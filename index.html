@@ -218,6 +218,10 @@ async function goHome(s){if(next){location.replace(next);return;}
   try{droits=await api("/rest/v1/rpc/mes_droits",{method:"POST",body:{},token:s.access_token});}
   catch(e){droits=null;}
   if(!droits){show("vLogin");msg("loginMsg","Impossible de lire vos droits d'accès. Réessayez dans un instant.");return;}
+  // Unités capitalisables : accès aussi par UC affectée ou épreuve dont on est responsable ; coordination pour les référents
+  try{const u=await api("/rest/v1/rpc/uc_acces",{method:"POST",body:{},token:s.access_token})||{},o=droits.outils=droits.outils||[],n=droits.niveaux=droits.niveaux||[];
+    if(u.acces){if(!o.includes("saisie-uc"))o.push("saisie-uc");if(!n.includes("capa"))n.push("capa");}
+    if(u.coord&&!o.includes("uc-coord"))o.push("uc-coord");}catch(e){}
   if(!droits.actif){signOutLocal(s);show("vLogin");msg("loginMsg","Votre compte est suspendu. Contactez le responsable pédagogique.");return;}
   const nomAff=droits.prenom?droits.prenom+" "+droits.nom:(droits.email||email);
   const FIL={capa:"CAPa JP",bpa:"BPA OSP",bp:"BP AP",btsa:"BTSA AP",cs:"CS Arboriste",bprea:"BPREA"};
@@ -261,7 +265,11 @@ const ICONS={
 };
 const LEVELS=[
   {id:"capa",nom:"CAPa Jardinier paysagiste",niv:"Niveau 3",c:"#6E9A3A",sub:"Formation en unités capitalisables",tools:[
-    {t:"Saisie UC : documents 4 et 5",d:"Appréciations en ligne par critère, capacité intermédiaire et épreuve (document 4), propositions par UC (document 5), bibliothèque d'appréciations, impression.",i:"grille",href:"/UC/",code:"saisie-uc"}]},
+    {t:"Tableau de bord UC",d:"Vos UC et vos épreuves : avancement de vos saisies par groupe, prochaines épreuves, propositions par UC à rédiger.",i:"suivi",href:"/UC/?vue=tdb",code:"saisie-uc"},
+    {t:"Saisie UC : documents 4 et 5",d:"Appréciations par critère (acquis / non acquis), capacité intermédiaire calculée, appréciation de l'épreuve (document 4), propositions par UC (document 5), impression.",i:"grille",href:"/UC/?vue=doc4",code:"saisie-uc"},
+    {t:"Coordination UC",d:"Référents de classe : dates des épreuves, convocations, formateurs affectés aux UC, synthèse par UC, éditions de la cohorte (tous les documents 5, grille par UC).",i:"coord",href:"/UC/?vue=coord",code:"uc-coord"},
+    {t:"Calendrier des épreuves UC",d:"Dates, horaires et lieux des épreuves certificatives de vos classes CAPa, et dates restant à fixer.",i:"calend",href:"/UC/?vue=cal",code:"saisie-uc"},
+    {t:"Paramétrage des plans d'évaluation",d:"Administrateur : référentiels, plans agréés par cohorte, épreuves, formateurs affectés aux UC, candidats, UC déjà validées et VAA.",i:"fiche",href:"/UC/param.html",adm:1}]},
   {id:"bpa",nom:"BPA Ouvrier spécialisé en paysage",niv:"Niveau 3",c:"#3F8A70",sub:"Formation en unités capitalisables",tools:[
     {t:"Grilles d'évaluation des UC",d:"Grilles par UC et synthèse des résultats du groupe.",i:"grille"}]},
   {id:"bp",nom:"BP Aménagements paysagers",niv:"Niveau 4",c:"#2E6A4B",sub:"Formation en unités capitalisables",tools:[
@@ -282,7 +290,7 @@ let filtre="all";
 function visibles(){
   const d=apercu||droits||{},niv=new Set(d.niveaux||[]),out=new Set(d.outils||[]);
   return LEVELS.filter(l=>d.admin||l.id==="tous"||niv.has(l.id))
-    .map(l=>Object.assign({},l,{tools:l.tools.filter(t=>t.code?out.has(t.code):true)}))
+    .map(l=>Object.assign({},l,{tools:l.tools.filter(t=>t.adm?(!apercu&&!!d.admin):t.code?out.has(t.code):true)}))
     .filter(l=>l.tools.length);
 }
 function renderDash(){
