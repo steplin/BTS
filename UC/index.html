@@ -387,7 +387,7 @@ function renderListe(){
       return `<tr>${G.length>1?`<td>${esc(x.g.lettre)}</td>`:""}<td>semaine du ${esc(frDate(x.lundi))}</td>
         <td>${x.items.map(it=>`<b>${esc(it.e.code)}</b> ${esc(new Date(it.d.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}))} ${esc((it.d.heure||"08:15").replace(":","h"))}`).join("<br>")}</td>
         <td>${faites?`<span class="acq oui">faites</span>`:`<span class="acq${lim<=auj?" non":""}">à envoyer avant le ${esc(frDate(lim))}</span>`}</td>
-        <td style="text-align:right;white-space:nowrap">${ed?`<button type="button" class="small" data-convs ${k}>Convocations</button> ${faites?`<button type="button" class="ghost small" data-convsno ${k}>Annuler</button>`:`<button type="button" class="ghost small" data-convsok ${k}>Marquer faites</button>`}`:""}</td></tr>`;}).join("")}</tbody></table>`}`;
+        <td style="text-align:right;white-space:nowrap">${ed?`<button type="button" class="small" data-convs ${k}>Convocations (PDF)</button> ${faites?`<button type="button" class="ghost small" data-convsno ${k}>Annuler</button>`:`<button type="button" class="ghost small" data-convsok ${k}>Marquer faites</button>`}`:""}</td></tr>`;}).join("")}</tbody></table>`}`;
   const edi=`<h2 class="h2">Préparation des jurys · cohorte ${esc(S.cohorte)} <small>fichiers Excel modifiables et PDF</small></h2>
     <table class="list editions-t"><tbody>
       <tr><td><b>Dossier du jury de validation</b><br><small>documents 4 et 5 de chaque candidat et résultat final, en Excel (xls/) et en PDF (pdf/)</small></td><td><button type="button" class="small" data-exp="jury">Tout le dossier (.zip)</button></td></tr>
@@ -651,25 +651,26 @@ async function marquer(ep,cl,faites){const r=await rpc("uc_convocations",{p_epre
 async function marquerSession(cl,lundi,faites){const x=sessions(S.classe.groupes).find(y=>y.g.code===cl&&y.lundi===lundi);if(!x)return;
   try{for(const it of x.items)await marquer(it.e.id,cl,faites);S.cal=null;renderListe();}catch(e){toast(e.message);}}
 const hPassage=(h,i,du)=>{const [a,b]=(h||"08:15").split(":").map(Number),t=a*60+b+i*(+du||0);return String(Math.floor(t/60)).padStart(2,"0")+"h"+String(t%60).padStart(2,"0");};
-function convocationsSession(cl,lundi){const x=sessions(S.classe.groupes).find(y=>y.g.code===cl&&y.lundi===lundi);if(!x)return;
+async function convocationsSession(cl,lundi,btn){const x=sessions(S.classe.groupes).find(y=>y.g.code===cl&&y.lundi===lundi);if(!x)return;
+  if(!window.KepDoc){toast("Module d'export indisponible, rechargez la page.");return;}
   const g=x.g,cg=S.cands.filter(c=>c.groupe===g.lettre).sort((a,b)=>(a.ordre-b.ordre)||a.nom.localeCompare(b.nom));
   const jL=iso=>new Date(iso+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const auj=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}),fin=x.items[x.items.length-1].d.jour;
   const ucsDe=e=>[...new Map(cisEpreuve(e.id).map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code).join(", ");
-  $("#conv").innerHTML=cg.map((c,i)=>`<section class="cpage">
-    <p class="cetab">UFA Kerplouz LaSalle Auray</p><p class="cdest"><b>${esc(c.prenom+" "+c.nom.toUpperCase())}</b></p>
-    <p class="cdate">Kerplouz, le ${esc(auj)}</p>
-    <p><b>Objet : convocation aux épreuves certificatives — ${esc(S.ref.libelle||"")}</b></p>
-    <p>Madame, Monsieur,</p>
-    <p>Vous êtes convoqué·e aux épreuves certificatives suivantes, lors de la session de formation au CFA ${x.items[0].d.jour===fin?"du "+esc(jL(fin)):"du "+esc(jL(x.items[0].d.jour))+" au "+esc(jL(fin))} (cohorte ${esc(S.cohorte)}, groupe ${esc(g.lettre||g.code)}) :</p>
-    <table class="ctab ctab5"><tr><th>Date</th><th>Heure de passage</th><th>Épreuve</th><th>UC</th><th>Lieu</th><th>Modalités</th></tr>
-      ${x.items.map(it=>`<tr><td>${esc(jL(it.d.jour))}</td><td>${esc(hPassage(it.d.heure,i,it.d.duree))}</td><td><b>${esc(it.e.code)}</b> ${esc(it.e.nom)}</td>
-        <td>${esc(ucsDe(it.e))}</td><td>${esc(it.d.lieu||"UFA Kerplouz LaSalle Auray")}</td><td>${esc(it.e.nature||"")}</td></tr>`).join("")}</table>
-    <p>Merci de vous présenter 10 minutes avant l'heure indiquée, muni·e de la présente convocation. Toute absence doit être justifiée auprès du centre de formation.</p>
-    <p>Nous vous prions d'agréer nos salutations distinguées.</p>
-    <p class="csign">${esc(S.moi)}</p></section>`).join("");
-  $("#pageSize").textContent="@page{size:A4 portrait}";document.body.classList.add("print-conv");window.print();document.body.classList.remove("print-conv");
-  if(!x.items.every(it=>it.d.convoc_le)&&confirm("Noter les convocations de la session du "+frDate(lundi)+" (groupe "+(g.lettre||g.code)+") comme faites ?"))marquerSession(cl,lundi,true);}
+  const lib=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Préparation…";}
+  try{let ref=null;try{ref=((await api("/rest/v1/qualiopi_refs?cle=eq.conv-uc&select=cle,code,date_ref,redacteur"))||[])[0];}catch(e){}
+    const lettres=cg.map((c,i)=>({dest:[c.prenom+" "+c.nom.toUpperCase()],lieuDate:"Kerplouz, le "+auj,
+      objet:"Objet : convocation aux épreuves certificatives — "+(S.ref.libelle||""),
+      corps:["Madame, Monsieur,","Vous êtes convoqué·e aux épreuves certificatives suivantes, lors de la session de formation au CFA "+(x.items[0].d.jour===fin?"du "+jL(fin):"du "+jL(x.items[0].d.jour)+" au "+jL(fin))+" (cohorte "+S.cohorte+", groupe "+(g.lettre||g.code)+") :"],
+      tableau:{tete:["Date","Heure de passage","Épreuve","UC","Lieu","Modalités"],largeurs:[.17,.12,.27,.12,.16,.16],gras:[1],centre:[1],
+        lignes:x.items.map(it=>[jL(it.d.jour),hPassage(it.d.heure,i,it.d.duree),it.e.code+" "+it.e.nom,ucsDe(it.e),it.d.lieu||"UFA Kerplouz LaSalle Auray",it.e.nature||""])},
+      fin:["Merci de vous présenter 10 minutes avant l’heure indiquée, muni·e de la présente convocation. Toute absence doit être justifiée auprès du centre de formation.","Nous vous prions d’agréer nos salutations distinguées."],
+      signataire:S.moi||""}));
+    const nom=KepDoc.nomFichier("Convocations "+S.classe.libelle+" "+(g.lettre||"")+" semaine du "+lundi)+".pdf";
+    await KepDoc.telecharger(nom,await KepDoc.courriers(lettres,{titre:"Convocations "+S.classe.libelle,logo:"/lib/logo-kerplouz.png",qualiopi:KepDoc.qualiopi(ref)}),"application/pdf");
+    if(!x.items.every(it=>it.d.convoc_le)&&confirm("Noter les convocations de la session du "+frDate(lundi)+" (groupe "+(g.lettre||g.code)+") comme faites ?"))marquerSession(cl,lundi,true);}
+  catch(e){console.error(e);toast("Convocations impossibles : "+(e.message||e));}
+  finally{if(btn){btn.disabled=false;btn.textContent=lib;}}}
 /* ---------- Cellules d'appréciation : lecture seule, bouton « Modifier », ordre de saisie ---------- */
 const LIB={ci:{oui:"Acquis",non:"Non acquis",att:"En attente des critères"},uc:{oui:"Proposition : validation",non:"Proposition : non-validation",att:"En attente des capacités"}};
 const badge=(a,n="ci")=>{const L=LIB[n]||LIB.ci;return `<span class="acq${a===true?" oui":a===false?" non":""}">${a===true?L.oui:a===false?L.non:L.att}</span>`;};
@@ -827,7 +828,7 @@ document.addEventListener("click",async e=>{
   else if(b.id==="btnPrint"){await toutEnregistrer();$("#pageSize").textContent="@page{size:A3 portrait}";window.print();}
   else if(b.hasAttribute("data-sug"))suggestions(b.closest(".cell"));
   else if(b.hasAttribute("data-edit")){const cell=b.closest(".cell");basculer(cell,!cell.classList.contains("edit"));}
-  else if(b.hasAttribute("data-convs"))convocationsSession(b.dataset.cl,b.dataset.lundi);
+  else if(b.hasAttribute("data-convs"))convocationsSession(b.dataset.cl,b.dataset.lundi,b);
   else if(b.hasAttribute("data-convsok"))marquerSession(b.dataset.cl,b.dataset.lundi,true);
   else if(b.hasAttribute("data-convsno"))marquerSession(b.dataset.cl,b.dataset.lundi,false);
   else if(b.dataset.exp)exporter(b.dataset.exp,b);
