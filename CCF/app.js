@@ -715,7 +715,7 @@ const Saisie=(()=>{
     rows.push({h:8,cells:[{v:"",bord:false,cs:9},...N9]});
     rows.push({h:40,cells:[{v:"Appréciation générale : "+(d.ag||""),va:"t",cs:9},...N9]});
     rows.push({h:40,cells:[{v:"Signature de l'évaluateur :",bord:false,va:"t",cs:4},null,null,null,{v:"Signature du candidat :",bord:false,va:"t",cs:5},null,null,null,null]});
-    return {nom:code,papier:"A4",cols:[20,40,5,5,5,5,8,9,31],lignes:rows,repeter:1,repeterDe:6,piedPDF:"UFA Kerplouz LaSalle Auray · "+nomApp(a)+" · "+code};}
+    return {nom:code,papier:"A4",cols:[20,40,5,5,5,5,8,11,29],lignes:rows,repeter:1,repeterDe:6,piedPDF:"UFA Kerplouz LaSalle Auray · "+nomApp(a)+" · "+code};}
   async function pdfGrilles(cs,aids){if(!window.KepDoc){toast("Module d'export indisponible, rechargez la page.");return;}
     const F=[];for(const c of cs)if(peut(c)||S.coord)for(const a of aids)F.push(feuilleGrille(c,a));if(!F.length){toast("Rien à exporter.");return;}
     const un=aids.length===1?S.apps.find(x=>x.id===aids[0]):null;
