@@ -58,6 +58,7 @@ table{border-collapse:collapse;width:100%}
 .mois{font:600 14px var(--body);margin:18px 0 6px}
 .cal{table-layout:fixed;width:100%}
 .cal td.j{white-space:nowrap;font-weight:600}
+.pin{display:flex;align-items:center;gap:4px;margin:0 0 4px}.pin input{font-size:12px;padding:3px 4px;width:128px}.pin span{color:var(--ink-3)}
 .doc td.ci b{display:block}
 .doc .ind{color:var(--ink-2);white-space:pre-line}
 .doc .crt{font-weight:600}
@@ -173,7 +174,7 @@ textarea:focus{background:#fff}
     <button type="button" data-z="saisie">Saisie des documents 4 et 5</button>
     <button type="button" data-z="coord" hidden>Coordination</button>
     <button type="button" data-z="cal">Calendrier des épreuves</button>
-    <a href="/UC/param.html" id="lnkParam" hidden>Paramétrage des plans</a>
+    <a href="/UC/param.html" id="lnkParam" hidden>Plans d'évaluation</a>
   </nav>
   <div class="banner" id="fictif" hidden>Essai : référentiel et candidats <b>fictifs</b>, en attendant l'import des référentiels d'EvalUc. Aucune donnée d'apprenti réel.</div>
   <div class="banner" id="msg" hidden></div>
@@ -241,19 +242,20 @@ async function init(){
   if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
   try{
     const d=await rpc("mes_droits");S.moi=((d.prenom||"")+" "+(d.nom||"")).trim()||d.email||"";$("#who").textContent=S.moi;
-    $("#lnkParam").hidden=!d.admin;S.admin=!!d.admin;
-    [S.classes,S.aff]=await Promise.all([rpc("uc_mes_classes"),rpc("uc_mes_affectations").catch(()=>[])]);S.classes=S.classes||[];S.aff=S.aff||[];
+    S.admin=!!d.admin;
+    let ac;[S.classes,S.aff,ac]=await Promise.all([rpc("uc_mes_classes"),rpc("uc_mes_affectations").catch(()=>[]),rpc("uc_acces").catch(()=>({}))]);
+    S.resp=!!(ac&&ac.resp);$("#lnkParam").hidden=!S.resp;S.classes=S.classes||[];S.aff=S.aff||[];
   }catch(e){return erreur(e);}
   const q0=new URLSearchParams(location.search).get("vue")||"";
   S.zone=["doc4","doc5"].includes(q0)?"saisie":["tdb","coord","cal","saisie"].includes(q0)?q0:"tdb";if(q0==="doc5")S.vue="doc5";
-  $("#zones").hidden=false;$('[data-z="coord"]').hidden=!(S.admin||S.classes.some(c=>c.referent));
+  $("#zones").hidden=false;$('[data-z="coord"]').hidden=!(S.resp||S.classes.some(c=>c.referent||c.coord));
   const avec=S.classes.filter(c=>c.plan_id);
   if(S.zone==="cal"&&!avec.length)return render();
   if(!avec.length){$("#view").innerHTML=`<p class="empty">Aucune de vos classes n'a encore de plan d'évaluation en UC.</p>`;return;}
   // A, B, C… sont des groupes d'une même classe : CAPaJP1-A, CAPaJP1-B → classe CAPaJP1
   S.bases=[];for(const c of avec){const b=baseDe(c.code);let x=S.bases.find(y=>y.code===b);
     if(!x){x={code:b,libelle:c.libelle.replace(/\s*-\s*[A-Za-z]$/,""),groupes:[]};S.bases.push(x);}
-    x.groupes.push({code:c.code,lettre:c.groupe||lettreDe(c.code),plan_id:c.plan_id,referentiel:c.referentiel,cohorte:c.cohorte,referent:!!c.referent});}
+    x.groupes.push({code:c.code,lettre:c.groupe||lettreDe(c.code),plan_id:c.plan_id,referentiel:c.referentiel,cohorte:c.cohorte,referent:!!c.referent,coord:!!c.coord});}
   $("#selClasse").innerHTML=S.bases.map(b=>`<option value="${esc(b.code)}">${esc(b.libelle)}</option>`).join("");
   const q=new URLSearchParams(location.search),mem=ls("uc.classe");
   const pre=[q.get("classe")&&baseDe(q.get("classe")),mem].find(x=>S.bases.some(b=>b.code===x))||S.bases[0].code;
@@ -358,12 +360,12 @@ function avancementEpreuve(ep,cands){let f=0,t=0;const cis=cisEpreuve(ep.id);
   return [f,t];}
 function renderListe(){
   const L=candsVis(),grpCol=S.classe.groupes.length>1;
-  const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes;
-  let ep=`<h2 class="h2">Épreuves du plan${S.plan.agree_le?" agréé le "+esc(frDate(S.plan.agree_le)):""} <small>cohorte ${esc(S.cohorte)} · date fixée dans une période agréée, au plus tard 15 jours avant</small></h2>
+  const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes,perEdit=S.resp||S.classe.groupes.some(g=>g.referent);
+  let ep=`<h2 class="h2">Épreuves du plan${S.plan.agree_le?" agréé le "+esc(frDate(S.plan.agree_le)):""} <small>cohorte ${esc(S.cohorte)} · le référent pose les périodes prévisionnelles puis la date réelle, au plus tard 15 jours avant</small></h2>
     <table class="list dash"><thead><tr><th>Épreuve</th><th>Périodes agréées</th><th>Responsable</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Heure</th><th>Min./cand.</th><th>Lieu</th><th>Saisies</th></tr></thead><tbody>`;
   for(const e of S.epreuves)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,t]=avancementEpreuve(e,cg),ed=g.referent;
     const k=`data-ep="${e.id}" data-cl="${esc(g.code)}"`;
-    ep+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td><td rowspan="${G.length}" class="per">${perTxt(e)||'<span class="meta">non renseignées</span>'}</td>
+    ep+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td><td rowspan="${G.length}" class="per">${perEdit?perInputs(e):perTxt(e)||'<span class="meta">non renseignées</span>'}</td>
         <td rowspan="${G.length}">${esc(nomPers(e.responsable))||"—"}</td>`:""}
       ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}
       <td>${ed?`<input type="date" ${k} data-d="jour" value="${esc(d.jour||"")}" aria-label="Date ${esc(e.code)}">`:esc(frDate(d.jour))||"—"}<div>${echeance(e,d)}</div></td>
@@ -375,34 +377,33 @@ function renderListe(){
   if(!S.epreuves.length)ep=`<p class="empty">Aucune épreuve dans le plan d'évaluation.</p>`;
   // Convocations : une par candidat et par session de formation (semaine au CFA), toutes les épreuves de la session
   const SS=sessions(G);
-  const conv=`<h2 class="h2">Convocations par session de formation <small>une convocation par apprenti reprenant toutes les épreuves de la session</small></h2>${!SS.length?`<p class="meta" style="margin:0 0 18px">Aucune date fixée pour l'instant.</p>`:
+  const conv=`<h2 class="h2">Convocations par session de formation <small>éditées par le coordinateur de la filière · une convocation par apprenti pour toutes les épreuves de la session</small></h2>${!SS.length?`<p class="meta" style="margin:0 0 18px">Aucune date fixée pour l'instant.</p>`:
     `<table class="list"><thead><tr>${G.length>1?"<th>Groupe</th>":""}<th>Session</th><th>Épreuves</th><th>Convocations</th><th></th></tr></thead><tbody>${SS.map(x=>{
-      const faites=x.items.every(it=>it.d.convoc_le),ed=x.g.referent,k=`data-cl="${esc(x.g.code)}" data-lundi="${x.lundi}"`,lim=ajout(x.items[0].d.jour,-15),auj=AUJ();
+      const faites=x.items.every(it=>it.d.convoc_le),ed=x.g.coord,k=`data-cl="${esc(x.g.code)}" data-lundi="${x.lundi}"`,lim=ajout(x.items[0].d.jour,-15),auj=AUJ();
       return `<tr>${G.length>1?`<td>${esc(x.g.lettre)}</td>`:""}<td>semaine du ${esc(frDate(x.lundi))}</td>
         <td>${x.items.map(it=>`<b>${esc(it.e.code)}</b> ${esc(new Date(it.d.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}))} ${esc((it.d.heure||"08:15").replace(":","h"))}`).join("<br>")}</td>
         <td>${faites?`<span class="acq oui">faites</span>`:`<span class="acq${lim<=auj?" non":""}">à envoyer avant le ${esc(frDate(lim))}</span>`}</td>
         <td style="text-align:right;white-space:nowrap">${ed?`<button type="button" class="small" data-convs ${k}>Convocations</button> ${faites?`<button type="button" class="ghost small" data-convsno ${k}>Annuler</button>`:`<button type="button" class="ghost small" data-convsok ${k}>Marquer faites</button>`}`:""}</td></tr>`;}).join("")}</tbody></table>`}`;
-  const cand=!L.length?`<p class="empty">Aucun candidat dans ce groupe.</p>`:`<h2 class="h2">Candidats</h2><table class="list"><thead><tr><th>Candidat</th>${grpCol?"<th>Groupe</th>":""}<th>Document 4 (saisies)</th><th>Document 5 (propositions par UC)</th><th></th></tr></thead><tbody>${
-    L.map(c=>{const p=progression(c.id);return `<tr><td><b>${esc(c.nom)}</b> ${esc(c.prenom)}${c.fictif?' <small style="color:var(--ink-3)">(fictif)</small>':""}</td>${grpCol?`<td>${esc(c.groupe)}</td>`:""}
-      <td>${barre(p.fait4,p.tot4)}</td><td>${barre(p.fait5,p.tot5)}</td>
-      <td style="text-align:right;white-space:nowrap"><button type="button" class="ghost small" data-go="doc4" data-c="${c.id}">Document 4</button> <button type="button" class="ghost small" data-go="doc5" data-c="${c.id}">Document 5</button></td></tr>`;}).join("")
-  }</tbody></table>`;
   const edi=`<h2 class="h2">Éditions de la cohorte ${esc(S.cohorte)} <small>impression ou « Enregistrer au format PDF »</small></h2>
     <p class="editions"><button type="button" class="ghost" data-lot="doc5">Tous les documents 5 (A3 portrait)</button>
       <button type="button" class="ghost" data-lot="uc">Grille par UC (A4 paysage)</button></p>`;
   const nomsUC=u=>S.affPlan.filter(a=>a.uc_id===u.id).map(a=>nomPers(a.email)),
     epsUC=u=>S.epreuves.filter(e=>cisEpreuve(e.id).some(ci=>ci.uc_id===u.id));
-  const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.admin?`modifiables dans le <a href="/UC/param.html">paramétrage</a>`:"fixés par l'administrateur"}</small></h2>
+  const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.resp?`modifiables dans les <a href="/UC/param.html">plans d'évaluation</a>`:"fixés par le responsable pédagogique"}</small></h2>
     <table class="list"><thead><tr><th>UC</th><th>Formateurs affectés</th><th>Épreuves (responsable)</th></tr></thead><tbody>${
     S.ucs.map(u=>`<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${esc(nomsUC(u).join(", "))||'<span class="acq non">à affecter</span>'}</td>
       <td>${epsUC(u).map(e=>esc(e.code)+" ("+(esc(nomPers(e.responsable))||"—")+")").join("<br>")}</td></tr>`).join("")}</tbody></table>`;
-  const syn=!L.length?"":`<h2 class="h2">Synthèse par UC <small>propositions de l'équipe (document 5)</small></h2>
-    <div style="overflow-x:auto"><table class="list"><thead><tr><th>Candidat</th>${S.ucs.map(u=>`<th title="${esc(u.nom)}">${esc(u.code)}</th>`).join("")}</tr></thead><tbody>${
-    L.map(c=>`<tr><td>${esc(c.nom+" "+c.prenom)}${grpCol?` <small>(${esc(c.groupe)})</small>`:""}</td>${S.ucs.map(u=>{const t=etatUC(c.id,u);
-      return `<td><span class="acq${/^Validation|^Validée|^VAA/.test(t)?" oui":/^Non/.test(t)?" non":""}">${esc(t==="—"?"en cours":t.replace(" proposée",""))}</span></td>`;}).join("")}</tr>`).join("")}</tbody></table></div>`;
-  $("#view").innerHTML=edi+ep+conv+aff+syn+cand;
+  $("#view").innerHTML=edi+ep+conv+aff;
 }
 /* ---------- Périodes agréées, échéances (15 jours avant) et sessions de formation ---------- */
+const perInputs=e=>[1,2,3].map(k=>`<div class="pin"><input type="date" data-per="${e.id}" data-k="p${k}_du" value="${esc(e["p"+k+"_du"]||"")}" aria-label="Période ${k} : début"><span>→</span><input type="date" data-per="${e.id}" data-k="p${k}_au" value="${esc(e["p"+k+"_au"]||"")}" aria-label="Période ${k} : fin"></div>`).join("");
+const tPer=new Map();
+function majPeriodes(inp){const ep=+inp.dataset.per;clearTimeout(tPer.get(ep));
+  tPer.set(ep,setTimeout(async()=>{const v={};$$(`[data-per="${ep}"]`).forEach(x=>v[x.dataset.k]=x.value||null);
+    for(const k of [1,2,3])if(v["p"+k+"_du"]&&!v["p"+k+"_au"])v["p"+k+"_au"]=v["p"+k+"_du"];
+    statut("Enregistrement…");
+    try{await rpc("uc_fixer_periodes",{p_epreuve:ep,...v});Object.assign(S.epreuves.find(x=>x.id===ep),v);S.cal=null;statut("Périodes enregistrées");renderListe();}
+    catch(e){statut("Non enregistré : "+e.message.replace(/^(PERIODE|DROIT) : /,""),true);}},900));}
 const periodes=e=>[[e.p1_du,e.p1_au],[e.p2_du,e.p2_au],[e.p3_du,e.p3_au]].filter(p=>p[0]).map(p=>({du:p[0],au:p[1]||p[0]}));
 const fr2=iso=>new Date(iso+"T12:00:00").toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
 const perTxt=e=>periodes(e).map(p=>p.du===p.au?"le "+esc(frDate(p.du)):"du "+esc(fr2(p.du))+" au "+esc(frDate(p.au))).join("<br>");
@@ -419,6 +420,18 @@ function sessions(G){const R=[];
     let x=R.find(y=>y.g.code===g.code&&y.lundi===l);if(!x){x={g,lundi:l,items:[]};R.push(x);}x.items.push({e,d});}
   R.forEach(x=>x.items.sort((a,b)=>(a.d.jour+a.d.heure).localeCompare(b.d.jour+b.d.heure)));
   return R.sort((a,b)=>a.lundi.localeCompare(b.lundi)||a.g.code.localeCompare(b.g.code));}
+/* ---------- Résultats de la cohorte (tous les formateurs de la classe) ---------- */
+function htmlResultats(){const L=candsVis(),grpCol=S.classe.groupes.length>1;
+  const syn=!L.length?"":`<h2 class="h2">Résultats : synthèse par UC <small>propositions de l'équipe (document 5)</small></h2>
+    <div style="overflow-x:auto"><table class="list"><thead><tr><th>Candidat</th>${S.ucs.map(u=>`<th title="${esc(u.nom)}">${esc(u.code)}</th>`).join("")}</tr></thead><tbody>${
+    L.map(c=>`<tr><td>${esc(c.nom+" "+c.prenom)}${grpCol?` <small>(${esc(c.groupe)})</small>`:""}</td>${S.ucs.map(u=>{const t=etatUC(c.id,u);
+      return `<td><span class="acq${/^Validation|^Validée|^VAA/.test(t)?" oui":/^Non/.test(t)?" non":""}">${esc(t==="—"?"en cours":t.replace(" proposée",""))}</span></td>`;}).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const cand=!L.length?`<p class="empty">Aucun candidat dans ce groupe.</p>`:`<h2 class="h2">Avancement des saisies par candidat</h2><table class="list"><thead><tr><th>Candidat</th>${grpCol?"<th>Groupe</th>":""}<th>Document 4 (saisies)</th><th>Document 5 (propositions par UC)</th><th></th></tr></thead><tbody>${
+    L.map(c=>{const p=progression(c.id);return `<tr><td><b>${esc(c.nom)}</b> ${esc(c.prenom)}${c.fictif?' <small style="color:var(--ink-3)">(fictif)</small>':""}</td>${grpCol?`<td>${esc(c.groupe)}</td>`:""}
+      <td>${barre(p.fait4,p.tot4)}</td><td>${barre(p.fait5,p.tot5)}</td>
+      <td style="text-align:right;white-space:nowrap"><button type="button" class="ghost small" data-go="doc4" data-c="${c.id}">Document 4</button> <button type="button" class="ghost small" data-go="doc5" data-c="${c.id}">Document 5</button></td></tr>`;}).join("")
+  }</tbody></table>`;
+  return syn+cand;}
 /* ---------- Tableau de bord du formateur ---------- */
 function avMes(e,cands){let f=0,t=0;const cis=cisEpreuve(e.id).filter(ci=>peut("ci",ci.id));
   for(const c of cands){for(const ci of cis){if(validation(c.id,ci.uc_id))continue;
@@ -448,7 +461,7 @@ function renderTdb(){
   const auj=new Date().toISOString().slice(0,10),proch=S.dates.filter(d=>d.jour&&d.jour>=auj&&eps.some(e=>e.id===d.epreuve_id)).sort((a,b)=>(a.jour+a.heure).localeCompare(b.jour+b.heure)).slice(0,6);
   if(proch.length)t+=`<h2 class="h2">Prochaines épreuves</h2><ul>${proch.map(d=>{const e=S.epreuves.find(x=>x.id===d.epreuve_id);
     return `<li><b>${esc(frDate(d.jour))}</b> ${esc((d.heure||"08:15").replace(":","h"))} · ${esc(e.code)} ${esc(e.nom)} · ${esc(d.classe)} · ${esc(d.lieu||"")}</li>`;}).join("")}</ul>`;
-  $("#view").innerHTML=intro+t;
+  $("#view").innerHTML=intro+t+htmlResultats();
 }
 /* ---------- Calendrier des épreuves (toutes mes classes UC) ---------- */
 async function renderCal(){
@@ -660,6 +673,7 @@ document.addEventListener("change",e=>{const cell=e.target.closest(".cell");
   if(cell&&e.target.matches("[data-acq]"))return enregistrer(cell);
   if(e.target.id==="dEval"){const ep=S.epr,c=S.cand;const fake=document.querySelector(`.cell[data-n="epreuve"][data-r="${ep}"]`);if(fake)enregistrer(fake,{date:e.target.value||null});}
   if(e.target.dataset&&e.target.dataset.d)return majDate(e.target);
+  if(e.target.dataset&&e.target.dataset.per)return majPeriodes(e.target);
   if(e.target.id==="selClasse")chargerClasse(e.target.value);
   if(e.target.id==="selGrp"){S.grp=e.target.value;majCands();render();}
   if(e.target.id==="selCand"){S.cand=e.target.value;render();}

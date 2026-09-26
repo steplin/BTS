@@ -76,7 +76,7 @@ dialog h2{margin:0;font:700 18px var(--display)}
     <button type="button" data-e="candidats">Candidats</button>
     <button type="button" data-e="validations">UC déjà validées / VAA</button>
     <div class="sec"></div>
-    <a href="/UC/">← Saisie des documents 4 et 5</a>
+    <a href="/UC/">← Évaluations UC</a>
     <a href="/">← Outils</a>
   </aside>
   <main>
@@ -109,7 +109,7 @@ async function api(path,{method="GET",body,prefer}={}){
   const r=await fetch(SB+path,{method,headers:h,body:body?JSON.stringify(body):undefined});
   const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){d=t;}
   if(!r.ok){let m=(d&&(d.message||d.msg))||("Erreur "+r.status);
-    if(/row-level security|permission denied/i.test(m))m="Vous n'avez pas le droit de modifier ce paramétrage (réservé à l'administrateur, au coordinateur de la filière et au responsable pédagogique).";
+    if(/row-level security|permission denied/i.test(m))m="Vous n'avez pas le droit de modifier ce paramétrage (plans d'évaluation : responsable pédagogique et administrateur ; candidats, UC validées et VAA : administrateur).";
     if(/duplicate key/i.test(m))m="Cet élément existe déjà (code ou cohorte en double).";
     if(/foreign key/i.test(m))m="Élément encore utilisé ailleurs : supprimez d'abord ce qui en dépend.";
     throw new Error(m);}
@@ -259,9 +259,10 @@ document.addEventListener("change",e=>{if(e.target.id==="flt"){filtreVal[cur]=e.
 document.addEventListener("input",e=>{if(e.target.id==="q"){recherche=e.target.value;afficher();}});
 $("#frm").addEventListener("submit",enregistrer);
 (async()=>{if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
-  // Paramétrage réservé à l'administrateur (la base refuse aussi toute modification aux autres comptes)
-  try{const d=await api("/rest/v1/rpc/mes_droits",{method:"POST",body:{}});
-    if(!d||!d.admin){document.querySelector(".app").innerHTML=`<main><h1>Paramétrage réservé à l'administrateur</h1><p class="hint">Les référentiels, les plans d'évaluation, les candidats, les UC validées et les VAA sont gérés par l'administrateur. <a href="/UC/">Retour à la saisie</a></p></main>`;return;}
+  // Plans d'évaluation : responsable pédagogique et administrateur ; candidats, UC validées et VAA : administrateur (la base applique les mêmes règles)
+  try{const d=await api("/rest/v1/rpc/uc_acces",{method:"POST",body:{}});
+    if(!d||!d.resp){document.querySelector(".app").innerHTML=`<main><h1>Plans d'évaluation : accès réservé</h1><p class="hint">Les référentiels et les plans d'évaluation sont gérés par le responsable pédagogique et l'administrateur. <a href="/UC/">Retour aux évaluations UC</a></p></main>`;return;}
+    if(!d.admin)document.querySelectorAll('aside [data-e="candidats"],aside [data-e="validations"]').forEach(b=>b.hidden=true);
   }catch(e){}
   try{await charger();}catch(e){$("#liste").innerHTML=`<p class="empty">${esc(e.message)}</p>`;return;}
   const h=location.hash.slice(1);ouvrir(E[h]?h:"plans");})();
