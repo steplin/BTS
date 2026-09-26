@@ -366,6 +366,7 @@ const Saisie=(()=>{
       const d=await Cloud.call("/rest/v1/rpc/mes_droits",{method:"POST",body:{}});
       S.me=d.email;MOI_NOM=((d.prenom||"")+" "+(d.nom||"")).trim();S.coord=!!(d.actif&&(d.admin||(d.filieres||[]).includes("btsa")));S.refs=(d.classes||[]).filter(c=>c.fonction==="referent").map(c=>c.code);
       const lp=u=>Cloud.call(u).catch(()=>[]);
+      lp("/rest/v1/qualiopi_refs?select=cle,code,date_ref,redacteur").then(r=>{S.qref={};(r||[]).forEach(x=>S.qref[x.cle]=x);});
       const [pr,pg,pe]=await Promise.all([lp("/rest/v1/bts_apprenants?select=promo"),lp("/rest/v1/grilles_bts?select=promo"),lp("/rest/v1/bts_epreuves?select=promo")]);
       S.promos=[...new Set([state.classe.promo||"2026-2028",...[...(pr||[]),...(pg||[]),...(pe||[])].map(x=>x.promo)])].filter(x=>/^\d{4}-\d{4}$/.test(x)).sort();
       if(!S.promo||!S.promos.includes(S.promo))S.promo=S.promos.includes(state.classe.promo)?state.classe.promo:S.promos[0]||"2026-2028";
@@ -646,9 +647,9 @@ const Saisie=(()=>{
           champs:{DEST1:nom,DEST2:"",DEST3:"",DEST4:"",DATE:auj(),CIVILITE:"Madame, Monsieur",PROMO:S.promo,DATEEPREUVE:dateLongue(e0.date),LIEU:lieux.join(" et "),SIGNATAIRE:sign,
           OBJETEPR:n>1?"aux épreuves certificatives (ECCF)":"à une épreuve certificative (ECCF)",AUXEPR:n>1?"aux "+n+" épreuves certificatives suivantes":"à l’épreuve certificative suivante",
           COPIE:[a.entreprise,a.tuteur?"à l'attention de "+a.tuteur:""].filter(Boolean).join(", ")||"entreprise d'accueil"}});
-        zip.file(nomFichier(`Convocation ${e0.date} ${a.nom} ${a.prenom}`)+".docx",u);}
+        zip.file(nomFichier(`Convocation ${e0.date} ${a.nom} ${a.prenom}`)+".docx",window.KepDoc?await KepDoc.qualiopiDocx(u,KepDoc.qualiopi((S.qref||{})["conv-ccf"])):u);}
       const base=nomFichier(`Convocations ${e0.date} ${jour.join(" ")} BTS AP ${suffixe()}`).slice(0,120);
-      const ok=pdfMode?await save(base+".pdf",await KepDoc.courriers(lettres,{titre:"Convocations "+jour.join(", ")+" "+dateLongue(e0.date),logo:"/lib/logo-kerplouz.png",theme:THEME_PDF[state.theme]||THEME_PDF.origine}))
+      const ok=pdfMode?await save(base+".pdf",await KepDoc.courriers(lettres,{titre:"Convocations "+jour.join(", ")+" "+dateLongue(e0.date),logo:"/lib/logo-kerplouz.png",theme:THEME_PDF[state.theme]||THEME_PDF.origine,qualiopi:KepDoc.qualiopi((S.qref||{})["conv-ccf"])}))
         :await save(base+".zip",await zip.generateAsync({type:"blob"}));
       if(ok){
         try{await marquerJour(cd,true);toast(n>1?"Convocations du "+dateLongue(e0.date)+" ("+jour.join(", ")+") notées comme faites.":"Convocations "+cd+" notées comme faites.");}catch(err){console.warn("convocations",err);}}});}
@@ -663,7 +664,7 @@ const Saisie=(()=>{
           :{DEST1:a.entreprise||"Entreprise d'accueil",DEST2:a.tuteur?"À l'attention de "+a.tuteur:"",DEST3:adr[0]||"",DEST4:adr.slice(1).join(", ")};
         Object.assign(champs,{DATE:auj(),PERIODE:per,PROMO:S.promo,APPRENANT:nomA,MOY:mg!=null?fr(mg)+" / 20":"—",NBNOTES:String(Object.keys(nt).length),SIGNATAIRE:sign});
         const u=await ResultatsEngine.doc(tpl,{theme:state.theme,champs,lignes,puces:al});
-        zip.file(nomFichier(`${type==="al"?"Alerte":"Resultats entreprise"} S${k} ${a.nom} ${a.prenom}`)+".docx",u);n++;}
+        zip.file(nomFichier(`${type==="al"?"Alerte":"Resultats entreprise"} S${k} ${a.nom} ${a.prenom}`)+".docx",window.KepDoc?await KepDoc.qualiopiDocx(u,KepDoc.qualiopi((S.qref||{})[type==="al"?"alerte":"res-ent"])):u);n++;}
       if(!n){toast("Aucun courrier à produire.");return;}
       await save(nomFichier(`${type==="al"?"Lettres alerte":"Resultats entreprises"} S${k} BTS AP ${suffixe()}`)+".zip",await zip.generateAsync({type:"blob"}));});}
   function notesDe(a){const o={};for(const c of tousCodes()){const r=S.saisies[key(c,a.id)];if(r&&r.complet&&r.note20!=null)o[c]=+r.note20;}return o;}
