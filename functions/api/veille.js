@@ -54,7 +54,7 @@ async function flux(src, ctx) {
   if (mots.length) items = items.filter((i) => { const t = sansAccent(i.titre + " " + i.resume); return mots.some((m) => t.includes(m)); });
   const limite = Date.now() - MAX_JOURS * 864e5;
   items = items.filter((i) => !i.date || Date.parse(i.date) >= limite).slice(0, MAX_PAR_SOURCE);
-  return { items: items.map((i) => ({ ...i, source: src.nom, site: src.site, theme: src.theme })), lu };
+  return { items: items.map((i) => ({ ...i, source: src.nom, site: src.site, theme: src.theme, filieres: src.filieres || [] })), lu };
 }
 
 export async function onRequestGet(ctx) {
