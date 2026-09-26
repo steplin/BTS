@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Référentiels des diplômes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#F4F6F3;--surface:#FFFFFF;--line:#DCE2D9;--ink:#18241E;--ink-2:#4A5A51;--ink-3:#76857C;--accent:#2E6A4B;--accent-soft:#DCEBDF;
+  --danger:#A8412F;--warn:#7A5410;--warn-soft:#FFF6E5;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 var(--body);padding-inline:16px}
+main{max-width:1240px;margin:0 auto;padding-block:22px 60px;display:flex;flex-direction:column;gap:16px}
+a{color:var(--accent)}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.head .t{display:flex;flex-direction:column;gap:3px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+h1{font:700 26px/1.15 var(--display);margin:0;letter-spacing:-.01em}
+.me{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.me a{font-weight:600;text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.bar label{font-size:12.5px;color:var(--ink-3);font-weight:500}
+select,input[type=search],input[type=text],textarea{font:14px var(--body);color:var(--ink);background:#F8FAF7;border:1px solid var(--line);border-radius:8px;padding:7px 9px;max-width:100%}
+input[type=search]{min-width:240px}
+button,.btn{font:600 13.5px var(--body);border:0;border-radius:8px;padding:8px 12px;background:var(--accent);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+button.ghost,.btn.ghost{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sp{flex:1}
+.status{font-size:12.5px;color:var(--ink-3)}.status.err{color:var(--danger)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.empty{color:var(--ink-3);text-align:center;padding:30px}
+.info h2{font:700 20px/1.2 var(--display);margin:0 0 6px}
+.info dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:8px 0 0;font-size:13.5px}.info dt{color:var(--ink-3)}.info dd{margin:0}
+.pill{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 8px;background:#EEF2EC;color:var(--ink-2)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+details.n1{border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:0 0 10px}
+details.n1>summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:baseline}
+details.n1>summary::-webkit-details-marker{display:none}
+details.n1>summary::before{content:"▸";color:var(--ink-3);transition:transform .15s}
+details.n1[open]>summary::before{transform:rotate(90deg)}
+details.n1>summary .code{font-family:var(--display);color:var(--accent);white-space:nowrap}
+details.n1>summary .cnt{margin-left:auto;font-weight:400;font-size:12px;color:var(--ink-3);white-space:nowrap}
+.n1body{padding:0 16px 14px}
+.desc{white-space:pre-line;color:var(--ink-2);font-size:13.5px;margin:0 0 10px}
+.n2{border-top:1px solid var(--line);padding:12px 0 4px}
+.n2 h3{font-size:14.5px;margin:0 0 6px}.n2 h3 .code{color:var(--accent);margin-right:6px}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;font-size:13px}
+th{background:#EEF3EF;font-size:12px;color:var(--ink-2)}
+td .t{font-weight:600}td.ind{white-space:pre-line;color:var(--ink-2)}
+mark{background:#FFE9A8;padding:0 1px}
+.imp{display:flex;flex-direction:column;gap:10px}
+.imp textarea{min-height:180px;font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre}
+.hint{font-size:12.5px;color:var(--ink-3);margin:0}
+.prev{max-height:260px;overflow:auto}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:9px;padding:9px 14px;font-size:13.5px;z-index:60}
+@media print{
+  @page{size:A4 portrait;margin:12mm 10mm 14mm}
+  body{background:#fff;padding:0;font-size:10pt}main{padding:0;max-width:none}
+  .noprint,.head .me{display:none!important}
+  .card,details.n1{border:0;padding:0;border-radius:0}
+  details.n1{break-inside:auto;margin:0 0 10pt}details.n1>summary::before{display:none}
+  th,td{border-color:#000;font-size:9pt}th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .n2{break-inside:avoid}
+}
+</style></head><body>
+<main>
+  <div class="head">
+    <div class="t"><span class="eyebrow">Kerplouz LaSalle · Toutes formations</span><h1>Référentiels des diplômes</h1></div>
+    <div class="me"><span id="who"></span><a href="/">← Outils</a></div>
+  </div>
+  <div class="bar noprint" id="bar" hidden>
+    <label for="selRef">Diplôme</label><select id="selRef"></select>
+    <input type="search" id="q" placeholder="Rechercher (capacité, critère, indicateur…)" aria-label="Rechercher dans le référentiel">
+    <span class="sp"></span><span class="status" id="status" aria-live="polite"></span>
+    <button type="button" class="ghost" id="btnTout">Tout déplier</button>
+    <button type="button" class="ghost" id="btnPrint">Imprimer</button>
+    <span id="outilsResp" hidden><button type="button" id="btnImp">Importer</button> <a class="btn ghost" id="lnkEdit" href="/UC/param.html#referentiels">Modifier</a></span>
+  </div>
+  <section class="card imp noprint" id="imp" hidden>
+    <h2 style="margin:0;font-size:16px">Importer depuis un tableur</h2>
+    <p class="hint">Dans Excel ou LibreOffice, sélectionnez les lignes (sans en-tête) puis copiez-collez ci-dessous. Colonnes attendues, dans cet ordre :
+      <b>code niveau 1</b> (ex. UCP 1) · <b>libellé niveau 1</b> · <b>code niveau 2</b> (ex. UCP 1.1) · <b>libellé niveau 2</b> · <b>critère</b> · <b>indicateurs</b>.
+      Une ligne par critère ; les libellés peuvent n'être écrits qu'une fois. Pour le critère, le titre puis la description peuvent être séparés par un retour à la ligne dans la cellule.
+      L'import ajoute ce qui manque et met à jour les libellés existants ; il ne supprime rien.</p>
+    <textarea id="impTxt" aria-label="Lignes copiées depuis le tableur" placeholder="UCP 1&#9;Réaliser en sécurité des travaux d'entretien paysager&#9;UCP 1.1&#9;Entretenir la végétation&#9;Mise en œuvre des consignes&#9;- Conformité…"></textarea>
+    <div class="prev" id="impPrev"></div>
+    <div><button type="button" id="impGo" disabled>Importer dans ce référentiel</button> <button type="button" class="ghost" id="impClose">Fermer</button></div>
+  </section>
+  <section class="card info" id="info" hidden></section>
+  <section id="arbre"><p class="empty">Chargement…</p></section>
+</main>
+<script>
+"use strict";
+const SB="https://olqclfsywasktwirswpb.supabase.co",KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x",SKEY="kep.session";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let session=null;
+function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+async function frais(){session=session||ls(SKEY);if(!session)return false;
+  if(session.expires_at-60>Date.now()/1000)return true;
+  try{const r=await fetch(SB+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:session.refresh_token})});
+    if(!r.ok)throw 0;const t=await r.json();
+    session=Object.assign(session,{access_token:t.access_token,refresh_token:t.refresh_token,expires_at:t.expires_at?+t.expires_at:Math.floor(Date.now()/1000)+(+t.expires_in||3600)});
+    ls(SKEY,session);document.cookie="kep_at="+session.access_token+"; Path=/; Max-Age="+Math.max(60,session.expires_at-Math.floor(Date.now()/1000))+"; Secure; SameSite=Lax";return true;
+  }catch(e){return false;}}
+async function api(path,{method="GET",body}={}){
+  if(!await frais())throw new Error("Session expirée : reconnectez-vous depuis la page d'accueil.");
+  const r=await fetch(SB+path,{method,headers:{apikey:KEY,"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:body?JSON.stringify(body):undefined});
+  const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){d=t;}
+  if(!r.ok)throw new Error((d&&(d.message||d.msg))||("Erreur "+r.status));return d;}
+const rpc=(n,b)=>api("/rest/v1/rpc/"+n,{method:"POST",body:b||{}});
+const statut=(m,err)=>{$("#status").textContent=m||"";$("#status").classList.toggle("err",!!err);};
+const toast=m=>{const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4200);};
+const byOrd=(a,b)=>(a.ordre-b.ordre)||String(a.code).localeCompare(String(b.code),"fr",{numeric:true});
+const pl=t=>String(t).toLowerCase().split(" ").map(w=>/[sx]$/.test(w)?w:w+"s").join(" ");
+const FIL={capa:"CAPa",bpa:"BPA",bp:"BP",btsa:"BTSA",cs:"CS",bprea:"BPREA",autre:"Autre"};
+
+const R={refs:[],ref:null,n1:[],n2:[],n3:[],resp:false,tout:false};
+async function init(){
+  if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
+  try{const [d,ac,refs]=await Promise.all([rpc("mes_droits"),rpc("uc_acces").catch(()=>({})),api("/rest/v1/uc_referentiels?order=fictif,niveau,code")]);
+    $("#who").textContent=((d.prenom||"")+" "+(d.nom||"")).trim();R.resp=!!(ac&&ac.resp);R.refs=refs||[];}
+  catch(e){$("#arbre").innerHTML=`<p class="empty">${esc(e.message)}</p>`;return;}
+  $("#outilsResp").hidden=!R.resp;
+  if(!R.refs.length){$("#arbre").innerHTML=`<p class="empty">Aucun référentiel pour l'instant.${R.resp?` Créez-le dans <a href="/UC/param.html#referentiels">le paramétrage</a>, puis importez-le ici.`:""}</p>`;return;}
+  $("#selRef").innerHTML=R.refs.map(r=>`<option value="${esc(r.code)}">${esc(r.libelle)}${r.fictif?" (essai)":""}</option>`).join("");
+  const pre=[new URLSearchParams(location.search).get("ref"),ls("ref.code")].find(x=>R.refs.some(r=>r.code===x))||R.refs[0].code;
+  $("#selRef").value=pre;$("#bar").hidden=false;await charger(pre);
+}
+async function charger(code){
+  R.ref=R.refs.find(r=>r.code===code);ls("ref.code",code);statut("Chargement…");
+  try{R.n1=await api(`/rest/v1/uc_ucs?referentiel=eq.${encodeURIComponent(code)}&order=ordre,code`);
+    const i1=R.n1.map(x=>x.id).join(",")||"0";R.n2=await api(`/rest/v1/uc_cis?uc_id=in.(${i1})&order=ordre,code`);
+    const i2=R.n2.map(x=>x.id).join(",")||"0";R.n3=await api(`/rest/v1/uc_crs?ci_id=in.(${i2})&order=ordre,id`);}
+  catch(e){statut(e.message,true);return;}
+  statut("");$("#lnkEdit").href="/UC/param.html#ucs";render();
+}
+function surligne(t,q){const s=esc(t);if(!q)return s;const re=new RegExp("("+q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","gi");return s.replace(re,"<mark>$1</mark>");}
+const sans=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+function render(){
+  const r=R.ref,q=$("#q").value.trim(),qs=sans(q),L1=r.lib_n1||"UC",L2=r.lib_n2||"Capacité intermédiaire",L3=r.lib_n3||"Critère";
+  $("#info").hidden=false;
+  $("#info").innerHTML=`<h2>${esc(r.libelle)}</h2>${r.fictif?'<span class="pill warn">référentiel d\'essai</span> ':""}<span class="pill">${esc(FIL[r.niveau]||r.niveau)}</span>
+    ${r.description?`<p class="desc" style="margin-top:8px">${esc(r.description)}</p>`:""}
+    <dl>${r.arrete?`<dt>Arrêté</dt><dd>${esc(r.arrete)}</dd>`:""}${r.version?`<dt>Version</dt><dd>${esc(r.version)}</dd>`:""}
+      <dt>Source</dt><dd>${r.chlorofil?`<a href="${esc(r.chlorofil)}" target="_blank" rel="noopener">Chlorofil ↗</a>`:`Chlorofil${R.resp?' <span class="pill">lien à renseigner dans « Modifier »</span>':""}`}</dd>
+      <dt>Contenu</dt><dd>${R.n1.length} ${esc(L1)} · ${R.n2.length} ${esc(pl(L2))} · ${R.n3.length} ${esc(pl(L3))}</dd></dl>`;
+  if(!R.n1.length){$("#arbre").innerHTML=`<p class="empty">Ce référentiel est vide.${R.resp?" Utilisez « Importer » pour le remplir depuis un tableur.":""}</p>`;return;}
+  const hit=(...t)=>!qs||t.some(x=>sans(x).includes(qs));
+  let h="",n=0;
+  for(const u of R.n1.slice().sort(byOrd)){
+    const cis=R.n2.filter(c=>c.uc_id===u.id).sort(byOrd);let body="",nb=0;
+    for(const c of cis){const crs=R.n3.filter(x=>x.ci_id===c.id).sort(byOrd);
+      const vis=crs.filter(x=>hit(x.nom,x.indicateur)||hit(c.code,c.nom,c.description)||hit(u.code,u.nom,u.description));
+      if(q&&!vis.length&&!hit(c.code,c.nom,c.description))continue;nb++;
+      body+=`<div class="n2"><h3><span class="code">${surligne(c.code,q)}</span>${surligne(c.nom,q)}</h3>${c.description?`<p class="desc">${surligne(c.description,q)}</p>`:""}
+        ${vis.length?`<table><colgroup><col style="width:38%"><col></colgroup><thead><tr><th>${esc(L3)}</th><th>Indicateurs</th></tr></thead><tbody>${vis.map(x=>{const [t,...d]=String(x.nom).split("\n");
+          return `<tr><td><span class="t">${surligne(t,q)}</span>${d.length?"<br>"+surligne(d.join(" "),q):""}</td><td class="ind">${surligne(x.indicateur,q)}</td></tr>`;}).join("")}</tbody></table>`:""}</div>`;}
+    if(q&&!nb&&!hit(u.code,u.nom,u.description))continue;n++;
+    h+=`<details class="n1"${q||R.tout?" open":""}><summary><span class="code">${surligne(u.code,q)}</span><span>${surligne(u.nom,q)}</span><span class="cnt">${cis.length} ${esc(cis.length>1?pl(L2):L2.toLowerCase())}</span></summary>
+      <div class="n1body">${u.description?`<p class="desc">${surligne(u.description,q)}</p>`:""}${body||`<p class="hint">Aucune ${esc(L2.toLowerCase())}.</p>`}</div></details>`;}
+  $("#arbre").innerHTML=h||`<p class="empty">Aucun résultat pour « ${esc(q)} ».</p>`;
+}
+/* ---------- Import (responsable pédagogique) : collage depuis un tableur ---------- */
+function lireTSV(t){const rows=[];let row=[],cell="",q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){cell+='"';i++;}else q=false;}else cell+=ch;}
+    else if(ch==='"'&&cell==="")q=true;
+    else if(ch==="\t"){row.push(cell);cell="";}
+    else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&t[i+1]==="\n")i++;row.push(cell);cell="";if(row.some(x=>x.trim()))rows.push(row);row=[];}
+    else cell+=ch;}
+  row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows;}
+let lignes=[];
+function apercu(){const rows=lireTSV($("#impTxt").value);let p1="",p2="";
+  lignes=rows.map(r=>{const o={n1_code:(r[0]||"").trim(),n1_nom:(r[1]||"").trim(),n2_code:(r[2]||"").trim(),n2_nom:(r[3]||"").trim(),n3_nom:(r[4]||"").trim(),indicateur:(r[5]||"").trim()};
+    o.n1_code=o.n1_code||p1;o.n2_code=o.n2_code||(o.n1_code===p1?p2:"");p1=o.n1_code;p2=o.n2_code;return o;}).filter(o=>o.n1_code);
+  const n1=new Set(lignes.map(l=>l.n1_code)),n2=new Set(lignes.filter(l=>l.n2_code).map(l=>l.n1_code+"|"+l.n2_code)),n3=lignes.filter(l=>l.n3_nom).length;
+  $("#impPrev").innerHTML=!lignes.length?"":`<p class="hint">${lignes.length} ligne(s) lue(s) : ${n1.size} ${esc(R.ref.lib_n1||"UC")}, ${n2.size} ${esc((R.ref.lib_n2||"capacité").toLowerCase())}(s), ${n3} ${esc((R.ref.lib_n3||"critère").toLowerCase())}(s).</p>
+    <table><thead><tr><th>Niv. 1</th><th>Niv. 2</th><th>Critère</th><th>Indicateurs</th></tr></thead><tbody>${lignes.slice(0,12).map(l=>`<tr><td>${esc(l.n1_code)}</td><td>${esc(l.n2_code)}</td><td>${esc(l.n3_nom.split("\n")[0])}</td><td class="ind">${esc(l.indicateur.slice(0,120))}</td></tr>`).join("")}</tbody></table>${lignes.length>12?`<p class="hint">… et ${lignes.length-12} autre(s).</p>`:""}`;
+  $("#impGo").disabled=!lignes.length;}
+async function importer(){$("#impGo").disabled=true;statut("Import…");
+  try{const r=await rpc("ref_importer",{p_ref:R.ref.code,p_lignes:lignes});
+    toast(`Import terminé : ${r.n1} ${R.ref.lib_n1||"UC"} ajoutée(s), ${r.n2} capacité(s), ${r.n3} critère(s) ajoutés, ${r.n3_maj} mis à jour.`);
+    $("#impTxt").value="";apercu();$("#imp").hidden=true;await charger(R.ref.code);}
+  catch(e){statut(e.message.replace(/^DROIT : /,""),true);$("#impGo").disabled=false;}}
+
+document.addEventListener("change",e=>{if(e.target.id==="selRef"){$("#q").value="";charger(e.target.value);}});
+let tq;document.addEventListener("input",e=>{if(e.target.id==="q"){clearTimeout(tq);tq=setTimeout(render,200);}if(e.target.id==="impTxt")apercu();});
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.id==="btnPrint"){$$("details.n1").forEach(d=>d.open=true);window.print();}
+  else if(b.id==="btnTout"){R.tout=!R.tout;b.textContent=R.tout?"Tout replier":"Tout déplier";$$("details.n1").forEach(d=>d.open=R.tout);}
+  else if(b.id==="btnImp"){$("#imp").hidden=false;$("#impTxt").focus();}
+  else if(b.id==="impClose")$("#imp").hidden=true;
+  else if(b.id==="impGo")importer();});
+init();
+</script>
+<script src="/comme.js" defer></script>
+</body></html>
