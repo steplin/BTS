@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Saisie UC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#F4F6F3;--surface:#FFFFFF;--line:#DCE2D9;--ink:#18241E;--ink-2:#4A5A51;--ink-3:#76857C;--accent:#2E6A4B;--accent-soft:#DCEBDF;--c:#6E9A3A;
+  --danger:#A8412F;--danger-soft:#F6DED8;--warn:#7A5410;--warn-soft:#FFF6E5;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 var(--body);padding-inline:16px}
+main{max-width:1240px;margin:0 auto;padding-block:22px 60px;display:flex;flex-direction:column;gap:16px}
+a{color:var(--accent)}
+.head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.head .t{display:flex;flex-direction:column;gap:3px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+h1{font:700 26px/1.15 var(--display);margin:0;letter-spacing:-.01em}
+.me{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.me a{font-weight:600;text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px}
+.banner{background:var(--warn-soft);border:1px solid #F0DDB5;color:var(--warn);border-radius:10px;padding:10px 14px;font-size:13.5px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.bar label{font-size:12.5px;color:var(--ink-3);font-weight:500}
+select,input[type=date]{font:14px var(--body);color:var(--ink);background:#F8FAF7;border:1px solid var(--line);border-radius:8px;padding:7px 9px;max-width:100%}
+button{font:600 13.5px var(--body);border:0;border-radius:8px;padding:8px 12px;background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+button.small{font-size:12px;padding:5px 9px}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border-radius:0;background:var(--surface);color:var(--ink-2);font-weight:500}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.sp{flex:1}
+.status{font-size:12.5px;color:var(--ink-3);min-width:120px;text-align:right}
+.status.err{color:var(--danger)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.empty{color:var(--ink-3);text-align:center;padding:30px}
+table{border-collapse:collapse;width:100%}
+.list th,.list td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.list th{font-size:12px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.prog{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2)}
+.prog i{display:block;width:120px;height:7px;border-radius:9px;background:#EDF1EB;overflow:hidden}
+.prog i b{display:block;height:100%;background:var(--c)}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 18px;font-size:13.5px;margin-bottom:12px}
+.info div span{color:var(--ink-3)}
+.doc{table-layout:fixed}
+.doc th{background:#EEF3EF;font-size:12px;font-weight:600;color:var(--ink-2);padding:8px;border:1px solid #C9D3C6;text-align:left;vertical-align:bottom}
+.doc td{border:1px solid #C9D3C6;padding:8px;vertical-align:top;font-size:13px}
+.doc td.ci{background:#F8FAF7}
+.doc td.ci b{display:block}
+.doc .ind{color:var(--ink-2)}
+.cell{display:flex;flex-direction:column;gap:4px}
+textarea{font:13px/1.45 var(--body);color:var(--ink);background:#FCFDFB;border:1px solid var(--line);border-radius:7px;padding:6px 8px;width:100%;min-height:62px;resize:vertical}
+textarea:focus{background:#fff}
+.meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:11.5px;color:var(--ink-3)}
+.meta button{background:none;color:var(--accent);padding:0;font-weight:500;font-size:11.5px;text-decoration:underline;text-underline-offset:2px}
+.meta select{font-size:12px;padding:3px 6px}
+.ok{color:var(--accent);font-weight:600}.ko{color:var(--danger);font-weight:600}
+.valide{font-weight:600;color:var(--accent)}
+.tot{margin-top:12px}
+.tot h3{font-size:13px;margin:0 0 6px}
+.sug{position:fixed;inset:0;background:rgba(24,36,30,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.sug .box{background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:80vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.sug h2{font-size:16px;margin:0}
+.sug ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.sug li button{display:block;width:100%;text-align:left;background:#F8FAF7;color:var(--ink);border:1px solid var(--line);font-weight:400;font-size:13px;line-height:1.45}
+.sug li button:hover{border-color:var(--accent)}
+.sug li small{display:block;color:var(--ink-3);margin-top:3px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:9px;padding:9px 14px;font-size:13.5px;z-index:60;max-width:90vw}
+.print-only{display:none}
+@media (max-width:760px){
+  .doc,.doc thead,.doc tbody,.doc tr,.doc td{display:block;width:100%}
+  .doc thead{display:none}
+  .doc td{border-width:0 0 1px}
+  .doc td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--ink-3);font-weight:600;text-transform:uppercase}
+  .prog i{width:70px}
+}
+@media print{
+  @page{margin:10mm 10mm 14mm;@bottom-left{content:"UFA Kerplouz LaSalle Auray";font:9pt sans-serif}@bottom-right{content:counter(page) " / " counter(pages);font:9pt sans-serif}}
+  body{background:#fff;padding:0;font-size:10.5pt}
+  main{max-width:none;padding:0}
+  .noprint,.head,.bar,.banner,.meta,.toast{display:none!important}
+  .card{border:0;padding:0}
+  textarea,input[type=date]{display:none}
+  .print-only{display:block;white-space:pre-wrap}
+  .doc th,.doc td{border-color:#000}
+  .doc tr{break-inside:avoid}
+  .ptitle{display:block!important;text-align:center;font-weight:700;border:1px solid #000;padding:5px;margin:4px 0 8px}
+}
+.dhead{width:100%;font-size:12px;font-style:italic;color:var(--ink-2);margin-bottom:6px}
+.dhead td{padding:2px 0}
+.dtitre{text-align:center;font-weight:700;font-size:15px;border:1px solid #9aa79a;background:#F4F7F3;padding:6px;margin:4px 0 0}
+.dbox{width:100%;margin:0 0 8px}.dbox td{border:1px solid #9aa79a;border-top:0;padding:6px 8px;font-size:13.5px}
+.dinfo{width:100%;margin:0 0 12px;font-size:13px}.dinfo th,.dinfo td{border:1px solid #C9D3C6;padding:6px 8px;text-align:left;vertical-align:middle}
+.dinfo th{background:#EEF3EF;font-weight:600}
+.grp{font-size:12.5px;color:var(--ink-3);margin:-4px 0 10px}
+.h2{font:600 15px var(--body);margin:0 0 8px}.h2 small{font-weight:400;color:var(--ink-3);font-size:12.5px}
+.dash{margin-bottom:22px}.dash input{font-size:13px;padding:5px 7px}
+.pill{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 8px;background:#EEF2EC;color:var(--ink-2)}.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.print-conv-only{display:none}
+.editions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.gtab{width:100%;border-collapse:collapse;table-layout:fixed}.gtab th,.gtab td{border:1px solid #000;padding:5px 7px;font-size:10pt;vertical-align:top;text-align:left}
+.gtab th{background:#eee}.gtab td.c{text-align:center;font-weight:600}
+@media print{
+  body.print-conv main>*:not(#conv){display:none!important}
+  body.print-lot main>*:not(#lot){display:none!important}
+  body.print-lot #lot{display:block}
+  .lot{break-after:page}
+  .lot .noprint{display:none!important}
+  body.print-conv #conv{display:block}
+  .cpage{break-after:page;font-size:11pt;line-height:1.45;padding:4mm 6mm}
+  .cetab{font-weight:700;margin:0}.cdest{text-align:right;margin:0 0 8mm}.cdate{text-align:right}
+  .ctab{width:100%;border-collapse:collapse;margin:4mm 0}.ctab th,.ctab td{border:1px solid #000;padding:5px 8px;text-align:left;font-size:10.5pt}.ctab th{width:32%;background:#eee}
+  .csign{margin:10mm 0 0 55%}
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media print{
+  .dtitre,.dbox td,.dinfo th,.dinfo td,.doc th,.doc td{border-color:#000!important;background:none!important}
+  .dhead{color:#000}
+  .grp{display:none}
+}
+</style><style id="pageSize">@page{size:A4 landscape}</style></head><body>
+<main>
+  <div class="head">
+    <div class="t"><span class="eyebrow">Kerplouz LaSalle · Unités capitalisables</span><h1>Saisie UC : documents 4 et 5</h1></div>
+    <div class="me"><span id="who"></span><a href="/UC/param.html" id="lnkParam" hidden>Paramétrage des plans</a><a href="/">← Outils</a></div>
+  </div>
+  <div class="banner" id="fictif" hidden>Essai : référentiel et candidats <b>fictifs</b>, en attendant l'import des référentiels d'EvalUc. Aucune donnée d'apprenti réel.</div>
+  <div class="banner" id="msg" hidden></div>
+
+  <div class="bar noprint" id="bar" hidden>
+    <label for="selClasse">Classe</label><select id="selClasse"></select>
+    <span id="navGrp" hidden><label for="selGrp">Groupe</label> <select id="selGrp"></select></span>
+    <div class="seg" role="group" aria-label="Vue">
+      <button type="button" data-v="liste" aria-pressed="true">Tableau de bord</button>
+      <button type="button" data-v="doc4" aria-pressed="false">Document 4</button>
+      <button type="button" data-v="doc5" aria-pressed="false">Document 5</button>
+    </div>
+    <span id="navCand" hidden>
+      <button type="button" class="ghost small" id="prev" aria-label="Candidat précédent">◀</button>
+      <select id="selCand" aria-label="Candidat"></select>
+      <button type="button" class="ghost small" id="next" aria-label="Candidat suivant">▶</button>
+    </span>
+    <span id="navEpr" hidden><label for="selEpr">Épreuve</label> <select id="selEpr"></select></span>
+    <span class="sp"></span>
+    <span class="status" id="status" aria-live="polite"></span>
+    <button type="button" class="ghost" id="btnPrint" hidden>Imprimer</button>
+  </div>
+
+  <section class="card" id="view"><p class="empty">Chargement…</p></section>
+  <div id="conv" class="print-conv-only"></div>
+  <div id="lot" class="print-conv-only"></div>
+</main>
+<div class="sug" id="sug" hidden role="dialog" aria-modal="true" aria-labelledby="sugT"><div class="box">
+  <h2 id="sugT">Appréciations déjà utilisées</h2><p class="meta" id="sugRappel" style="font-size:12.5px"></p>
+  <ul id="sugList"></ul>
+  <button type="button" class="ghost" id="sugClose">Fermer</button>
+</div></div>
+<script>
+"use strict";
+const SB="https://olqclfsywasktwirswpb.supabase.co",KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x",SKEY="kep.session";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const frDate=iso=>iso?new Date(iso.length===10?iso+"T12:00:00":iso).toLocaleDateString("fr-FR"):"";
+const frDH=iso=>iso?new Date(iso).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
+let session=null;
+function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+async function api(path,{method="GET",body,prefer}={}){
+  if(!await frais())throw Object.assign(new Error("Session expirée : reconnectez-vous depuis la page d'accueil."),{status:401});
+  const h={apikey:KEY,"Content-Type":"application/json",Authorization:"Bearer "+session.access_token};if(prefer)h.Prefer=prefer;
+  const r=await fetch(SB+path,{method,headers:h,body:body?JSON.stringify(body):undefined});
+  const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){d=t;}
+  if(!r.ok)throw Object.assign(new Error((d&&(d.message||d.msg||d.error))||("Erreur "+r.status)),{status:r.status});
+  return d;}
+const rpc=(n,b)=>api("/rest/v1/rpc/"+n,{method:"POST",body:b||{}});
+async function frais(){session=session||ls(SKEY);if(!session)return false;
+  if(session.expires_at-60>Date.now()/1000)return true;
+  try{const r=await fetch(SB+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:session.refresh_token})});
+    if(!r.ok)throw 0;const t=await r.json();
+    session=Object.assign(session,{access_token:t.access_token,refresh_token:t.refresh_token,expires_at:t.expires_at?+t.expires_at:Math.floor(Date.now()/1000)+(+t.expires_in||3600)});
+    ls(SKEY,session);document.cookie="kep_at="+session.access_token+"; Path=/; Max-Age="+Math.max(60,session.expires_at-Math.floor(Date.now()/1000))+"; Secure; SameSite=Lax";return true;
+  }catch(e){return false;}}
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4200);}
+function statut(m,err){const s=$("#status");s.textContent=m||"";s.classList.toggle("err",!!err);}
+
+/* ---------- État ---------- */
+const S={classes:[],classe:null,ref:null,ucs:[],cis:[],crs:[],epreuves:[],epCis:[],cands:[],valid:[],saisies:new Map(),vue:"liste",cand:null,epr:null,moi:""};
+const kS=(c,n,r)=>c+"|"+n+"|"+r;
+const byOrd=(a,b)=>(a.ordre-b.ordre)||String(a.code).localeCompare(String(b.code),"fr",{numeric:true});
+
+async function init(){
+  if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
+  try{
+    const d=await rpc("mes_droits");S.moi=((d.prenom||"")+" "+(d.nom||"")).trim()||d.email||"";$("#who").textContent=S.moi;
+    $("#lnkParam").hidden=!d.admin;
+    S.classes=(await rpc("uc_mes_classes"))||[];
+  }catch(e){return erreur(e);}
+  const avec=S.classes.filter(c=>c.plan_id);
+  if(!avec.length){$("#view").innerHTML=`<p class="empty">Aucune de vos classes n'a encore de plan d'évaluation en UC.</p>`;return;}
+  // A, B, C… sont des groupes d'une même classe : CAPaJP1-A, CAPaJP1-B → classe CAPaJP1
+  S.bases=[];for(const c of avec){const b=baseDe(c.code);let x=S.bases.find(y=>y.code===b);
+    if(!x){x={code:b,libelle:c.libelle.replace(/\s*-\s*[A-Za-z]$/,""),groupes:[]};S.bases.push(x);}
+    x.groupes.push({code:c.code,lettre:c.groupe||lettreDe(c.code),plan_id:c.plan_id,referentiel:c.referentiel,cohorte:c.cohorte,referent:!!c.referent});}
+  $("#selClasse").innerHTML=S.bases.map(b=>`<option value="${esc(b.code)}">${esc(b.libelle)}</option>`).join("");
+  const q=new URLSearchParams(location.search),mem=ls("uc.classe");
+  const pre=[q.get("classe")&&baseDe(q.get("classe")),mem].find(x=>S.bases.some(b=>b.code===x))||S.bases[0].code;
+  $("#selClasse").value=pre;$("#bar").hidden=false;
+  await chargerClasse(pre);
+}
+const baseDe=code=>String(code).replace(/-[A-Za-z]$/,""),lettreDe=code=>(String(code).match(/-([A-Za-z])$/)||[])[1]||"";
+const candsVis=()=>S.grp?S.cands.filter(c=>c.groupe===S.grp):S.cands;
+function erreur(e){$("#view").innerHTML=`<p class="empty">${esc(e.message)}</p>`;}
+
+async function chargerClasse(code){
+  S.classe=S.bases.find(b=>b.code===code);ls("uc.classe",code);statut("Chargement…");
+  const G=S.classe.groupes;S.grp=G.some(g=>g.lettre===S.grp)?S.grp:"";
+  $("#navGrp").hidden=G.length<2;
+  $("#selGrp").innerHTML=`<option value="">Tous les groupes</option>`+G.map(g=>`<option value="${esc(g.lettre)}">Groupe ${esc(g.lettre||g.code)}</option>`).join("");
+  $("#selGrp").value=S.grp;
+  try{
+    const pl=G[0].plan_id,ref=G[0].referentiel,coh=G[0].cohorte;
+    const [refs,ucs,eps,cands,plans,dates,pers]=await Promise.all([
+      api(`/rest/v1/uc_referentiels?code=eq.${encodeURIComponent(ref)}`),
+      api(`/rest/v1/uc_ucs?referentiel=eq.${encodeURIComponent(ref)}&order=ordre,code`),
+      api(`/rest/v1/uc_epreuves?plan_id=eq.${pl}&order=ordre,code`),
+      api(`/rest/v1/uc_candidats?referentiel=eq.${encodeURIComponent(ref)}&cohorte=eq.${encodeURIComponent(coh)}&order=groupe,ordre,nom,prenom`),
+      api(`/rest/v1/uc_plans?id=eq.${pl}`),
+      api(`/rest/v1/uc_dates?classe=in.(${G.map(g=>encodeURIComponent(g.code)).join(",")})`),
+      S.pers?Promise.resolve(S.pers):rpc("uc_personnel").catch(()=>[])]);
+    S.ref=refs[0]||{};S.plan=plans[0]||{};S.dates=dates;S.pers=pers;S.cohorte=coh;S.ucs=ucs;S.epreuves=eps;S.cands=cands;
+    const ucIds=ucs.map(u=>u.id).join(",")||"0",epIds=eps.map(e=>e.id).join(",")||"0",cIds=cands.map(c=>c.id).join(",");
+    S.cis=await api(`/rest/v1/uc_cis?uc_id=in.(${ucIds})&order=ordre,code`);
+    const ciIds=S.cis.map(c=>c.id).join(",")||"0";
+    const [crs,epc,val,sai]=await Promise.all([
+      api(`/rest/v1/uc_crs?ci_id=in.(${ciIds})&order=ordre,id`),
+      api(`/rest/v1/uc_epreuve_cis?epreuve_id=in.(${epIds})`),
+      cIds?api(`/rest/v1/uc_validations?candidat=in.(${cIds})`):[],
+      cIds?api(`/rest/v1/uc_saisies?candidat=in.(${cIds})`):[]]);
+    S.crs=crs;S.epCis=epc;S.valid=val;S.saisies=new Map(sai.map(s=>[kS(s.candidat,s.niveau,s.ref_id),s]));
+  }catch(e){statut("");return erreur(e);}
+  $("#fictif").hidden=!(S.ref.fictif||S.cands.some(c=>c.fictif));
+  majCands();
+  $("#selEpr").innerHTML=S.epreuves.map(e=>`<option value="${e.id}">${esc(e.code+" · "+e.nom)}</option>`).join("");
+  if(!S.epreuves.some(e=>e.id===S.epr))S.epr=S.epreuves[0]&&S.epreuves[0].id;
+  statut("");render();
+}
+
+function majCands(){const L=candsVis(),plusieurs=S.classe.groupes.length>1&&!S.grp;
+  $("#selCand").innerHTML=L.map(c=>`<option value="${c.id}">${esc(c.nom+" "+c.prenom)}${plusieurs&&c.groupe?" ("+esc(c.groupe)+")":""}</option>`).join("");
+  if(!L.some(c=>c.id===S.cand))S.cand=L[0]&&L[0].id;}
+/* ---------- Référentiel ---------- */
+const ucDe=ci=>S.ucs.find(u=>u.id===ci.uc_id)||{};
+const cisEpreuve=ep=>S.epCis.filter(x=>x.epreuve_id===ep).map(x=>S.cis.find(c=>c.id===x.ci_id)).filter(Boolean)
+  .sort((a,b)=>byOrd(ucDe(a),ucDe(b))||byOrd(a,b));
+const crsDe=ci=>S.crs.filter(r=>r.ci_id===ci.id).sort(byOrd);
+const epreuveDe=ci=>S.epreuves.find(e=>S.epCis.some(x=>x.epreuve_id===e.id&&x.ci_id===ci.id));
+const validation=(cand,uc)=>S.valid.find(v=>v.candidat===cand&&v.uc_id===uc);
+const sai=(c,n,r)=>S.saisies.get(kS(c,n,r));
+const rempli=(c,n,r)=>{const s=sai(c,n,r);return !!(s&&s.texte.trim());};
+const objectifs=()=>S.ref.structure==="objectifs";
+
+function progression(c){
+  let fait4=0,tot4=0;
+  for(const ep of S.epreuves){for(const ci of cisEpreuve(ep.id)){if(validation(c,ci.uc_id))continue;
+      for(const cr of crsDe(ci)){tot4++;if(rempli(c,"cr",cr.id))fait4++;}
+      tot4++;if(rempli(c,"ci",ci.id))fait4++;}
+    tot4++;if(rempli(c,"epreuve",ep.id))fait4++;}
+  let fait5=0,tot5=0;
+  for(const u of S.ucs){if(validation(c,u.id))continue;tot5++;if(rempli(c,"uc",u.id))fait5++;}
+  return {fait4,tot4,fait5,tot5};
+}
+const barre=(f,t)=>`<span class="prog"><i><b style="width:${t?Math.round(f/t*100):0}%"></b></i>${f}/${t}</span>`;
+
+/* ---------- Vues ---------- */
+function render(){
+  $$(".seg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===S.vue)));
+  $("#navCand").hidden=S.vue==="liste";$("#navEpr").hidden=S.vue!=="doc4";$("#btnPrint").hidden=S.vue==="liste";
+  $("#selCand").value=S.cand||"";$("#selEpr").value=S.epr||"";
+  if(S.vue==="liste")return renderListe();
+  if(!candsVis().length){$("#view").innerHTML=`<p class="empty">Aucun candidat dans ce groupe.</p>`;return;}
+  S.vue==="doc4"?renderDoc4():renderDoc5();
+}
+const nomPers=e=>{const p=(S.pers||[]).find(x=>x.email===e);return p?p.nom:(e||"");};
+const dateDe=(ep,cl)=>S.dates.find(d=>d.epreuve_id===ep&&d.classe===cl)||{};
+function avancementEpreuve(ep,cands){let f=0,t=0;const cis=cisEpreuve(ep.id);
+  for(const c of cands){for(const ci of cis){if(validation(c.id,ci.uc_id))continue;for(const cr of crsDe(ci)){t++;if(rempli(c.id,"cr",cr.id))f++;}t++;if(rempli(c.id,"ci",ci.id))f++;}t++;if(rempli(c.id,"epreuve",ep.id))f++;}
+  return [f,t];}
+function renderListe(){
+  const L=candsVis(),grpCol=S.classe.groupes.length>1;
+  const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes;
+  let ep=`<h2 class="h2">Épreuves du plan${S.plan.agree_le?" agréé le "+esc(frDate(S.plan.agree_le)):""} <small>cohorte ${esc(S.cohorte)}</small></h2>
+    <table class="list dash"><thead><tr><th>Épreuve</th><th>Responsable</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Heure</th><th>Min./cand.</th><th>Lieu</th><th>Saisies</th><th>Convocations</th></tr></thead><tbody>`;
+  for(const e of S.epreuves)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,t]=avancementEpreuve(e,cg),ed=g.referent;
+    const k=`data-ep="${e.id}" data-cl="${esc(g.code)}"`;
+    ep+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td><td rowspan="${G.length}">${esc(nomPers(e.responsable))||"—"}</td>`:""}
+      ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}
+      <td>${ed?`<input type="date" ${k} data-d="jour" value="${esc(d.jour||"")}" aria-label="Date ${esc(e.code)}">`:esc(frDate(d.jour))||"—"}</td>
+      <td>${ed?`<input type="time" ${k} data-d="heure" value="${esc(d.heure||"08:15")}" aria-label="Heure ${esc(e.code)}">`:esc((d.heure||"08:15").replace(":","h"))}</td>
+      <td>${ed?`<input type="number" min="0" step="5" style="width:70px" ${k} data-d="duree" value="${esc(d.duree||0)}" aria-label="Minutes par candidat">`:esc(d.duree||"—")}</td>
+      <td>${ed?`<input type="text" ${k} data-d="lieu" value="${esc(d.lieu||"")}" placeholder="UFA Kerplouz LaSalle Auray" aria-label="Lieu">`:esc(d.lieu||"UFA Kerplouz LaSalle Auray")}</td>
+      <td>${barre(f,t)}</td>
+      <td>${d.convoc_le?`<span class="pill ok">✓ faites le ${esc(new Date(d.convoc_le).toLocaleDateString("fr-FR"))}</span>${ed?` <button type="button" class="ghost small" data-convno ${k}>Annuler</button>`:""}`
+        :ed?`<button type="button" class="small" data-conv ${k} ${d.jour&&cg.length?"":"disabled"} title="${d.jour?"":"Fixez d'abord la date"}">Convocations</button> <button type="button" class="ghost small" data-convok ${k}>Marquer faites</button>`:"à faire"}</td></tr>`;});
+  ep+=`</tbody></table>`;
+  if(!S.epreuves.length)ep=`<p class="empty">Aucune épreuve dans le plan d'évaluation.</p>`;
+  const cand=!L.length?`<p class="empty">Aucun candidat dans ce groupe.</p>`:`<h2 class="h2">Candidats</h2><table class="list"><thead><tr><th>Candidat</th>${grpCol?"<th>Groupe</th>":""}<th>Document 4 (saisies)</th><th>Document 5 (propositions par UC)</th><th></th></tr></thead><tbody>${
+    L.map(c=>{const p=progression(c.id);return `<tr><td><b>${esc(c.nom)}</b> ${esc(c.prenom)}${c.fictif?' <small style="color:var(--ink-3)">(fictif)</small>':""}</td>${grpCol?`<td>${esc(c.groupe)}</td>`:""}
+      <td>${barre(p.fait4,p.tot4)}</td><td>${barre(p.fait5,p.tot5)}</td>
+      <td style="text-align:right;white-space:nowrap"><button type="button" class="ghost small" data-go="doc4" data-c="${c.id}">Document 4</button> <button type="button" class="ghost small" data-go="doc5" data-c="${c.id}">Document 5</button></td></tr>`;}).join("")
+  }</tbody></table>`;
+  const edi=`<h2 class="h2">Éditions de la cohorte ${esc(S.cohorte)} <small>impression ou « Enregistrer au format PDF »</small></h2>
+    <p class="editions"><button type="button" class="ghost" data-lot="doc5">Tous les documents 5 (A3 paysage)</button>
+      <button type="button" class="ghost" data-lot="uc">Grille par UC (A4 paysage)</button></p>`;
+  $("#view").innerHTML=edi+ep+cand;
+}
+/* ---------- Éditions de la cohorte (PDF via l'impression du navigateur) ---------- */
+function imprimerLot(html,taille){$("#lot").innerHTML=html;$("#pageSize").textContent=`@page{size:${taille} landscape}`;
+  document.body.classList.add("print-lot");window.print();document.body.classList.remove("print-lot");}
+const tousCands=()=>S.cands.slice().sort((a,b)=>(a.groupe||"").localeCompare(b.groupe||"")||(a.ordre-b.ordre)||a.nom.localeCompare(b.nom));
+// Tous les documents 5 de la cohorte : un par candidat, A3 paysage recto (exigence du guide DRAAF)
+function lotDoc5(){const garde=S.cand,vue=S.vue;let html="";
+  for(const c of tousCands()){S.cand=c.id;renderDoc5();html+=`<section class="lot">${$("#view").innerHTML}</section>`;}
+  S.cand=garde;S.vue=vue;render();imprimerLot(html,"A3");}
+// Grille par UC : récapitulatif candidats × UC, puis une page par UC avec la proposition argumentée de chaque candidat
+function etatUC(c,u){const v=validation(c,u.id);if(v)return v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le);
+  const s=sai(c,"uc",u.id)||{};return s.acquis===true?"Validation proposée":s.acquis===false?"Non-validation proposée":"—";}
+function grilleUC(){const L=tousCands(),P=S.plan||{};
+  const tete=t=>`<table class="dhead"><tr><td>Diplôme : ${esc(S.ref.libelle||"")}</td><td style="text-align:center">Cohorte : ${esc(S.cohorte||"")}</td>
+      <td style="text-align:right">Plan d'évaluation agréé le : ${P.agree_le?esc(frDate(P.agree_le)):"__/__/____"} · Jury : ${P.jury_le?esc(frDate(P.jury_le)):"__/__/____"}</td></tr></table><div class="dtitre">${esc(t)}</div>`;
+  let html=`<section class="lot">${tete("GRILLE DE PRÉSENTATION DES RÉSULTATS À LA VALIDATION — PROPOSITIONS PAR UC")}
+    <table class="gtab" style="margin-top:8px"><thead><tr><th style="width:22%">Candidat</th><th style="width:6%">Groupe</th>${S.ucs.map(u=>`<th>${esc(u.code)}</th>`).join("")}</tr></thead><tbody>${
+      L.map(c=>`<tr><td>${esc(c.nom+" "+c.prenom)}</td><td>${esc(c.groupe)}</td>${S.ucs.map(u=>`<td class="c">${esc(etatUC(c.id,u))}</td>`).join("")}</tr>`).join("")}</tbody></table>
+    <p style="font-size:9pt">${S.ucs.map(u=>esc(u.code+" : "+u.nom)).join(" · ")}</p></section>`;
+  for(const u of S.ucs){
+    html+=`<section class="lot">${tete("GRILLE PAR UC — "+u.code+" "+u.nom)}
+      <table class="gtab" style="margin-top:8px"><thead><tr><th style="width:16%">Candidat</th><th style="width:7%">Groupe</th><th style="width:14%">Proposition</th><th>Proposition argumentée sur la validation de la capacité globale</th><th style="width:15%">Avis du jury, date</th></tr></thead><tbody>${
+        L.map(c=>{const s=sai(c.id,"uc",u.id)||{};return `<tr><td>${esc(c.nom+" "+c.prenom)}</td><td>${esc(c.groupe)}</td><td>${esc(etatUC(c.id,u))}</td><td style="white-space:pre-wrap">${esc(validation(c.id,u.id)?"":s.texte||"")}</td><td></td></tr>`;}).join("")}</tbody></table></section>`;}
+  imprimerLot(html,"A4");}
+/* ---------- Dates et convocations (référent de la classe) ---------- */
+const tDate=new Map();
+function majDate(inp){const ep=+inp.dataset.ep,cl=inp.dataset.cl,k=ep+"|"+cl;clearTimeout(tDate.get(k));
+  tDate.set(k,setTimeout(async()=>{const row=[...document.querySelectorAll(`[data-ep="${ep}"][data-cl="${cl}"][data-d]`)],v={};row.forEach(x=>v[x.dataset.d]=x.value);
+    statut("Enregistrement…");
+    try{await rpc("uc_fixer_date",{p_epreuve:ep,p_classe:cl,p_jour:v.jour||null,p_heure:v.heure||"08:15",p_duree:+v.duree||0,p_lieu:v.lieu||""});
+      const d=S.dates.find(x=>x.epreuve_id===ep&&x.classe===cl);const n={epreuve_id:ep,classe:cl,jour:v.jour||null,heure:v.heure||"08:15",duree:+v.duree||0,lieu:v.lieu||"UFA Kerplouz LaSalle Auray"};
+      d?Object.assign(d,n):S.dates.push(n);statut("Enregistré");
+      const bt=document.querySelector(`[data-conv][data-ep="${ep}"][data-cl="${cl}"]`);if(bt)bt.disabled=!v.jour;}
+    catch(e){statut("Non enregistré : "+e.message,true);}},700));}
+async function marquer(ep,cl,faites){try{const r=await rpc("uc_convocations",{p_epreuve:ep,p_classe:cl,p_faites:faites});
+    const d=S.dates.find(x=>x.epreuve_id===ep&&x.classe===cl);if(d)d.convoc_le=r.convoc_le;else S.dates.push({epreuve_id:ep,classe:cl,convoc_le:r.convoc_le});renderListe();}
+  catch(e){toast(e.message);}}
+const hPassage=(h,i,du)=>{const [a,b]=(h||"08:15").split(":").map(Number),t=a*60+b+i*(+du||0);return String(Math.floor(t/60)).padStart(2,"0")+"h"+String(t%60).padStart(2,"0");};
+function convocations(ep,cl){const e=S.epreuves.find(x=>x.id===ep),g=S.classe.groupes.find(x=>x.code===cl),d=dateDe(ep,cl),cg=S.cands.filter(c=>c.groupe===g.lettre);
+  const jourL=d.jour?new Date(d.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
+  const auj=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
+  const cis=cisEpreuve(ep),ucs=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()];
+  $("#conv").innerHTML=cg.map((c,i)=>`<section class="cpage">
+    <p class="cetab">UFA Kerplouz LaSalle Auray</p><p class="cdest"><b>${esc(c.prenom+" "+c.nom.toUpperCase())}</b></p>
+    <p class="cdate">Kerplouz, le ${esc(auj)}</p>
+    <p><b>Objet : convocation à une épreuve certificative — ${esc(S.ref.libelle||"")}</b></p>
+    <p>Madame, Monsieur,</p>
+    <p>Vous êtes convoqué·e à l'épreuve certificative suivante, dans le cadre de votre formation (cohorte ${esc(S.cohorte)}) :</p>
+    <table class="ctab"><tr><th>Épreuve</th><td>${esc(e.code+" — "+e.nom)}</td></tr>
+      ${e.situation?`<tr><th>Situation support</th><td>${esc(e.situation)}</td></tr>`:""}
+      <tr><th>UC concernée(s)</th><td>${esc(ucs.map(u=>u.code+" "+u.nom).join(" ; "))}</td></tr>
+      <tr><th>Date</th><td>${esc(jourL)}</td></tr><tr><th>Heure de passage</th><td>${esc(hPassage(d.heure,i,d.duree))}</td></tr>
+      <tr><th>Lieu</th><td>${esc(d.lieu||"UFA Kerplouz LaSalle Auray")}</td></tr>
+      ${e.nature?`<tr><th>Modalités</th><td>${esc(e.nature)}</td></tr>`:""}${e.responsable?`<tr><th>Responsable de l'épreuve</th><td>${esc(nomPers(e.responsable))}</td></tr>`:""}</table>
+    <p>Merci de vous présenter 10 minutes avant l'heure indiquée, muni·e de la présente convocation. Toute absence doit être justifiée auprès du centre de formation.</p>
+    <p>Nous vous prions d'agréer nos salutations distinguées.</p>
+    <p class="csign">${esc(S.moi)}</p></section>`).join("");
+  $("#pageSize").textContent="@page{size:A4 portrait}";document.body.classList.add("print-conv");window.print();document.body.classList.remove("print-conv");
+  if(!d.convoc_le&&confirm("Noter les convocations de "+e.code+" (groupe "+(g.lettre||g.code)+") comme faites ?"))marquer(ep,cl,true);}
+function champ(c,n,r,opts={}){
+  const s=sai(c,n,r)||{},id=`t_${n}_${r}`;
+  const acq=opts.acquis?`<select data-acq aria-label="${esc(opts.acquis.label)}">
+      <option value="">${esc(opts.acquis.vide)}</option><option value="1" ${s.acquis===true?"selected":""}>${esc(opts.acquis.oui)}</option><option value="0" ${s.acquis===false?"selected":""}>${esc(opts.acquis.non)}</option></select>`:"";
+  return `<div class="cell" data-c="${c}" data-n="${n}" data-r="${r}"${opts.imprimer?` data-po="${esc(opts.imprimer.oui)}" data-pn="${esc(opts.imprimer.non)}"`:""}>
+    <textarea id="${id}" aria-label="${esc(opts.aria||"Appréciation")}" placeholder="${esc(opts.ph||"Appréciation")}">${esc(s.texte||"")}</textarea>
+    <div class="print-only">${opts.imprimer&&s.acquis!=null?esc(s.acquis?opts.imprimer.oui:opts.imprimer.non)+"\n":""}${esc(s.texte||"")}</div>
+    <div class="meta">${acq}<button type="button" data-sug>Appréciations déjà utilisées</button><span data-m>${s.maj_nom?"par "+esc(s.maj_nom)+", "+frDH(s.maj_le):""}</span></div></div>`;
+}
+const ETAB="UFA Kerplouz LaSalle Auray";
+// En-tête commun (format DRAAF / SRFD Bretagne, repris d'EvalUc) : diplôme, session (cohorte), agrément du plan
+function entete(titre){
+  const c=S.cands.find(x=>x.id===S.cand)||{},P=S.plan||{};
+  return `<table class="dhead"><tr><td>Diplôme : ${esc(S.ref.libelle||"")}</td><td style="text-align:center">Session : ${esc(S.cohorte||"")}</td>
+      <td style="text-align:right">Plan d'évaluation agréé le : ${P.agree_le?esc(frDate(P.agree_le)):"__/__/____"}</td></tr></table>
+    <div class="dtitre">${esc(titre)}</div>
+    <table class="dbox"><tr><td style="width:40%">Candidat : <b>${esc((c.nom||"")+" "+(c.prenom||""))}</b></td><td>Diplôme : ${esc(S.ref.libelle||"")}</td></tr></table>
+    <p class="noprint grp">${esc(S.classe.libelle)}${c.groupe?" · groupe "+esc(c.groupe):""} · cohorte ${esc(S.cohorte||"")}</p>`;
+}
+const ACQ_CI={label:"Capacité intermédiaire",vide:"Acquis ?",oui:"Acquis",non:"Non acquis"};
+function renderDoc4(){
+  const c=S.cand,ep=S.epreuves.find(e=>e.id===S.epr);
+  if(!ep){$("#view").innerHTML=`<p class="empty">Aucune épreuve dans le plan d'évaluation.</p>`;return;}
+  const cis=cisEpreuve(ep.id),se=sai(c,"epreuve",ep.id)||{};
+  const ucs=[...new Set(cis.map(ci=>ucDe(ci).code))].join(", "),lcis=cis.map(ci=>ci.code).join(", ");
+  const H=objectifs()?["N° UC + OI de rang 1 + thème de l'OI","Critères / OI de rang 2","Indicateurs","Appréciation (résultats au regard des critères)","Appréciation globale relative à la capacité intermédiaire (OI rang 1)"]
+                     :["Capacités intermédiaires","Critères","Indicateurs","Appréciation (résultats au regard des critères)","Appréciation globale relative à la capacité intermédiaire"];
+  let rows="";
+  for(const ci of cis){const u=ucDe(ci),v=validation(c,u.id),crs=crsDe(ci),n=Math.max(1,crs.length);
+    const vtxt=v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
+    (crs.length?crs:[null]).forEach((cr,i)=>{
+      rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(ci.code)} ${esc(ci.nom)}</td>`:""}
+        <td data-l="${esc(H[1])}">${cr?esc((objectifs()?cr.code+" ":"")+cr.nom):""}</td><td class="ind" data-l="${esc(H[2])}">${cr?esc(cr.indicateur):""}</td>
+        <td data-l="${esc(H[3])}">${v?`<span class="valide">${esc(vtxt)}</span>`:cr?champ(c,"cr",cr.id,{aria:"Appréciation : "+cr.nom}):""}</td>
+        ${i===0?`<td rowspan="${n}" data-l="${esc(H[4])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,{aria:"Appréciation globale "+ci.code,acquis:ACQ_CI})}</td>`:""}</tr>`;});
+  }
+  const ucsL=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code+" "+u.nom).join(" ; "),cisL=cis.map(ci=>ci.code+" "+ci.nom).join(" ; ");
+  $("#view").innerHTML=entete("DOCUMENT 4 : GRILLE D'ÉVALUATION DE L'ÉPREUVE PAR CANDIDAT")+`
+    <table class="dinfo"><tr><th rowspan="6" style="width:14%">Épreuve concernée</th><td style="width:30%">Date d'épreuve :</td>
+        <td><label class="sr" for="dEval">Date d'épreuve</label><input type="date" id="dEval" value="${esc(se.date_eval||"")}"><span class="print-only">${frDate(se.date_eval)}</span></td></tr>
+      <tr><td>N° épreuve :</td><td><b>${esc(ep.code+" "+ep.nom)}</b></td></tr>
+      <tr><td>Intitulé de la situation support :</td><td>${esc(ep.situation||"")}</td></tr>
+      <tr><td>UC concernée(s) :</td><td>${esc(ucsL)}</td></tr>
+      <tr><td>${objectifs()?"OI":"OI ou capacité(s) intermédiaire(s)"} concerné(s) :</td><td>${esc(cisL)}</td></tr>
+      <tr><td>Modalités (nature de l'épreuve) :</td><td>${esc(ep.nature||"Pratique et entretien d'évaluation")}</td></tr></table>
+    <table class="doc"><colgroup><col style="width:19%"><col style="width:17%"><col style="width:17%"><col style="width:24%"><col style="width:23%"></colgroup>
+    <thead><tr>${H.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows||`<tr><td colspan="5">Aucune capacité rattachée à cette épreuve.</td></tr>`}</tbody></table>
+    <div class="tot"><h3>Appréciation globale relative à l'épreuve</h3>${champ(c,"epreuve",ep.id,{aria:"Appréciation globale de l'épreuve"})}</div>`;
+}
+const ACQ_UC={label:"Proposition",vide:"Proposition ?",oui:"Proposée valide",non:"Proposée non valide"},
+  IMP_UC={oui:"Proposition : validation de l'UC.",non:"Proposition : non-validation de l'UC."};
+function renderDoc5(){
+  const c=S.cand;let rows="";
+  const H=["Capacité globale de l'UC",objectifs()?"N° OI rang 1 + thème":"Capacité intermédiaire","N° épreuve","Rappels des critères d'évaluation",
+           objectifs()?"Appréciation globale relative à la capacité intermédiaire (OI rang 1)":"Appréciation globale relative à la capacité intermédiaire",
+           "Proposition argumentée sur la validation de la capacité globale (l'équipe indique sa proposition : validation ou non validation de l'UC et explicite sur quoi se fonde cette proposition)","Avis du jury, date"];
+  for(const u of S.ucs){const cis=S.cis.filter(x=>x.uc_id===u.id).sort(byOrd),v=validation(c,u.id),n=Math.max(1,cis.length);
+    const vtxt=v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
+    (cis.length?cis:[null]).forEach((ci,i)=>{const ep=ci&&epreuveDe(ci);
+      rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(u.nom)}</td>`:""}
+        <td data-l="${esc(H[1])}">${ci?esc(ci.code+" "+ci.nom):""}</td><td data-l="${esc(H[2])}">${ep?esc(ep.code+" "+ep.nom):""}</td>
+        <td class="ind" data-l="${esc(H[3])}">${ci?crsDe(ci).map(r=>esc(r.nom)).join("<br>"):""}</td>
+        <td data-l="${esc(H[4])}">${!ci?"":v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,{aria:"Appréciation "+ci.code,acquis:ACQ_CI})}</td>
+        ${i===0?`<td rowspan="${n}" data-l="${esc(H[5])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"uc",u.id,{aria:"Proposition "+u.code,ph:"Proposition argumentée",acquis:ACQ_UC,imprimer:IMP_UC})}</td>
+                  <td rowspan="${n}" data-l="${esc(H[6])}"></td>`:""}</tr>`;});
+  }
+  const cc=S.cands.find(x=>x.id===c)||{},P=S.plan||{};
+  $("#view").innerHTML=entete("DOCUMENT 5 : TABLEAU RÉCAPITULATIF PAR CANDIDAT ET PAR UC")+`
+    <table class="dinfo"><tr><td>Nom du candidat : <b>${esc((cc.nom||"")+" "+(cc.prenom||""))}</b></td><td>Cohorte : ${esc(S.cohorte||"")}</td>
+      <td>Date de la présentation au jury : ${P.jury_le?esc(frDate(P.jury_le)):"__/__/____"}</td></tr></table>
+    <table class="doc"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:9%"><col style="width:15%"><col style="width:20%"><col style="width:20%"><col style="width:10%"></colgroup>
+    <thead><tr>${H.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ---------- Enregistrement automatique ---------- */
+const timers=new Map(),enCours=new Map();
+function planifier(cell,delai=1200){const k=kS(cell.dataset.c,cell.dataset.n,cell.dataset.r);
+  clearTimeout(timers.get(k));statut("Modifications non enregistrées…");timers.set(k,setTimeout(()=>enregistrer(cell),delai));}
+async function enregistrer(cell,extra={}){
+  const c=cell.dataset.c,n=cell.dataset.n,r=+cell.dataset.r,k=kS(c,n,r);clearTimeout(timers.get(k));
+  if(enCours.get(k)){await enCours.get(k);}
+  const cur=S.saisies.get(k)||{},ta=cell.querySelector("textarea"),acq=cell.querySelector("[data-acq]");
+  const texte=ta?ta.value:cur.texte||"",acquis=acq?(acq.value===""?null:acq.value==="1"):(cur.acquis??null);
+  const date=extra.date!==undefined?extra.date:(cur.date_eval||null);
+  if(cur.version&&texte===cur.texte&&acquis===(cur.acquis??null)&&date===(cur.date_eval||null)){statut("");return;}
+  if(!cur.version&&!texte.trim()&&acquis===null&&!date){statut("");return;}
+  statut("Enregistrement…");
+  const p=rpc("uc_saisir",{p_candidat:c,p_niveau:n,p_ref:r,p_texte:texte,p_acquis:acquis,p_date:date,p_version:cur.version||null})
+    .then(res=>{S.saisies.set(k,Object.assign({},cur,{candidat:c,niveau:n,ref_id:r,texte,acquis,date_eval:date,version:res.version,maj_nom:res.maj_nom,maj_le:res.maj_le}));
+      const m=cell.querySelector("[data-m]");if(m)m.textContent="par "+res.maj_nom+", "+frDH(res.maj_le);
+      const pr=cell.querySelector(".print-only");if(pr)pr.textContent=(cell.dataset.po&&acquis!=null?(acquis?cell.dataset.po:cell.dataset.pn)+"\n":"")+texte;
+      if(n==="epreuve"){const d=document.querySelector("#dEval+.print-only");if(d)d.textContent=frDate(date);}
+      statut("Enregistré");})
+    .catch(async e=>{
+      if(/CONFLIT/.test(e.message)){const qui=e.message.replace(/^.*CONFLIT \d+ ?/,"");
+        toast(`${qui||"Un collègue"} vient de modifier cette appréciation : sa version est affichée, votre texte est copié dans le presse-papiers.`);
+        try{await navigator.clipboard.writeText(texte);}catch(_){}
+        const d=await api(`/rest/v1/uc_saisies?candidat=eq.${c}&niveau=eq.${n}&ref_id=eq.${r}`);if(d[0])S.saisies.set(k,d[0]);render();statut("");}
+      else statut("Non enregistré : "+e.message,true);})
+    .finally(()=>enCours.delete(k));
+  enCours.set(k,p);return p;
+}
+document.addEventListener("input",e=>{const cell=e.target.closest(".cell");if(cell&&e.target.tagName==="TEXTAREA")planifier(cell);});
+document.addEventListener("change",e=>{const cell=e.target.closest(".cell");
+  if(cell&&e.target.matches("[data-acq]"))return enregistrer(cell);
+  if(e.target.id==="dEval"){const ep=S.epr,c=S.cand;const fake=document.querySelector(`.cell[data-n="epreuve"][data-r="${ep}"]`);if(fake)enregistrer(fake,{date:e.target.value||null});}
+  if(e.target.dataset&&e.target.dataset.d)return majDate(e.target);
+  if(e.target.id==="selClasse")chargerClasse(e.target.value);
+  if(e.target.id==="selGrp"){S.grp=e.target.value;majCands();render();}
+  if(e.target.id==="selCand"){S.cand=e.target.value;render();}
+  if(e.target.id==="selEpr"){S.epr=+e.target.value;render();}});
+document.addEventListener("focusout",e=>{const cell=e.target.closest&&e.target.closest(".cell");if(cell&&e.target.tagName==="TEXTAREA")enregistrer(cell);});
+window.addEventListener("beforeunload",e=>{if([...timers.values()].length&&$("#status").textContent.startsWith("Modifications")){e.preventDefault();e.returnValue="";}});
+
+/* ---------- Navigation ---------- */
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.v){await toutEnregistrer();S.vue=b.dataset.v;render();}
+  else if(b.dataset.go){await toutEnregistrer();S.cand=b.dataset.c;S.vue=b.dataset.go;render();window.scrollTo(0,0);}
+  else if(b.id==="prev"||b.id==="next"){await toutEnregistrer();const L=candsVis(),i=L.findIndex(c=>c.id===S.cand),j=i+(b.id==="next"?1:-1);
+    if(j>=0&&j<L.length){S.cand=L[j].id;render();}}
+  else if(b.id==="btnPrint"){await toutEnregistrer();$("#pageSize").textContent=`@page{size:${S.vue==="doc5"?"A3":"A4"} landscape}`;window.print();}
+  else if(b.hasAttribute("data-sug"))suggestions(b.closest(".cell"));
+  else if(b.hasAttribute("data-conv"))convocations(+b.dataset.ep,b.dataset.cl);
+  else if(b.dataset.lot){await toutEnregistrer();b.dataset.lot==="doc5"?lotDoc5():grilleUC();}
+  else if(b.hasAttribute("data-convok"))marquer(+b.dataset.ep,b.dataset.cl,true);
+  else if(b.hasAttribute("data-convno"))marquer(+b.dataset.ep,b.dataset.cl,false);
+  else if(b.id==="sugClose")$("#sug").hidden=true;
+});
+async function toutEnregistrer(){await Promise.all($$(".cell").filter(c=>timers.has(kS(c.dataset.c,c.dataset.n,c.dataset.r))).map(c=>enregistrer(c)));}
+
+/* ---------- Bibliothèque d'appréciations ---------- */
+let sugCell=null;
+async function suggestions(cell){
+  sugCell=cell;const n=cell.dataset.n,r=+cell.dataset.r;
+  const nom=n==="cr"?(S.crs.find(x=>x.id===r)||{}).nom:n==="ci"?(()=>{const x=S.cis.find(y=>y.id===r)||{};return x.code+" "+x.nom;})()
+          :n==="uc"?(()=>{const x=S.ucs.find(y=>y.id===r)||{};return x.code+" "+x.nom;})():"Appréciation globale de l'épreuve";
+  $("#sugRappel").textContent="Pour : "+nom;$("#sugList").innerHTML="<li>Chargement…</li>";$("#sug").hidden=false;$("#sugClose").focus();
+  try{const L=await rpc("uc_suggestions",{p_niveau:n,p_ref:r});
+    $("#sugList").innerHTML=L.length?L.map((s,i)=>`<li><button type="button" data-i="${i}">${esc(s.texte)}<small>${s.acquis===true?(n==="uc"?"Proposée valide":"Acquis"):s.acquis===false?(n==="uc"?"Proposée non valide":"Non acquis"):""} · utilisée ${s.nb} fois · ${frDate(s.dernier)}</small></button></li>`).join("")
+      :"<li>Aucune appréciation enregistrée pour cet élément.</li>";
+    $$("#sugList button").forEach(bt=>bt.onclick=()=>{const s=L[+bt.dataset.i],ta=sugCell.querySelector("textarea");
+      ta.value=ta.value.trim()?ta.value.trim()+"\n"+s.texte:s.texte;const acq=sugCell.querySelector("[data-acq]");
+      if(acq&&acq.value===""&&s.acquis!=null)acq.value=s.acquis?"1":"0";$("#sug").hidden=true;enregistrer(sugCell);ta.focus();});
+  }catch(err){$("#sugList").innerHTML=`<li>${esc(err.message)}</li>`;}
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#sug").hidden=true;});
+init();
+</script>
+<script src="/comme.js" defer></script>
+</body></html>

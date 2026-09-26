@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paramétrage UC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#F4F6F3;--surface:#FFFFFF;--line:#DCE2D9;--ink:#18241E;--ink-2:#4A5A51;--ink-3:#76857C;--accent:#2E6A4B;--accent-soft:#DCEBDF;--side:#1F3328;
+  --danger:#A8412F;--danger-soft:#F6DED8;--warn:#7A5410;--warn-soft:#FFF6E5;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--body)}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+aside{background:var(--side);color:#DDE8DF;padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+aside .brand{font:700 17px/1.2 var(--display);color:#fff;padding:0 8px 12px}
+aside .brand small{display:block;font:500 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:#9FB5A6;margin-bottom:3px}
+aside .sec{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#88A090;padding:12px 8px 4px}
+aside button{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:7px;font-size:13.5px;color:#DDE8DF}
+aside button:hover{background:rgba(255,255,255,.07)}
+aside button[aria-current=true]{background:#fff;color:var(--side);font-weight:600}
+aside button:focus-visible{outline:2px solid #9FD3AE}
+aside a{color:#BFD3C5;font-size:13px;padding:7px 10px;text-decoration:none}
+main{padding:20px 22px 60px;display:flex;flex-direction:column;gap:14px;min-width:0}
+h1{font:700 23px/1.2 var(--display);margin:0}
+.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.hint{font-size:13px;color:var(--ink-2);margin:0;max-width:880px}
+.banner{background:var(--warn-soft);border:1px solid #F0DDB5;color:var(--warn);border-radius:10px;padding:10px 14px;font-size:13px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filters label{font-size:12.5px;color:var(--ink-3)}
+select,input,textarea{font:14px var(--body);color:var(--ink);background:#F8FAF7;border:1px solid var(--line);border-radius:8px;padding:7px 9px;max-width:100%}
+textarea{width:100%;min-height:70px;resize:vertical}
+input[type=search]{min-width:220px}
+button{font:600 13.5px var(--body);border:0;border-radius:8px;padding:8px 12px;background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+button.danger{background:var(--surface);color:var(--danger);border:1px solid #E7C3BA}
+button.small{font-size:12px;padding:5px 9px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:auto}
+table{border-collapse:collapse;width:100%}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:13.5px}
+th{font-size:11.5px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;background:#FAFBF9;position:sticky;top:0}
+tr:hover td{background:#FAFCF9}
+td.act{white-space:nowrap;text-align:right}
+.pill{display:inline-block;font-size:11.5px;border-radius:99px;padding:1px 8px;background:#EEF2EC;color:var(--ink-2)}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.empty{padding:26px;text-align:center;color:var(--ink-3)}
+.count{font-size:12.5px;color:var(--ink-3)}
+dialog{border:0;border-radius:14px;padding:0;width:min(720px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(24,36,30,.4)}
+dialog form{display:flex;flex-direction:column;gap:12px;padding:18px 20px}
+dialog h2{margin:0;font:700 18px var(--display)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.f{display:flex;flex-direction:column;gap:4px}.f.full{grid-column:1/-1}
+.f label{font-size:12.5px;font-weight:500;color:var(--ink-2)}
+.f small{font-size:11.5px;color:var(--ink-3)}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 12px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px}
+.checks label{font-size:13px;color:var(--ink);display:flex;gap:6px;align-items:flex-start;font-weight:400}
+.foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.msg{font-size:13px;border-radius:8px;padding:8px 10px;background:var(--danger-soft);color:var(--danger)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:9px;padding:9px 14px;font-size:13.5px;z-index:60}
+@media (max-width:820px){.app{grid-template-columns:1fr}aside{flex-direction:row;flex-wrap:wrap;gap:4px}aside .sec{display:none}.fields{grid-template-columns:1fr}}
+</style></head><body>
+<div class="app">
+  <aside aria-label="Menu du paramétrage">
+    <div class="brand"><small>Saisie UC</small>Paramétrage</div>
+    <div class="sec">Référentiel</div>
+    <button type="button" data-e="referentiels">Référentiels</button>
+    <button type="button" data-e="ucs">UC (capacités globales)</button>
+    <button type="button" data-e="cis">Capacités intermédiaires</button>
+    <button type="button" data-e="crs">Critères et indicateurs</button>
+    <div class="sec">Plans d'évaluation</div>
+    <button type="button" data-e="plans">Plans (par cohorte)</button>
+    <button type="button" data-e="epreuves">Épreuves du plan</button>
+    <div class="sec">Candidats</div>
+    <button type="button" data-e="candidats">Candidats</button>
+    <button type="button" data-e="validations">UC déjà validées / VAA</button>
+    <div class="sec"></div>
+    <a href="/UC/">← Saisie des documents 4 et 5</a>
+    <a href="/">← Outils</a>
+  </aside>
+  <main>
+    <div class="top"><h1 id="titre">Paramétrage</h1><div style="display:flex;gap:8px"><button type="button" class="ghost" id="btnDup" hidden>Reconduire pour une nouvelle cohorte</button><button type="button" id="btnNew">Ajouter</button></div></div>
+    <p class="hint" id="aide"></p>
+    <div class="banner" id="bCand" hidden>Candidats <b>fictifs uniquement</b> tant que la direction et le DPO n'ont pas validé l'enregistrement de données réelles d'apprentis.</div>
+    <div class="filters" id="filtres"></div>
+    <div class="card" id="liste"><p class="empty">Chargement…</p></div>
+  </main>
+</div>
+<dialog id="dlg" aria-labelledby="dlgT"><form method="dialog" id="frm" novalidate>
+  <h2 id="dlgT">Modifier</h2><div class="msg" id="frmMsg" hidden></div>
+  <div class="fields" id="fields"></div>
+  <div class="foot"><button type="button" class="danger" id="btnDel" hidden>Supprimer</button><span style="flex:1"></span><button type="button" class="ghost" id="btnCancel">Annuler</button><button type="submit" id="btnSave">Enregistrer</button></div>
+</form></dialog>
+<script>
+"use strict";
+const SB="https://olqclfsywasktwirswpb.supabase.co",KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x",SKEY="kep.session";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const frDate=iso=>iso?new Date(iso+"T12:00:00").toLocaleDateString("fr-FR"):"";
+let session=null;
+function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch(e){return null;}}
+async function frais(){session=session||ls(SKEY);if(!session)return false;if(session.expires_at-60>Date.now()/1000)return true;
+  try{const r=await fetch(SB+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:session.refresh_token})});
+    if(!r.ok)throw 0;const t=await r.json();Object.assign(session,{access_token:t.access_token,refresh_token:t.refresh_token,expires_at:t.expires_at?+t.expires_at:Math.floor(Date.now()/1000)+3600});ls(SKEY,session);return true;}catch(e){return false;}}
+async function api(path,{method="GET",body,prefer}={}){
+  if(!await frais())throw new Error("Session expirée : reconnectez-vous depuis la page d'accueil.");
+  const h={apikey:KEY,"Content-Type":"application/json",Authorization:"Bearer "+session.access_token};if(prefer)h.Prefer=prefer;
+  const r=await fetch(SB+path,{method,headers:h,body:body?JSON.stringify(body):undefined});
+  const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){d=t;}
+  if(!r.ok){let m=(d&&(d.message||d.msg))||("Erreur "+r.status);
+    if(/row-level security|permission denied/i.test(m))m="Vous n'avez pas le droit de modifier ce paramétrage (réservé à l'administrateur, au coordinateur de la filière et au responsable pédagogique).";
+    if(/duplicate key/i.test(m))m="Cet élément existe déjà (code ou cohorte en double).";
+    if(/foreign key/i.test(m))m="Élément encore utilisé ailleurs : supprimez d'abord ce qui en dépend.";
+    throw new Error(m);}
+  return d;}
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+const NIVEAUX=[["capa","CAPa"],["bpa","BPA"],["bp","BP"],["cs","CS"],["bprea","BPREA"],["autre","Autre"]];
+
+/* ---------- Données de référence pour les listes déroulantes ---------- */
+const R={refs:[],ucs:[],cis:[],plans:[],cands:[],pers:[]};
+async function charger(){[R.refs,R.ucs,R.cis,R.plans]=await Promise.all([
+  api("/rest/v1/uc_referentiels?order=code"),api("/rest/v1/uc_ucs?order=referentiel,ordre,code"),
+  api("/rest/v1/uc_cis?order=ordre,code"),api("/rest/v1/uc_plans?order=referentiel,cohorte.desc")]);
+  R.pers=await api("/rest/v1/rpc/uc_personnel",{method:"POST",body:{}}).catch(()=>[]);}
+const optRef=()=>R.refs.map(r=>[r.code,r.code+" · "+r.libelle]);
+const ucLib=id=>{const u=R.ucs.find(x=>x.id===id);return u?u.code+" "+u.nom:"";};
+const ciLib=id=>{const c=R.cis.find(x=>x.id===id);return c?c.code+" "+c.nom:"";};
+const planLib=id=>{const p=R.plans.find(x=>x.id===id);return p?(p.cohorte||"sans cohorte")+" · "+p.nom:"";};
+const refDeUc=id=>(R.ucs.find(x=>x.id===id)||{}).referentiel;
+const refDeCi=id=>refDeUc((R.cis.find(x=>x.id===id)||{}).uc_id);
+
+/* ---------- Définition des écrans (à la manière d'EasyAdmin) ---------- */
+const F=(k,l,o={})=>Object.assign({k,l,type:"text"},o);
+const E={
+  referentiels:{t:"Référentiels",table:"uc_referentiels",pk:["code"],order:"code",
+    aide:"Un référentiel par diplôme (ex. CAPa JP). Le préfixe relie les classes de l'année : CAPaJP → CAPaJP1-A, CAPaJP2-B…",
+    cols:[F("code","Code",{req:1,edit:0}),F("libelle","Libellé (diplôme)",{req:1,full:1}),F("niveau","Filière",{type:"select",opts:()=>NIVEAUX,req:1}),
+      F("structure","Structure",{type:"select",opts:()=>[["capacites","Capacités (CI / critères)"],["objectifs","Objectifs (OI rang 1 / rang 2)"]]}),
+      F("prefixe","Préfixe des classes",{help:"ex. CAPaJP"}),F("fictif","Fictif (essai)",{type:"bool"})]},
+  ucs:{t:"UC (capacités globales)",table:"uc_ucs",pk:["id"],order:"ordre,code",filtre:{k:"referentiel",l:"Référentiel",opts:()=>optRef()},
+    aide:"Les UC du diplôme, dans l'ordre du référentiel.",
+    cols:[F("referentiel","Référentiel",{type:"select",opts:()=>optRef(),req:1,liste:0}),F("code","Code",{req:1}),F("nom","Libellé",{req:1,full:1,type:"textarea"}),F("ordre","Ordre",{type:"number"})]},
+  cis:{t:"Capacités intermédiaires",table:"uc_cis",pk:["id"],order:"ordre,code",filtre:{k:"uc_id",l:"UC",opts:()=>R.ucs.map(u=>[u.id,u.referentiel+" · "+u.code+" "+u.nom])},
+    aide:"Capacités intermédiaires (ou OI de rang 1) de chaque UC.",
+    cols:[F("uc_id","UC",{type:"select",opts:()=>R.ucs.map(u=>[u.id,u.referentiel+" · "+u.code+" "+u.nom]),req:1,num:1,aff:ucLib}),F("code","Code",{req:1}),F("nom","Libellé",{req:1,full:1,type:"textarea"}),F("ordre","Ordre",{type:"number"})]},
+  crs:{t:"Critères et indicateurs",table:"uc_crs",pk:["id"],order:"ordre,id",filtre:{k:"ci_id",l:"Capacité intermédiaire",opts:()=>R.cis.map(c=>[c.id,(refDeUc(c.uc_id)||"")+" · "+c.code+" "+c.nom])},
+    aide:"Critères (ou OI de rang 2) et indicateurs du document 4, tels qu'agréés.",
+    cols:[F("ci_id","Capacité intermédiaire",{type:"select",opts:()=>R.cis.map(c=>[c.id,c.code+" "+c.nom]),req:1,num:1,aff:ciLib}),F("code","N° (OI rang 2)"),F("ordre","Ordre",{type:"number"}),
+      F("nom","Critère",{req:1,full:1,type:"textarea"}),F("indicateur","Indicateurs",{full:1,type:"textarea"})]},
+  plans:{t:"Plans d'évaluation (par cohorte)",table:"uc_plans",pk:["id"],order:"referentiel,cohorte.desc",filtre:{k:"referentiel",l:"Référentiel",opts:()=>optRef()},dup:1,
+    aide:"Un plan agréé vaut pour une cohorte (2 ans). Pour la cohorte suivante, « Reconduire » copie les épreuves, leurs capacités et leurs responsables ; il reste à saisir la nouvelle date d'agrément. Les dates des épreuves sont fixées par les référents de classe dans le tableau de bord.",
+    cols:[F("referentiel","Référentiel",{type:"select",opts:()=>optRef(),req:1}),F("cohorte","Cohorte",{req:1,help:"ex. 2026-2028",pattern:"^\\d{4}-\\d{4}$"}),F("nom","Intitulé",{req:1,full:1}),
+      F("agree_le","Agréé le",{type:"date"}),F("agree_jusqu_a","Agréé jusqu'à",{type:"date"}),F("jury_le","Présentation au jury le",{type:"date",help:"repris sur le document 5"})]},
+  epreuves:{t:"Épreuves du plan",table:"uc_epreuves",pk:["id"],order:"ordre,code",filtre:{k:"plan_id",l:"Plan",opts:()=>R.plans.map(p=>[p.id,p.referentiel+" · "+planLib(p.id)])},
+    aide:"Épreuves certificatives du plan agréé et capacités intermédiaires évaluées par chacune (document 3).",
+    cols:[F("plan_id","Plan",{type:"select",opts:()=>R.plans.map(p=>[p.id,p.referentiel+" · "+planLib(p.id)]),req:1,num:1,aff:planLib,liste:0}),F("code","N° épreuve",{req:1,help:"ex. SE1Ep1"}),F("ordre","Ordre",{type:"number"}),
+      F("responsable","Responsable de l'épreuve",{type:"select",opts:()=>[["","— à désigner —"]].concat(R.pers.map(p=>[p.email,p.nom])),aff:e=>{const p=R.pers.find(x=>x.email===e);return p?p.nom:(e||"—");},help:"voit la classe et saisit les documents 4 et 5, même sans y être inscrit"}),
+      F("nom","Intitulé de l'épreuve",{req:1,full:1}),F("situation","Intitulé de la situation support",{full:1}),F("nature","Modalités (nature de l'épreuve)",{full:1,help:"ex. Pratique et entretien d'évaluation"}),
+      F("_cis","Capacités intermédiaires évaluées",{type:"cis",full:1})]},
+  candidats:{t:"Candidats",table:"uc_candidats",pk:["id"],order:"cohorte.desc,groupe,ordre,nom",filtre:{k:"referentiel",l:"Référentiel",opts:()=>optRef()},
+    aide:"Un candidat appartient à une cohorte et à un groupe (A, B, C…) ; sa classe de l'année s'en déduit.",
+    cols:[F("referentiel","Référentiel",{type:"select",opts:()=>optRef(),req:1,liste:0}),F("cohorte","Cohorte",{req:1,help:"ex. 2026-2028",pattern:"^\\d{4}-\\d{4}$"}),F("groupe","Groupe",{help:"A, B, C…"}),
+      F("nom","Nom",{req:1}),F("prenom","Prénom"),F("ordre","Ordre",{type:"number"}),F("fictif","Fictif",{type:"bool",def:true}),
+      F("plan_id","Plan individualisé",{type:"select",opts:()=>[["","— plan de la cohorte —"]].concat(R.plans.map(p=>[p.id,planLib(p.id)])),num:1,aff:planLib,help:"seulement pour un parcours particulier"})]},
+  validations:{t:"UC déjà validées / VAA",table:"uc_validations",pk:["candidat","uc_id"],order:"candidat",
+    aide:"UC déjà acquises : elles apparaissent « Validée le … » ou « VAA » dans les documents 4 et 5, sans saisie.",
+    cols:[F("candidat","Candidat",{type:"select",opts:()=>R.cands.map(c=>[c.id,c.nom+" "+c.prenom+" ("+c.cohorte+(c.groupe?" "+c.groupe:"")+")"]),req:1,aff:id=>{const c=R.cands.find(x=>x.id===id);return c?c.nom+" "+c.prenom:"";}}),
+      F("uc_id","UC",{type:"select",opts:()=>R.ucs.map(u=>[u.id,u.referentiel+" · "+u.code+" "+u.nom]),req:1,num:1,aff:ucLib}),
+      F("statut","Statut",{type:"select",opts:()=>[["valide","Validée"],["vaa","VAA"]],req:1}),F("le","Date de validation",{type:"date"})]}
+};
+
+/* ---------- Liste ---------- */
+let cur="plans",rows=[],filtreVal={},recherche="";
+async function ouvrir(e){cur=e;$$("aside button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.e===e)));
+  const d=E[e];$("#titre").textContent=d.t;$("#aide").textContent=d.aide||"";$("#bCand").hidden=e!=="candidats";$("#btnDup").hidden=!d.dup;
+  if(e==="validations")R.cands=await api("/rest/v1/uc_candidats?order=cohorte.desc,nom").catch(()=>[]);
+  let h="";if(d.filtre){const o=d.filtre.opts();if(filtreVal[e]==null&&o.length)filtreVal[e]=String(o[0][0]);
+    h+=`<label for="flt">${esc(d.filtre.l)}</label><select id="flt"><option value="">Tous</option>${o.map(([v,l])=>`<option value="${esc(v)}" ${String(v)===String(filtreVal[e])?"selected":""}>${esc(l)}</option>`).join("")}</select>`;}
+  h+=`<input type="search" id="q" placeholder="Rechercher…" aria-label="Rechercher" value="${esc(recherche)}"><span class="count" id="nb"></span>`;
+  $("#filtres").innerHTML=h;history.replaceState(null,"","#"+e);await lister();}
+async function lister(){const d=E[cur];let q=`/rest/v1/${d.table}?select=*&order=${d.order}`;
+  if(d.filtre&&filtreVal[cur])q+=`&${d.filtre.k}=eq.${encodeURIComponent(filtreVal[cur])}`;
+  try{rows=await api(q);if(cur==="epreuves"){const ids=rows.map(r=>r.id).join(",");R.epc=ids?await api(`/rest/v1/uc_epreuve_cis?epreuve_id=in.(${ids})`):[];}}
+  catch(e){$("#liste").innerHTML=`<p class="empty">${esc(e.message)}</p>`;return;}
+  afficher();}
+function valeur(c,r){const v=r[c.k];
+  if(c.type==="bool")return v?'<span class="pill ok">oui</span>':'<span class="pill">non</span>';
+  if(c.type==="date")return esc(frDate(v));
+  if(c.type==="cis"){const L=(R.epc||[]).filter(x=>x.epreuve_id===r.id).map(x=>(R.cis.find(c=>c.id===x.ci_id)||{}).code).filter(Boolean);return L.length?L.map(x=>`<span class="pill">${esc(x)}</span>`).join(" "):'<span class="pill">aucune</span>';}
+  if(c.aff)return esc(c.aff(v));
+  if(c.type==="select"&&c.opts){const o=c.opts().find(([k])=>String(k)===String(v));return esc(o?o[1]:v);}
+  const s=String(v==null?"":v);return esc(s.length>140?s.slice(0,140)+"…":s);}
+function afficher(){const d=E[cur],cols=d.cols.filter(c=>c.liste!==0);
+  const L=rows.filter(r=>!recherche||JSON.stringify(r).toLowerCase().includes(recherche.toLowerCase()));
+  $("#nb").textContent=L.length+" élément"+(L.length>1?"s":"");
+  $("#liste").innerHTML=L.length?`<table><thead><tr>${cols.map(c=>`<th>${esc(c.l)}</th>`).join("")}<th></th></tr></thead><tbody>${
+    L.map((r,i)=>`<tr>${cols.map(c=>`<td>${valeur(c,r)}</td>`).join("")}<td class="act"><button type="button" class="ghost small" data-edit="${rows.indexOf(r)}">Modifier</button></td></tr>`).join("")}</tbody></table>`
+    :`<p class="empty">Aucun élément. Utilisez « Ajouter ».</p>`;}
+
+/* ---------- Formulaire ---------- */
+let edite=null;
+function champ(c,r){const v=r?r[c.k]:(c.k===(E[cur].filtre||{}).k&&filtreVal[cur]?filtreVal[cur]:c.def);const id="f_"+c.k,dis=r&&c.edit===0?"disabled":"";
+  let w;
+  if(c.type==="select")w=`<select id="${id}" ${c.req?"required":""} ${dis}>${c.req?"":""}${c.opts().map(([k,l])=>`<option value="${esc(k)}" ${String(k)===String(v??"")?"selected":""}>${esc(l)}</option>`).join("")}</select>`;
+  else if(c.type==="textarea")w=`<textarea id="${id}" ${c.req?"required":""}>${esc(v??"")}</textarea>`;
+  else if(c.type==="bool")w=`<label style="font-weight:400;color:var(--ink)"><input type="checkbox" id="${id}" ${v?"checked":""}> oui</label>`;
+  else if(c.type==="cis"){const plan=r?r.plan_id:+filtreVal[cur],ref=(R.plans.find(p=>p.id===+($("#f_plan_id")||{}).value||p.id===plan)||{}).referentiel;
+    const pris=new Set(r?(R.epc||[]).filter(x=>x.epreuve_id===r.id).map(x=>x.ci_id):[]);
+    const L=R.cis.filter(ci=>!ref||refDeUc(ci.uc_id)===ref);
+    w=`<div class="checks" id="${id}">${L.map(ci=>`<label><input type="checkbox" value="${ci.id}" ${pris.has(ci.id)?"checked":""}> ${esc(((R.ucs.find(u=>u.id===ci.uc_id)||{}).code||"")+" · "+ci.code+" "+ci.nom)}</label>`).join("")||"<small>Aucune capacité dans ce référentiel.</small>"}</div>`;}
+  else w=`<input id="${id}" type="${c.type==="number"?"number":c.type==="date"?"date":"text"}" value="${esc(v??"")}" ${c.req?"required":""} ${c.pattern?`pattern="${esc(c.pattern)}"`:""} ${dis}>`;
+  return `<div class="f ${c.full?"full":""}"><label for="${id}">${esc(c.l)}${c.req?" *":""}</label>${w}${c.help?`<small>${esc(c.help)}</small>`:""}</div>`;}
+function formulaire(r){edite=r;const d=E[cur];$("#dlgT").textContent=(r?"Modifier":"Ajouter")+" · "+d.t;$("#frmMsg").hidden=true;
+  $("#fields").innerHTML=d.cols.map(c=>champ(c,r)).join("");$("#btnDel").hidden=!r;$("#dlg").showModal();
+  const fp=$("#f_plan_id");if(fp&&cur==="epreuves")fp.onchange=()=>{const x=d.cols.find(c=>c.type==="cis");$("#f__cis").closest(".f").outerHTML=champ(x,edite);};}
+function lire(){const d=E[cur],o={};for(const c of d.cols){if(c.type==="cis"||(edite&&c.edit===0))continue;const el=$("#f_"+c.k);
+    let v=c.type==="bool"?el.checked:el.value.trim();
+    if(c.req&&(v===""||v==null))throw new Error("« "+c.l+" » est obligatoire.");
+    if(c.pattern&&v&&!new RegExp(c.pattern).test(v))throw new Error("« "+c.l+" » : format attendu "+(c.help||c.pattern)+".");
+    if(c.type==="number")v=v===""?0:+v;else if(c.num)v=v===""?null:+v;if((c.type==="date"||c.type==="select")&&v==="")v=null;o[c.k]=v;}
+  return o;}
+async function enregistrer(ev){ev.preventDefault();const d=E[cur];let o;
+  try{o=lire();}catch(e){$("#frmMsg").textContent=e.message;$("#frmMsg").hidden=false;return;}
+  $("#btnSave").disabled=true;
+  try{let rec;
+    if(edite){const w=d.pk.map(k=>`${k}=eq.${encodeURIComponent(edite[k])}`).join("&");rec=(await api(`/rest/v1/${d.table}?${w}`,{method:"PATCH",body:o,prefer:"return=representation"}))[0];
+      if(!rec)throw new Error("Modification refusée (droits insuffisants).");}
+    else rec=(await api(`/rest/v1/${d.table}`,{method:"POST",body:o,prefer:"return=representation"}))[0];
+    if(cur==="epreuves"){const coches=$$("#f__cis input:checked").map(x=>+x.value);
+      await api(`/rest/v1/uc_epreuve_cis?epreuve_id=eq.${rec.id}`,{method:"DELETE"});
+      if(coches.length)await api("/rest/v1/uc_epreuve_cis",{method:"POST",body:coches.map(ci=>({epreuve_id:rec.id,ci_id:ci}))});}
+    $("#dlg").close();toast("Enregistré");await charger();await lister();
+  }catch(e){$("#frmMsg").textContent=e.message;$("#frmMsg").hidden=false;}
+  finally{$("#btnSave").disabled=false;}}
+async function supprimer(){const d=E[cur];if(!edite)return;
+  if(!confirm("Supprimer définitivement cet élément ? Les éléments qui en dépendent (capacités, critères, épreuves, saisies…) seront aussi supprimés."))return;
+  try{const w=d.pk.map(k=>`${k}=eq.${encodeURIComponent(edite[k])}`).join("&");const r=await api(`/rest/v1/${d.table}?${w}`,{method:"DELETE",prefer:"return=representation"});
+    if(!r||!r.length)throw new Error("Suppression refusée (droits insuffisants).");$("#dlg").close();toast("Supprimé");await charger();await lister();}
+  catch(e){$("#frmMsg").textContent=e.message;$("#frmMsg").hidden=false;}}
+async function reconduire(){const plan=+filtreVal[cur]||0;const p=R.plans.find(x=>x.id===plan)||R.plans.find(x=>x.referentiel===filtreVal[cur])||R.plans[0];
+  if(!p){toast("Aucun plan à reconduire.");return;}
+  const [a,b]=(p.cohorte||"2026-2028").split("-").map(Number);const nc=prompt(`Reconduire « ${p.nom} » (${p.cohorte||"?"}) pour la cohorte :`,`${a+1}-${b+1}`);if(!nc)return;
+  try{await api("/rest/v1/rpc/uc_dupliquer_plan",{method:"POST",body:{p_plan:p.id,p_cohorte:nc.trim()}});toast("Plan reconduit pour "+nc+" : saisissez sa date d'agrément.");await charger();await lister();}
+  catch(e){toast(e.message);}}
+
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.e)ouvrir(b.dataset.e);else if(b.dataset.edit!=null)formulaire(rows[+b.dataset.edit]);
+  else if(b.id==="btnNew")formulaire(null);else if(b.id==="btnCancel")$("#dlg").close();else if(b.id==="btnDel")supprimer();else if(b.id==="btnDup")reconduire();});
+document.addEventListener("change",e=>{if(e.target.id==="flt"){filtreVal[cur]=e.target.value;lister();}});
+document.addEventListener("input",e=>{if(e.target.id==="q"){recherche=e.target.value;afficher();}});
+$("#frm").addEventListener("submit",enregistrer);
+(async()=>{if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
+  // Paramétrage réservé à l'administrateur (la base refuse aussi toute modification aux autres comptes)
+  try{const d=await api("/rest/v1/rpc/mes_droits",{method:"POST",body:{}});
+    if(!d||!d.admin){document.querySelector(".app").innerHTML=`<main><h1>Paramétrage réservé à l'administrateur</h1><p class="hint">Les référentiels, les plans d'évaluation, les candidats, les UC validées et les VAA sont gérés par l'administrateur. <a href="/UC/">Retour à la saisie</a></p></main>`;return;}
+  }catch(e){}
+  try{await charger();}catch(e){$("#liste").innerHTML=`<p class="empty">${esc(e.message)}</p>`;return;}
+  const h=location.hash.slice(1);ouvrir(E[h]?h:"plans");})();
+</script>
+<script src="/comme.js" defer></script>
+</body></html>
