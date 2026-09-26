@@ -597,11 +597,11 @@ const Saisie=(()=>{
       ${al.length?`<ul class="plain">${al.map(a=>`<li><b>${esc(nomApp(a))}</b> : <span class="hint">${esc(alertes(notesPer(a,k)).join(" ; "))}</span></li>`).join("")}</ul>`:'<p class="hint">Aucun candidat en alerte pour cette période.</p>'}`;
       $("#szPer").onchange=e=>{state.res.periode=+e.target.value;persist();renderCoord();};$("#szSign").oninput=e=>{state.res.sign=e.target.value;persist();};}
     else if(S.ctab==="imp"){
-      c.innerHTML=`<p class="hint" style="margin:0">Impression des grilles remplies de toutes les capacités, quel que soit l'intervenant : une page A4 par candidat et par grille (grilles non saisies imprimées vides).</p>
+      c.innerHTML=`<p class="hint" style="margin:0">Grilles remplies de toutes les capacités, quel que soit l'intervenant. Excel : un classeur modifiable par grille (tous les candidats). PDF : une page A4 par candidat et par grille (grilles non saisies laissées vides), produite directement, sans passer par l'impression.</p>
       <div class="actions"><button type="button" class="ghost small" data-psel="1">Tout cocher</button><button type="button" class="ghost small" data-psel="0">Tout décocher</button></div>
       <div class="sz-plist">${tousCodes().map(cd=>{const g=grille(cd),k2=progress(cd);return `<label><input type="checkbox" data-pcode="${esc(cd)}" ${k2?"checked":""}> <b>${esc(cd)}</b> ${esc(g.titre.length>34?g.titre.slice(0,33)+"…":g.titre)} <span class="hint">${k2}/${N}</span></label>`;}).join("")}</div>
       <div class="newform" style="margin:0;max-width:720px"><div class="field"><label for="szPApp">Candidats</label><select id="szPApp"><option value="">Tous les candidats</option>${S.apps.map(a=>`<option value="${a.id}">${esc(nomApp(a))}</option>`).join("")}</select></div></div>
-      <div class="actions"><button type="button" class="primary" id="szPGo">Imprimer la sélection</button></div>`;}
+      <div class="actions"><button type="button" id="szPXl">Excel de la sélection (.zip)</button><button type="button" class="primary" id="szPGo">PDF de la sélection</button></div>`;}
     else{const k=+state.res.periode||2;
       c.innerHTML=`<p class="hint" style="margin:0">Documents produits à partir des grilles saisies, dans le modèle de sortie choisi dans « Préparer les grilles ». Seules les grilles complètes donnent une note.</p>
       <div class="newform" style="margin:0;max-width:720px">
@@ -662,8 +662,10 @@ const Saisie=(()=>{
     if(b.dataset.ctab){S.ctab=b.dataset.ctab;renderCoord();return;}
     if(b.dataset.open){const [cd,aid]=b.dataset.open.split("|");S.code=cd;S.app=aid;S.draft={};render();window.scrollTo(0,0);return;}
     if(b.dataset.psel!=null){document.querySelectorAll("[data-pcode]").forEach(x=>x.checked=b.dataset.psel==="1");return;}
-    if(b.id==="szPGo"){const cs=[...document.querySelectorAll("[data-pcode]:checked")].map(x=>x.dataset.pcode);const ap=$("#szPApp").value;
-      if(!cs.length){toast("Cochez au moins une grille.");return;}imprimer(cs,ap?[ap]:S.apps.map(a=>a.id));return;}
+    if(b.id==="szPGo"||b.id==="szPXl"){const cs=[...document.querySelectorAll("[data-pcode]:checked")].map(x=>x.dataset.pcode);const ap=$("#szPApp").value;
+      if(!cs.length){toast("Cochez au moins une grille.");return;}
+      if(b.id==="szPXl")return docGrilles(b,cs);
+      return busy(b,()=>pdfGrilles(cs,ap?[ap]:S.apps.map(a=>a.id)));}
     try{
       if(b.dataset.delApp){ask(b,async()=>{await Cloud.call(`/rest/v1/bts_apprenants?id=eq.${b.dataset.delApp}`,{method:"DELETE"});await load();});return;}
       if(b.dataset.conv)return docConvocations(b,b.dataset.conv);
@@ -697,6 +699,27 @@ const Saisie=(()=>{
       <table><thead><tr><th style="width:15%">Critères</th><th>Indicateurs</th>${LV.map(x=>`<th style="width:4.2%">${x}</th>`).join("")}<th style="width:6%">Note</th><th style="width:6.5%">Barème</th><th style="width:23%">Appréciations</th></tr></thead>
       <tbody>${rows}<tr class="tot"><td colspan="6">TOTAL</td><td class="c">${fr(t)}</td><td class="c">${fr(s)}</td><td>${plein&&s>0?"Note : "+fr(Math.round(t*2000/s)/100)+" / 20":"Grille incomplète"}</td></tr></tbody></table>
       <div class="ag"><b>Appréciation générale :</b> ${esc(d.ag||"")}</div><div class="sig"><span>Signature de l'évaluateur :</span><span>Signature du candidat :</span></div></section>`;}
+  /* PDF : même contenu que la page imprimable, produit par KepDoc (pdf-lib) */
+  function feuilleGrille(code,aid){const g=grille(code),a=S.apps.find(x=>x.id===aid),r=S.saisies[key(code,aid)],d=r?r.donnees:{lignes:[]};
+    const V="3C7D15",HC={b:true,sz:10,fond:V,coul:"FFFFFF",al:"c"},N9=Array(8).fill(null),rows=[];let idx=0,t=0,s=0,plein=true;
+    const meta=(a1,b1)=>({cells:[{v:a1,sz:10,cs:4},null,null,null,{v:b1,sz:10,cs:5},null,null,null,null]});
+    rows.push({h:26,cells:[{v:g.code+" "+g.titre,b:true,sz:13,bord:false,cs:9},...N9]});
+    rows.push(meta("Candidat : "+nomApp(a),"Promotion : "+S.promo));
+    rows.push(meta("Situation d'évaluation : "+(g.se||""),"Date de l'épreuve : "+(d.date?isoToFr(d.date):g.date?isoToFr(g.date):"")));
+    rows.push(meta("Intervenant(s) : "+(g.intervenant||""),"État : "+(!r?"non saisie":r.complet?"complète":"incomplète")));
+    rows.push({h:8,cells:[{v:"",bord:false,cs:9},...N9]});
+    rows.push({h:22,cells:["Critères","Indicateurs",...LV,"Note","Barème","Appréciations"].map(v=>({...HC,v}))});
+    for(const c of g.criteres){c.i.forEach((it,ii)=>{const l=(d.lignes||[])[idx]||{},b=+it.b||0,n=l.n!=null&&l.n!==""?+l.n:null,lv=niveau(n,b);s+=b;if(n==null)plein=false;else t+=n;
+      rows.push({cells:[ii===0?{v:c.c,b:true,sz:9,rs:c.i.length,va:"t"}:null,{v:it.t,sz:9},...[0,1,2,3].map(x=>({v:x===lv?"X":"",al:"c",b:true})),{v:n!=null?fr(n):"",al:"c",b:true},{v:fr(b),al:"c"},{v:l.a||"",sz:9}]});idx++;});}
+    rows.push({cells:[{v:"TOTAL",b:true,al:"r",cs:6},null,null,null,null,null,{v:fr(t),al:"c",b:true},{v:fr(s),al:"c"},{v:plein&&s>0?"Note : "+fr(Math.round(t*2000/s)/100)+" / 20":"Grille incomplète",b:true}]});
+    rows.push({h:8,cells:[{v:"",bord:false,cs:9},...N9]});
+    rows.push({h:40,cells:[{v:"Appréciation générale : "+(d.ag||""),va:"t",cs:9},...N9]});
+    rows.push({h:40,cells:[{v:"Signature de l'évaluateur :",bord:false,va:"t",cs:4},null,null,null,{v:"Signature du candidat :",bord:false,va:"t",cs:5},null,null,null,null]});
+    return {nom:code,papier:"A4",cols:[20,40,5,5,5,5,8,9,31],lignes:rows,repeter:1,repeterDe:6,piedPDF:"UFA Kerplouz LaSalle Auray · "+nomApp(a)+" · "+code};}
+  async function pdfGrilles(cs,aids){if(!window.KepDoc){toast("Module d'export indisponible, rechargez la page.");return;}
+    const F=[];for(const c of cs)if(peut(c)||S.coord)for(const a of aids)F.push(feuilleGrille(c,a));if(!F.length){toast("Rien à exporter.");return;}
+    const un=aids.length===1?S.apps.find(x=>x.id===aids[0]):null;
+    await KepDoc.telecharger(KepDoc.nomFichier("Grilles remplies BTS AP "+suffixe()+(un?" "+nomApp(un):"")+(cs.length===1?" "+cs[0]:""))+".pdf",await KepDoc.pdf(F,{titre:"Grilles remplies BTS AP "+S.promo}),"application/pdf");}
   function imprimer(cs,aids){const el=$("#szPrint");const pages=[];for(const c of cs)if(peut(c)||S.coord)for(const a of aids)pages.push(pageHTML(c,a));
     if(!pages.length){toast("Rien à imprimer.");return;}el.innerHTML=pages.join("");el.hidden=false;
     setTimeout(()=>{window.print();setTimeout(()=>{el.hidden=true;},500);},50);}
