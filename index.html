@@ -88,6 +88,7 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
 .espcard .ico svg{width:22px;height:22px}
 .espcard b{font:700 18px/1.2 var(--display)}.espcard p{margin:0;font-size:13.5px;color:var(--ink-2)}
 .espcard .go{margin-top:auto;font-size:13px;font-weight:600;color:var(--c)}
+.esp .badge{margin-left:6px;padding:0 7px;font-size:11px}
 .badge{display:inline-block;font-size:12px;font-weight:600;border-radius:99px;padding:2px 9px;background:#E3ECF8;color:#2D5A96}.badge.warn{background:#FFF6E5;color:#7A5410}
 .espintro{margin:0;color:var(--ink-2);font-size:14px}
 .actus ul{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px}
@@ -95,8 +96,8 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
 .actus li a{color:var(--ink);font-weight:500;text-decoration:none}.actus li a:hover{color:var(--accent);text-decoration:underline}
 .actus .level-h a{color:#6B5CA5;font-weight:600;text-decoration:none}
 .actus li span{font-size:12px;color:var(--ink-3)}
-body:not([data-esp="accueil"]):not([data-esp="evaluations"]) #rappels,body:not([data-esp="accueil"]):not([data-esp="evaluations"]) #rappelsUC{display:none!important}
-body:not([data-esp="accueil"]) #mine{display:none}
+body:not([data-espace="accueil"]):not([data-espace="evaluations"]) #rappels,body:not([data-espace="accueil"]):not([data-espace="evaluations"]) #rappelsUC{display:none!important}
+body:not([data-espace="accueil"]) #mine{display:none}
 @media (max-width:640px){.esp{padding:8px 10px;font-size:13px}}
 @media (prefers-reduced-motion:reduce){.tile,.espcard{transition:none}}
 </style></head><body>
@@ -319,7 +320,7 @@ const TOOLS=[
   {esp:"outils",niv:"tous",t:"La fabrique à livret",d:"Export Yparéo en entrée, un livret d'alternance Word par apprenti·e en sortie : les 18 modèles v5 validés, publipostés dans le navigateur.",i:"livret",href:"/livret/",code:"livret"},
   {esp:"outils",niv:"tous",t:"Tableau de stratégie de formation",d:"Répartition des capacités du référentiel entre le CFA et l'entreprise, période par période.",i:"decoup"},
   {esp:"outils",niv:"tous",t:"Fiches pédagogiques prévisionnelles",d:"Par formateur : heures de face-à-face et cadrage des UC enseignées d'après le référentiel.",i:"inscr"},
-  {esp:"outils",niv:"btsa",t:"Grilles d'évaluation BTS AP",d:"Préparer les classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/",code:"grilles-bts"},
+  {esp:"evaluations",niv:"btsa",t:"Grilles d'évaluation BTS AP",d:"Préparer les classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/",code:"grilles-bts"},
   // Évaluations
   {esp:"evaluations",niv:"capa",t:"Évaluations UC : documents 4 et 5",d:"Tableau de bord et résultats, saisie des appréciations, calendrier des épreuves ; pour les référents et le coordinateur : dates, convocations et éditions de la cohorte.",i:"grille",href:"/UC/",code:"saisie-uc"},
   {esp:"evaluations",niv:"capa",t:"Calendrier des épreuves UC",d:"Périodes agréées et dates des épreuves du CAPa par classe.",i:"calend",href:"/UC/?vue=cal",code:"saisie-uc"},
@@ -333,7 +334,6 @@ const TOOLS=[
   // Suivi des apprenants
   {esp:"suivi",niv:"tous",t:"Suivi et accompagnement",d:"Liste de vos apprenants avec leur dernier échange, visites en entreprise, alertes et actions en retard ; fiche de suivi imprimable.",i:"suivi",href:"/SUIVI/",code:"suivi"},
   {esp:"suivi",niv:"tous",t:"Actions à mener",d:"Toutes les actions et alertes ouvertes de vos classes, par échéance.",i:"calend",href:"/SUIVI/?o=actions",code:"suivi"},
-  {esp:"suivi",niv:"tous",t:"Assiduité et absences",d:"Reprise des absences Yparéo pour repérer les décrochages.",i:"inscr"},
   // Veille
   {esp:"veille",niv:"tous",t:"Actualités de la filière",d:"Unep, arboriculture, végétal, formation et réglementation : les flux des sources de référence, filtrés et classés par thème.",i:"veille",href:"/VEILLE/",code:"veille"},
   {esp:"veille",niv:"tous",t:"Sélection de l'équipe",d:"Les articles retenus par les formateurs, avec leur intérêt pédagogique.",i:"fiche",href:"/VEILLE/?o=pin",code:"veille"},
@@ -343,7 +343,8 @@ const TOOLS=[
   {esp:"admin",niv:"tous",t:"Plans d'évaluation UC",d:"Plans agréés par cohorte, épreuves et périodes, formateurs affectés aux UC.",i:"fiche",href:"/UC/param.html",code:"uc-param"},
   {esp:"admin",niv:"tous",t:"Référentiels : import et validation",d:"Importer ou corriger un référentiel depuis un tableur, valider les textes relus sur Chlorofil.",i:"fiche",href:"/REF/",code:"uc-param"},
   {esp:"admin",niv:"tous",t:"Sources de la veille",d:"Ajouter, filtrer ou désactiver les flux d'actualités.",i:"veille",href:"/VEILLE/?o=src",code:"uc-param"}];
-let filtre="all",espace="accueil";
+let filtre="all",espace="accueil";const BADGES={};
+function navEsp(EV){EV=EV||espacesVus();$("#espaces").innerHTML=[{id:"accueil",nom:"Accueil",c:"#18241E"},...EV].map(e=>`<button type="button" class="esp" data-esp="${e.id}" aria-current="${espace===e.id?"page":"false"}" style="--c:${e.c}">${e.nom}${BADGES[e.id]||""}</button>`).join("");}
 function outilsVus(){const d=apercu||droits||{};return new Set(d.outils||[]);}
 function visiblesEsp(esp){
   const d=apercu||droits||{},niv=new Set(d.niveaux||[]),out=outilsVus();
@@ -351,17 +352,21 @@ function visiblesEsp(esp){
     .filter(t=>t.code||esp!=="admin");}
 function espacesVus(){return ESPACES.filter(e=>visiblesEsp(e.id).some(t=>t.href));}
 function tuile(t){const f=FORMS[t.niv],on=!!t.href;const ico=`<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[t.i]||ICONS.fiche}</svg></span>`;
-  return on?`<a class="tile" href="${t.href}" style="--c:${f.c}">${ico}<span class="st on">Disponible</span><b>${t.t}</b><p>${t.d}</p><span class="go">Ouvrir l'outil →</span></a>`
-           :`<div class="tile soon" aria-disabled="true" style="--c:${f.c}">${ico}<span class="st soon">À venir</span><b>${t.t}</b><p>${t.d}</p></div>`;}
+  return on?`<a class="tile" href="${t.href}" style="--c:${f.c}">${ico}<span class="st on">${t.espNom||"Disponible"}</span><b>${t.t}</b><p>${t.d}</p><span class="go">Ouvrir l'outil →</span></a>`
+           :`<div class="tile soon" aria-disabled="true" style="--c:${f.c}">${ico}<span class="st soon">À venir${t.espNom?" · "+t.espNom:""}</span><b>${t.t}</b><p>${t.d}</p></div>`;}
 function renderDash(){
   const EV=espacesVus();if(espace!=="accueil"&&!EV.some(e=>e.id===espace))espace="accueil";
-  $("#espaces").innerHTML=[{id:"accueil",nom:"Accueil",c:"#18241E"},...EV].map(e=>`<button type="button" class="esp" data-esp="${e.id}" aria-current="${espace===e.id?"page":"false"}" style="--c:${e.c}">${e.nom}</button>`).join("");
-  document.body.dataset.esp=espace;
-  if(espace==="accueil"){$("#tabs").hidden=true;
-    $("#levels").innerHTML=`<div class="espgrid">${EV.map(e=>{const T=visiblesEsp(e.id),n=T.filter(t=>t.href).length;
-      return `<a class="espcard" href="#${e.id}" data-esp="${e.id}" style="--c:${e.c}"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[e.i]}</svg></span>
-        <b>${e.nom}</b><p>${e.d}</p><span class="go">${n} outil${n>1?"s":""} →</span><span class="extra" id="x-${e.id}"></span></a>`;}).join("")}</div>
-      <section class="actus" id="actus" hidden><div class="level-h" style="--c:#6B5CA5"><h2>Dernières actualités</h2><span class="sub"><a href="/VEILLE/">Toute la veille →</a></span></div><ul id="actusL"></ul></section>`;
+  navEsp(EV);
+  document.body.dataset.espace=espace;
+  if(espace==="accueil"){
+    const T=[];EV.forEach(e=>T.push(...visiblesEsp(e.id).map(t=>Object.assign({},t,{espNom:e.nom,espC:e.c}))));
+    const F=Object.keys(FORMS).filter(k=>T.some(t=>t.niv===k));if(filtre!=="all"&&!F.includes(filtre))filtre="all";
+    $("#tabs").innerHTML=[["all","Toutes les formations","var(--ink-3)"],...F.map(k=>[k,FORMS[k].court,FORMS[k].c])].map(([id,n,c])=>`<button type="button" class="tab" aria-pressed="${filtre===id}" data-f="${id}" style="--c:${c}"><span class="sw"></span>${n}</button>`).join("");
+    $("#tabs").hidden=F.length<2;
+    $("#levels").innerHTML=F.filter(k=>filtre==="all"||filtre===k).map(k=>{const f=FORMS[k],L=T.filter(t=>t.niv===k);
+      return `<section class="level" style="--c:${f.c}" aria-labelledby="h-${k}"><div class="level-h"><h2 id="h-${k}">${f.nom}</h2><span class="niv">${f.niv}</span><span class="sub">${f.sub}</span></div>
+        <div class="tiles">${L.map(tuile).join("")}</div></section>`;}).join("")
+      +`<section class="actus" id="actus" hidden><div class="level-h" style="--c:#6B5CA5"><h2>Dernières actualités</h2><span class="sub"><a href="/VEILLE/">Toute la veille →</a></span></div><ul id="actusL"></ul></section>`;
     extrasAccueil();return;}
   const T=visiblesEsp(espace),F=Object.keys(FORMS).filter(k=>T.some(t=>t.niv===k));
   if(filtre!=="all"&&!F.includes(filtre))filtre="all";
@@ -375,9 +380,9 @@ function renderDash(){
 /* Accueil : chiffres utiles et dernières actualités */
 async function extrasAccueil(){const s=await session();if(!s)return;const out=outilsVus(),adm=droits&&droits.admin&&!apercu;
   if(adm||out.has("suivi")){try{const a=await api("/rest/v1/rpc/suivi_actions",{method:"POST",body:{},token:s.access_token})||[];const auj=new Date().toISOString().slice(0,10),r=a.filter(x=>x.echeance&&x.echeance<auj).length;
-    const x=$("#x-suivi");if(x&&a.length)x.innerHTML=`<span class="badge${r?" warn":""}">${a.length} action${a.length>1?"s":""} ouverte${a.length>1?"s":""}${r?` dont ${r} en retard`:""}</span>`;}catch(e){}}
+    BADGES.suivi=a.length?`<span class="badge${r?" warn":""}" title="${a.length} action(s) ouverte(s)${r?", dont "+r+" en retard":""}">${a.length}</span>`:"";navEsp();}catch(e){}}
   if(adm||out.has("veille")){try{const r=await fetch("/api/veille",{credentials:"same-origin"});if(!r.ok)return;const d=await r.json(),L=(d.items||[]).slice(0,6);if(!L.length||espace!=="accueil")return;
-    const n2=(d.items||[]).filter(i=>i.date&&Date.now()-Date.parse(i.date)<7*864e5).length,x=$("#x-veille");if(x&&n2)x.innerHTML=`<span class="badge">${n2} article${n2>1?"s":""} cette semaine</span>`;
+    const n2=(d.items||[]).filter(i=>i.date&&Date.now()-Date.parse(i.date)<7*864e5).length;BADGES.veille=n2?`<span class="badge" title="${n2} article(s) cette semaine">${n2}</span>`:"";navEsp();
     $("#actusL").innerHTML=L.map(i=>`<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.titre)}</a><span>${esc(i.source)}${i.date?" · "+new Date(i.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):""}</span></li>`).join("");$("#actus").hidden=false;}catch(e){}}
 }
 function allerEsp(id,push){espace=id;filtre="all";if(push!==false)history.replaceState(null,"",id==="accueil"?location.pathname:"#"+id);renderDash();window.scrollTo({top:0});}
