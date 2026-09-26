@@ -47,6 +47,17 @@ table{border-collapse:collapse;width:100%}
 .doc th{background:#EEF3EF;font-size:12px;font-weight:600;color:var(--ink-2);padding:8px;border:1px solid #C9D3C6;text-align:left;vertical-align:bottom}
 .doc td{border:1px solid #C9D3C6;padding:8px;vertical-align:top;font-size:13px}
 .doc td.ci{background:#F8FAF7}
+.d4 td{vertical-align:middle}
+.zones{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.zones button,.zones a{font:600 13px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:7px 14px;text-decoration:none;cursor:pointer}
+.zones button[aria-current=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.acq{display:inline-block;font-weight:600;font-size:11.5px;border-radius:99px;padding:1px 8px;background:#EEF2EC;color:var(--ink-2)}
+.acq.oui{background:var(--accent-soft);color:var(--accent)}.acq.non{background:#FBEAEA;color:#A33}
+.cell.ro textarea{background:#F4F6F3;color:var(--ink-2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}.chips span{font-size:12.5px;border:1px solid var(--line);border-radius:99px;padding:3px 10px;background:#F8FAF7}
+.mois{font:600 14px var(--body);margin:18px 0 6px}
+.cal{table-layout:fixed;width:100%}
+.cal td.j{white-space:nowrap;font-weight:600}
 .doc td.ci b{display:block}
 .doc .ind{color:var(--ink-2);white-space:pre-line}
 .doc .crt{font-weight:600}
@@ -124,9 +135,16 @@ textarea:focus{background:#fff}
 </style><style id="pageSize">@page{size:A4 landscape}</style></head><body>
 <main>
   <div class="head">
-    <div class="t"><span class="eyebrow">Kerplouz LaSalle · Unités capitalisables</span><h1>Saisie UC : documents 4 et 5</h1></div>
-    <div class="me"><span id="who"></span><a href="/UC/param.html" id="lnkParam" hidden>Paramétrage des plans</a><a href="/">← Outils</a></div>
+    <div class="t"><span class="eyebrow">Kerplouz LaSalle · Unités capitalisables</span><h1 id="titreZ">Unités capitalisables</h1></div>
+    <div class="me"><span id="who"></span><a href="/">← Outils</a></div>
   </div>
+  <nav class="zones noprint" id="zones" aria-label="Zones" hidden>
+    <button type="button" data-z="tdb">Tableau de bord</button>
+    <button type="button" data-z="saisie">Saisie des documents 4 et 5</button>
+    <button type="button" data-z="coord" hidden>Coordination</button>
+    <button type="button" data-z="cal">Calendrier des épreuves</button>
+    <a href="/UC/param.html" id="lnkParam" hidden>Paramétrage des plans</a>
+  </nav>
   <div class="banner" id="fictif" hidden>Essai : référentiel et candidats <b>fictifs</b>, en attendant l'import des référentiels d'EvalUc. Aucune donnée d'apprenti réel.</div>
   <div class="banner" id="msg" hidden></div>
 
@@ -134,7 +152,6 @@ textarea:focus{background:#fff}
     <label for="selClasse">Classe</label><select id="selClasse"></select>
     <span id="navGrp" hidden><label for="selGrp">Groupe</label> <select id="selGrp"></select></span>
     <div class="seg" role="group" aria-label="Vue">
-      <button type="button" data-v="liste" aria-pressed="true">Tableau de bord</button>
       <button type="button" data-v="doc4" aria-pressed="false">Document 4</button>
       <button type="button" data-v="doc5" aria-pressed="false">Document 5</button>
     </div>
@@ -186,7 +203,7 @@ function toast(m){const t=document.createElement("div");t.className="toast";t.te
 function statut(m,err){const s=$("#status");s.textContent=m||"";s.classList.toggle("err",!!err);}
 
 /* ---------- État ---------- */
-const S={classes:[],classe:null,ref:null,ucs:[],cis:[],crs:[],epreuves:[],epCis:[],cands:[],valid:[],saisies:new Map(),vue:"liste",cand:null,epr:null,moi:""};
+const S={classes:[],classe:null,ref:null,ucs:[],cis:[],crs:[],epreuves:[],epCis:[],cands:[],valid:[],saisies:new Map(),vue:"doc4",zone:"tdb",droits:{},aff:[],affPlan:[],cand:null,epr:null,moi:""};
 const kS=(c,n,r)=>c+"|"+n+"|"+r;
 const byOrd=(a,b)=>(a.ordre-b.ordre)||String(a.code).localeCompare(String(b.code),"fr",{numeric:true});
 
@@ -194,10 +211,14 @@ async function init(){
   if(!await frais()){location.href="/?next="+encodeURIComponent(location.pathname);return;}
   try{
     const d=await rpc("mes_droits");S.moi=((d.prenom||"")+" "+(d.nom||"")).trim()||d.email||"";$("#who").textContent=S.moi;
-    $("#lnkParam").hidden=!d.admin;
-    S.classes=(await rpc("uc_mes_classes"))||[];
+    $("#lnkParam").hidden=!d.admin;S.admin=!!d.admin;
+    [S.classes,S.aff]=await Promise.all([rpc("uc_mes_classes"),rpc("uc_mes_affectations").catch(()=>[])]);S.classes=S.classes||[];S.aff=S.aff||[];
   }catch(e){return erreur(e);}
+  const q0=new URLSearchParams(location.search).get("vue")||"";
+  S.zone=["doc4","doc5"].includes(q0)?"saisie":["tdb","coord","cal","saisie"].includes(q0)?q0:"tdb";if(q0==="doc5")S.vue="doc5";
+  $("#zones").hidden=false;$('[data-z="coord"]').hidden=!(S.admin||S.classes.some(c=>c.referent));
   const avec=S.classes.filter(c=>c.plan_id);
+  if(S.zone==="cal"&&!avec.length)return render();
   if(!avec.length){$("#view").innerHTML=`<p class="empty">Aucune de vos classes n'a encore de plan d'évaluation en UC.</p>`;return;}
   // A, B, C… sont des groupes d'une même classe : CAPaJP1-A, CAPaJP1-B → classe CAPaJP1
   S.bases=[];for(const c of avec){const b=baseDe(c.code);let x=S.bases.find(y=>y.code===b);
@@ -229,6 +250,7 @@ async function chargerClasse(code){
       api(`/rest/v1/uc_plans?id=eq.${pl}`),
       api(`/rest/v1/uc_dates?classe=in.(${G.map(g=>encodeURIComponent(g.code)).join(",")})`),
       S.pers?Promise.resolve(S.pers):rpc("uc_personnel").catch(()=>[])]);
+    [S.droits,S.affPlan]=await Promise.all([rpc("uc_mes_droits_plan",{p_plan:pl}),api(`/rest/v1/uc_affectations?plan_id=eq.${pl}`)]);S.droits=S.droits||{};
     S.ref=refs[0]||{};S.plan=plans[0]||{};S.dates=dates;S.pers=pers;S.cohorte=coh;S.ucs=ucs;S.epreuves=eps;S.cands=cands;
     const ucIds=ucs.map(u=>u.id).join(",")||"0",epIds=eps.map(e=>e.id).join(",")||"0",cIds=cands.map(c=>c.id).join(",");
     S.cis=await api(`/rest/v1/uc_cis?uc_id=in.(${ucIds})&order=ordre,code`);
@@ -261,7 +283,14 @@ const crsDe=ci=>S.crs.filter(r=>r.ci_id===ci.id).sort(byOrd);
 const epreuveDe=ci=>S.epreuves.find(e=>S.epCis.some(x=>x.epreuve_id===e.id&&x.ci_id===ci.id));
 const validation=(cand,uc)=>S.valid.find(v=>v.candidat===cand&&v.uc_id===uc);
 const sai=(c,n,r)=>S.saisies.get(kS(c,n,r));
-const rempli=(c,n,r)=>{const s=sai(c,n,r);return !!(s&&s.texte.trim());};
+const rempli=(c,n,r)=>{const s=sai(c,n,r);return !!(s&&(s.texte.trim()||(n==="cr"&&s.acquis!=null)));};
+// Droit d'écrire (même règle que uc_ecrire côté base) : UC affectée au formateur, ou épreuve dont il est responsable
+function peut(n,r){const D=S.droits||{};if(D.admin)return true;const U=D.ucs||[],E=D.epreuves||[];
+  const respCI=ci=>S.epCis.some(x=>x.ci_id===ci&&E.includes(x.epreuve_id));
+  if(n==="epreuve")return E.includes(r)||S.epCis.some(x=>x.epreuve_id===r&&U.includes((S.cis.find(c=>c.id===x.ci_id)||{}).uc_id));
+  if(n==="uc")return U.includes(r)||S.cis.some(ci=>ci.uc_id===r&&respCI(ci.id));
+  const ci=n==="cr"?(S.crs.find(x=>x.id===r)||{}).ci_id:r,c=S.cis.find(x=>x.id===ci)||{};
+  return U.includes(c.uc_id)||respCI(ci);}
 const objectifs=()=>S.ref.structure==="objectifs";
 
 function progression(c){
@@ -277,11 +306,18 @@ function progression(c){
 const barre=(f,t)=>`<span class="prog"><i><b style="width:${t?Math.round(f/t*100):0}%"></b></i>${f}/${t}</span>`;
 
 /* ---------- Vues ---------- */
+const ZONES={tdb:"Tableau de bord UC",saisie:"Saisie UC : documents 4 et 5",coord:"Coordination UC",cal:"Calendrier des épreuves UC"};
 function render(){
+  $$("#zones [data-z]").forEach(b=>b.setAttribute("aria-current",String(b.dataset.z===S.zone)));
+  $("#titreZ").textContent=ZONES[S.zone];document.title=ZONES[S.zone];
+  const sa=S.zone==="saisie";$("#bar").hidden=S.zone==="cal"||!S.classe;
+  $(".seg").hidden=!sa;$("#navCand").hidden=!sa;$("#navEpr").hidden=!(sa&&S.vue==="doc4");$("#btnPrint").hidden=!sa;
   $$(".seg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===S.vue)));
-  $("#navCand").hidden=S.vue==="liste";$("#navEpr").hidden=S.vue!=="doc4";$("#btnPrint").hidden=S.vue==="liste";
   $("#selCand").value=S.cand||"";$("#selEpr").value=S.epr||"";
-  if(S.vue==="liste")return renderListe();
+  if(S.zone==="cal")return renderCal();
+  if(!S.classe){$("#view").innerHTML=`<p class="empty">Aucune de vos classes n'a encore de plan d'évaluation en UC.</p>`;return;}
+  if(S.zone==="tdb")return renderTdb();
+  if(S.zone==="coord")return renderListe();
   if(!candsVis().length){$("#view").innerHTML=`<p class="empty">Aucun candidat dans ce groupe.</p>`;return;}
   S.vue==="doc4"?renderDoc4():renderDoc5();
 }
@@ -316,7 +352,63 @@ function renderListe(){
   const edi=`<h2 class="h2">Éditions de la cohorte ${esc(S.cohorte)} <small>impression ou « Enregistrer au format PDF »</small></h2>
     <p class="editions"><button type="button" class="ghost" data-lot="doc5">Tous les documents 5 (A3 portrait)</button>
       <button type="button" class="ghost" data-lot="uc">Grille par UC (A4 paysage)</button></p>`;
-  $("#view").innerHTML=edi+ep+cand;
+  const nomsUC=u=>S.affPlan.filter(a=>a.uc_id===u.id).map(a=>nomPers(a.email)),
+    epsUC=u=>S.epreuves.filter(e=>cisEpreuve(e.id).some(ci=>ci.uc_id===u.id));
+  const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.admin?`modifiables dans le <a href="/UC/param.html">paramétrage</a>`:"fixés par l'administrateur"}</small></h2>
+    <table class="list"><thead><tr><th>UC</th><th>Formateurs affectés</th><th>Épreuves (responsable)</th></tr></thead><tbody>${
+    S.ucs.map(u=>`<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${esc(nomsUC(u).join(", "))||'<span class="acq non">à affecter</span>'}</td>
+      <td>${epsUC(u).map(e=>esc(e.code)+" ("+(esc(nomPers(e.responsable))||"—")+")").join("<br>")}</td></tr>`).join("")}</tbody></table>`;
+  const syn=!L.length?"":`<h2 class="h2">Synthèse par UC <small>propositions de l'équipe (document 5)</small></h2>
+    <div style="overflow-x:auto"><table class="list"><thead><tr><th>Candidat</th>${S.ucs.map(u=>`<th title="${esc(u.nom)}">${esc(u.code)}</th>`).join("")}</tr></thead><tbody>${
+    L.map(c=>`<tr><td>${esc(c.nom+" "+c.prenom)}${grpCol?` <small>(${esc(c.groupe)})</small>`:""}</td>${S.ucs.map(u=>{const t=etatUC(c.id,u);
+      return `<td><span class="acq${/^Validation|^Validée|^VAA/.test(t)?" oui":/^Non/.test(t)?" non":""}">${esc(t==="—"?"en cours":t.replace(" proposée",""))}</span></td>`;}).join("")}</tr>`).join("")}</tbody></table></div>`;
+  $("#view").innerHTML=edi+ep+aff+syn+cand;
+}
+/* ---------- Tableau de bord du formateur ---------- */
+function avMes(e,cands){let f=0,t=0;const cis=cisEpreuve(e.id).filter(ci=>peut("ci",ci.id));
+  for(const c of cands){for(const ci of cis){if(validation(c.id,ci.uc_id))continue;
+      for(const cr of crsDe(ci)){t++;if(rempli(c.id,"cr",cr.id))f++;}t++;if(rempli(c.id,"ci",ci.id))f++;}
+    if(peut("epreuve",e.id)){t++;if(rempli(c.id,"epreuve",e.id))f++;}}
+  return [f,t];}
+function renderTdb(){
+  const D=S.droits||{},mes=(S.aff||[]).filter(a=>a.cohorte===S.cohorte);
+  const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes,ref=S.classe.groupes.some(g=>g.referent);
+  const intro=mes.length?`<h2 class="h2">Mes UC et mes épreuves <small>cohorte ${esc(S.cohorte)}</small></h2><div class="chips">${
+      mes.map(a=>`<span>${a.role==="uc"?"UC":"Responsable de l'épreuve"} <b>${esc(a.code)}</b> ${esc(a.nom)}</span>`).join("")}</div>`
+    :`<p class="meta" style="margin:0 0 12px">${D.admin?"Administrateur : vous voyez et saisissez toutes les UC.":"Aucune UC de cette cohorte ne vous est affectée : vous consultez la classe"+(ref?" en tant que référent (dates et convocations dans « Coordination »).":".")}</p>`;
+  const eps=S.epreuves.filter(e=>peut("epreuve",e.id)||cisEpreuve(e.id).some(ci=>peut("ci",ci.id)));
+  let t=`<h2 class="h2">${mes.length?"Mes épreuves":"Épreuves du plan"}</h2>`;
+  if(!eps.length)t+=`<p class="empty">Aucune épreuve à saisir pour vous dans ce plan.</p>`;
+  else{t+=`<table class="list"><thead><tr><th>Épreuve</th><th>Capacités à saisir</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Mes saisies</th><th></th></tr></thead><tbody>`;
+    for(const e of eps)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,n]=avMes(e,cg);
+      t+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}${D.epreuves&&D.epreuves.includes(e.id)?' <span class="acq oui">responsable</span>':""}</td>
+        <td rowspan="${G.length}">${esc(cisEpreuve(e.id).filter(ci=>peut("ci",ci.id)).map(ci=>ci.code).join(", "))}</td>`:""}
+        ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}<td>${d.jour?esc(frDate(d.jour))+" "+esc((d.heure||"08:15").replace(":","h")):'<span class="meta">à fixer</span>'}</td>
+        <td>${barre(f,n)}</td><td style="text-align:right"><button type="button" class="small" data-saisir="${e.id}" data-g="${esc(g.lettre)}">Saisir</button></td></tr>`;});
+    t+=`</tbody></table>`;}
+  const ucs=S.ucs.filter(u=>peut("uc",u.id)),L=candsVis();
+  if(ucs.length){t+=`<h2 class="h2">Propositions par UC <small>document 5</small></h2><table class="list"><thead><tr><th>UC</th><th>Propositions rédigées</th><th></th></tr></thead><tbody>${
+    ucs.map(u=>{const a=L.filter(c=>!validation(c.id,u.id)),f=a.filter(c=>rempli(c.id,"uc",u.id)).length;
+      return `<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${barre(f,a.length)}</td><td style="text-align:right"><button type="button" class="ghost small" data-go="doc5" data-c="${L[0]?L[0].id:""}">Document 5</button></td></tr>`;}).join("")}</tbody></table>`;}
+  const auj=new Date().toISOString().slice(0,10),proch=S.dates.filter(d=>d.jour&&d.jour>=auj&&eps.some(e=>e.id===d.epreuve_id)).sort((a,b)=>(a.jour+a.heure).localeCompare(b.jour+b.heure)).slice(0,6);
+  if(proch.length)t+=`<h2 class="h2">Prochaines épreuves</h2><ul>${proch.map(d=>{const e=S.epreuves.find(x=>x.id===d.epreuve_id);
+    return `<li><b>${esc(frDate(d.jour))}</b> ${esc((d.heure||"08:15").replace(":","h"))} · ${esc(e.code)} ${esc(e.nom)} · ${esc(d.classe)} · ${esc(d.lieu||"")}</li>`;}).join("")}</ul>`;
+  $("#view").innerHTML=intro+t;
+}
+/* ---------- Calendrier des épreuves (toutes mes classes UC) ---------- */
+async function renderCal(){
+  if(!S.cal){$("#view").innerHTML=`<p class="empty">Chargement…</p>`;try{S.cal=await rpc("uc_calendrier")||[];}catch(e){return erreur(e);}}
+  const X=S.cal;if(!X.length){$("#view").innerHTML=`<p class="empty">Aucune épreuve UC dans vos classes.</p>`;return;}
+  const fix=X.filter(x=>x.jour),afix=X.filter(x=>!x.jour),mois=new Map();
+  for(const x of fix){const k=x.jour.slice(0,7);if(!mois.has(k))mois.set(k,[]);mois.get(k).push(x);}
+  const ligne=x=>`<tr><td class="j">${x.jour?esc(new Date(x.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}))+" · "+esc((x.heure||"08:15").replace(":","h")):"—"}</td>
+    <td>${esc(x.libelle)}</td><td><b>${esc(x.code)}</b> ${esc(x.nom)}</td><td>${esc(x.responsable||"—")}</td><td>${esc(x.lieu)}</td>
+    <td>${x.convoc_le?'<span class="acq oui">convocations faites</span>':x.jour?'<span class="acq">convocations à faire</span>':""}</td></tr>`;
+  const tete=`<colgroup><col style="width:16%"><col style="width:11%"><col style="width:33%"><col style="width:13%"><col style="width:15%"><col style="width:12%"></colgroup><thead><tr><th>Date</th><th>Classe</th><th>Épreuve</th><th>Responsable</th><th>Lieu</th><th>Convocations</th></tr></thead>`;
+  let h=`<p class="meta" style="margin:0 0 6px">Dates fixées par les référents de classe dans « Coordination ».</p>`;
+  for(const [k,L] of mois)h+=`<div class="mois">${esc(new Date(k+"-15T12:00:00").toLocaleDateString("fr-FR",{month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase()))}</div><table class="list cal">${tete}<tbody>${L.map(ligne).join("")}</tbody></table>`;
+  if(afix.length)h+=`<div class="mois">Dates à fixer (${afix.length})</div><table class="list cal">${tete}<tbody>${afix.map(ligne).join("")}</tbody></table>`;
+  $("#view").innerHTML=h;
 }
 /* ---------- Éditions de la cohorte (PDF via l'impression du navigateur) ---------- */
 function imprimerLot(html,taille){$("#lot").innerHTML=html;$("#pageSize").textContent=`@page{size:${taille}}`;
@@ -376,15 +468,22 @@ function convocations(ep,cl){const e=S.epreuves.find(x=>x.id===ep),g=S.classe.gr
     <p class="csign">${esc(S.moi)}</p></section>`).join("");
   $("#pageSize").textContent="@page{size:A4 portrait}";document.body.classList.add("print-conv");window.print();document.body.classList.remove("print-conv");
   if(!d.convoc_le&&confirm("Noter les convocations de "+e.code+" (groupe "+(g.lettre||g.code)+") comme faites ?"))marquer(ep,cl,true);}
+const badge=a=>`<span class="acq${a===true?" oui":a===false?" non":""}">${a===true?"Acquis":a===false?"Non acquis":"En attente des critères"}</span>`;
 function champ(c,n,r,opts={}){
-  const s=sai(c,n,r)||{},id=`t_${n}_${r}`;
-  const acq=opts.acquis?`<select data-acq aria-label="${esc(opts.acquis.label)}">
-      <option value="">${esc(opts.acquis.vide)}</option><option value="1" ${s.acquis===true?"selected":""}>${esc(opts.acquis.oui)}</option><option value="0" ${s.acquis===false?"selected":""}>${esc(opts.acquis.non)}</option></select>`:"";
-  return `<div class="cell" data-c="${c}" data-n="${n}" data-r="${r}"${opts.imprimer?` data-po="${esc(opts.imprimer.oui)}" data-pn="${esc(opts.imprimer.non)}"`:""}>
-    <textarea id="${id}" aria-label="${esc(opts.aria||"Appréciation")}" placeholder="${esc(opts.ph||"Appréciation")}">${esc(s.texte||"")}</textarea>
-    <div class="print-only">${opts.imprimer&&s.acquis!=null?esc(s.acquis?opts.imprimer.oui:opts.imprimer.non)+"\n":""}${esc(s.texte||"")}</div>
-    <div class="meta">${acq}<button type="button" data-sug>Appréciations déjà utilisées</button><span data-m>${s.maj_nom?"par "+esc(s.maj_nom)+", "+frDH(s.maj_le):""}</span></div></div>`;
+  const s=sai(c,n,r)||{},id=`t_${n}_${r}`,ok=peut(n,r),imp=opts.imprimer||(opts.auto?{oui:"Acquis",non:"Non acquis"}:null);
+  const acq=opts.auto?`<span data-auto="${c}|${r}">${badge(s.acquis??null)}</span>`
+    :opts.acquis&&ok?`<select data-acq aria-label="${esc(opts.acquis.label)}">
+      <option value="">${esc(opts.acquis.vide)}</option><option value="1" ${s.acquis===true?"selected":""}>${esc(opts.acquis.oui)}</option><option value="0" ${s.acquis===false?"selected":""}>${esc(opts.acquis.non)}</option></select>`
+    :opts.acquis&&s.acquis!=null?`<span class="acq ${s.acquis?"oui":"non"}">${esc(s.acquis?opts.acquis.oui:opts.acquis.non)}</span>`:"";
+  return `<div class="cell${ok?"":" ro"}" data-c="${c}" data-n="${n}" data-r="${r}"${imp?` data-po="${esc(imp.oui)}" data-pn="${esc(imp.non)}"`:""}>
+    <textarea id="${id}" aria-label="${esc(opts.aria||"Appréciation")}" placeholder="${esc(ok?(opts.ph||"Appréciation"):"")}"${ok?"":` readonly title="Saisie réservée aux formateurs affectés à cette UC et au responsable de l'épreuve"`}>${esc(s.texte||"")}</textarea>
+    <div class="print-only">${imp&&s.acquis!=null?esc(s.acquis?imp.oui:imp.non)+"\n":""}${esc(s.texte||"")}</div>
+    <div class="meta">${acq}${ok?`<button type="button" data-sug>Appréciations déjà utilisées</button>`:""}<span data-m>${s.maj_nom?"par "+esc(s.maj_nom)+", "+frDH(s.maj_le):""}</span></div></div>`;
 }
+// Capacité intermédiaire : suit les critères (réponse de la base après chaque critère)
+function majAuto(c,ci){const s=sai(c,"ci",ci)||{},a=s.acquis??null;
+  $$(`[data-auto="${c}|${ci}"]`).forEach(el=>el.innerHTML=badge(a));
+  $$(`.cell[data-c="${c}"][data-n="ci"][data-r="${ci}"] .print-only`).forEach(el=>el.textContent=(a!=null?(a?"Acquis":"Non acquis")+"\n":"")+(s.texte||""));}
 const ETAB="UFA Kerplouz LaSalle Auray";
 // En-tête commun (format DRAAF / SRFD Bretagne, repris d'EvalUc) : diplôme, session (cohorte), agrément du plan
 function entete(titre){
@@ -395,7 +494,7 @@ function entete(titre){
     <table class="dbox"><tr><td style="width:40%">Candidat : <b>${esc((c.nom||"")+" "+(c.prenom||""))}</b></td><td>Diplôme : ${esc(S.ref.libelle||"")}</td></tr></table>
     <p class="noprint grp">${esc(S.classe.libelle)}${c.groupe?" · groupe "+esc(c.groupe):""} · cohorte ${esc(S.cohorte||"")}</p>`;
 }
-const ACQ_CI={label:"Capacité intermédiaire",vide:"Acquis ?",oui:"Acquis",non:"Non acquis"};
+const ACQ_CI={label:"Capacité intermédiaire",vide:"Acquis ?",oui:"Acquis",non:"Non acquis"},ACQ_CR={label:"Critère",vide:"Acquis ?",oui:"Acquis",non:"Non acquis"},IMP_CR={oui:"Acquis",non:"Non acquis"};
 function renderDoc4(){
   const c=S.cand,ep=S.epreuves.find(e=>e.id===S.epr);
   if(!ep){$("#view").innerHTML=`<p class="empty">Aucune épreuve dans le plan d'évaluation.</p>`;return;}
@@ -409,8 +508,8 @@ function renderDoc4(){
     (crs.length?crs:[null]).forEach((cr,i)=>{
       rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(ci.code)} ${esc(ci.nom)}</td>`:""}
         <td data-l="${esc(H[1])}">${cr?(objectifs()&&cr.code?esc(cr.code)+" ":"")+crHtml(cr):""}</td><td class="ind" data-l="${esc(H[2])}">${cr?esc(cr.indicateur):""}</td>
-        <td data-l="${esc(H[3])}">${v?`<span class="valide">${esc(vtxt)}</span>`:cr?champ(c,"cr",cr.id,{aria:"Appréciation : "+String(cr.nom).split("\n")[0]}):""}</td>
-        ${i===0?`<td rowspan="${n}" data-l="${esc(H[4])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,{aria:"Appréciation globale "+ci.code,acquis:ACQ_CI})}</td>`:""}</tr>`;});
+        <td data-l="${esc(H[3])}">${v?`<span class="valide">${esc(vtxt)}</span>`:cr?champ(c,"cr",cr.id,{aria:"Appréciation : "+String(cr.nom).split("\n")[0],acquis:ACQ_CR,imprimer:IMP_CR}):""}</td>
+        ${i===0?`<td rowspan="${n}" data-l="${esc(H[4])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,crs.length?{aria:"Appréciation globale "+ci.code,auto:true}:{aria:"Appréciation globale "+ci.code,acquis:ACQ_CI})}</td>`:""}</tr>`;});
   }
   const ucsL=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code+" "+u.nom).join(" ; "),cisL=cis.map(ci=>ci.code+" "+ci.nom).join(" ; ");
   $("#view").innerHTML=entete("DOCUMENT 4 : GRILLE D'ÉVALUATION DE L'ÉPREUVE PAR CANDIDAT")+`
@@ -421,7 +520,7 @@ function renderDoc4(){
       <tr><td>UC concernée(s) :</td><td>${esc(ucsL)}</td></tr>
       <tr><td>${objectifs()?"OI":"OI ou capacité(s) intermédiaire(s)"} concerné(s) :</td><td>${esc(cisL)}</td></tr>
       <tr><td>Modalités (nature de l'épreuve) :</td><td>${esc(ep.nature||"Pratique et entretien d'évaluation")}</td></tr></table>
-    <table class="doc"><colgroup><col style="width:14%"><col style="width:18%"><col style="width:26%"><col style="width:22%"><col style="width:20%"></colgroup>
+    <table class="doc d4"><colgroup><col style="width:14%"><col style="width:18%"><col style="width:26%"><col style="width:22%"><col style="width:20%"></colgroup>
     <thead><tr>${H.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows||`<tr><td colspan="5">Aucune capacité rattachée à cette épreuve.</td></tr>`}</tbody></table>
     <div class="tot"><h3>Appréciation globale relative à l'épreuve</h3>${champ(c,"epreuve",ep.id,{aria:"Appréciation globale de l'épreuve"})}</div>`;
 }
@@ -438,7 +537,7 @@ function renderDoc5(){
       rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(u.nom)}</td>`:""}
         <td data-l="${esc(H[1])}">${ci?esc(ci.code+" "+ci.nom):""}</td><td data-l="${esc(H[2])}">${ep?`<span title="${esc(ep.nom)}">${esc(ep.code)}</span>`:""}</td>
         <td class="ind" data-l="${esc(H[3])}">${ci?crsDe(ci).map(crHtml).join("<br>"):""}</td>
-        <td data-l="${esc(H[4])}">${!ci?"":v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,{aria:"Appréciation "+ci.code,acquis:ACQ_CI})}</td>
+        <td data-l="${esc(H[4])}">${!ci?"":v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,crsDe(ci).length?{aria:"Appréciation "+ci.code,auto:true}:{aria:"Appréciation "+ci.code,acquis:ACQ_CI})}</td>
         ${i===0?`<td rowspan="${n}" data-l="${esc(H[5])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"uc",u.id,{aria:"Proposition "+u.code,ph:"Proposition argumentée",acquis:ACQ_UC,imprimer:IMP_UC})}</td>
                   <td rowspan="${n}" data-l="${esc(H[6])}"></td>`:""}</tr>`;});
   }
@@ -464,9 +563,12 @@ async function enregistrer(cell,extra={}){
   if(!cur.version&&!texte.trim()&&acquis===null&&!date){statut("");return;}
   statut("Enregistrement…");
   const p=rpc("uc_saisir",{p_candidat:c,p_niveau:n,p_ref:r,p_texte:texte,p_acquis:acquis,p_date:date,p_version:cur.version||null})
-    .then(res=>{S.saisies.set(k,Object.assign({},cur,{candidat:c,niveau:n,ref_id:r,texte,acquis,date_eval:date,version:res.version,maj_nom:res.maj_nom,maj_le:res.maj_le}));
+    .then(res=>{const aq=res.acquis!==undefined?res.acquis:acquis;
+      S.saisies.set(k,Object.assign({},cur,{candidat:c,niveau:n,ref_id:r,texte,acquis:aq,date_eval:date,version:res.version,maj_nom:res.maj_nom,maj_le:res.maj_le}));
+      if(res.ci){const kc=kS(c,"ci",res.ci),o=S.saisies.get(kc);o?o.acquis=res.ci_acquis:S.saisies.set(kc,{candidat:c,niveau:"ci",ref_id:res.ci,texte:"",acquis:res.ci_acquis,version:1});majAuto(c,res.ci);}
+      if(n==="ci")majAuto(c,r);
       const m=cell.querySelector("[data-m]");if(m)m.textContent="par "+res.maj_nom+", "+frDH(res.maj_le);
-      const pr=cell.querySelector(".print-only");if(pr)pr.textContent=(cell.dataset.po&&acquis!=null?(acquis?cell.dataset.po:cell.dataset.pn)+"\n":"")+texte;
+      const pr=cell.querySelector(".print-only");if(pr&&n!=="ci")pr.textContent=(cell.dataset.po&&aq!=null?(aq?cell.dataset.po:cell.dataset.pn)+"\n":"")+texte;
       if(n==="epreuve"){const d=document.querySelector("#dEval+.print-only");if(d)d.textContent=frDate(date);}
       statut("Enregistré");})
     .catch(async e=>{
@@ -493,8 +595,10 @@ window.addEventListener("beforeunload",e=>{if([...timers.values()].length&&$("#s
 /* ---------- Navigation ---------- */
 document.addEventListener("click",async e=>{
   const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.v){await toutEnregistrer();S.vue=b.dataset.v;render();}
-  else if(b.dataset.go){await toutEnregistrer();S.cand=b.dataset.c;S.vue=b.dataset.go;render();window.scrollTo(0,0);}
+  if(b.dataset.z){await toutEnregistrer();S.zone=b.dataset.z;history.replaceState(null,"","?vue="+(S.zone==="saisie"?S.vue:S.zone));render();}
+  else if(b.dataset.v){await toutEnregistrer();S.vue=b.dataset.v;history.replaceState(null,"","?vue="+S.vue);render();}
+  else if(b.dataset.saisir){S.zone="saisie";S.vue="doc4";S.epr=+b.dataset.saisir;S.grp=b.dataset.g||"";$("#selGrp").value=S.grp;majCands();render();window.scrollTo(0,0);}
+  else if(b.dataset.go){await toutEnregistrer();if(b.dataset.c)S.cand=b.dataset.c;S.zone="saisie";S.vue=b.dataset.go;render();window.scrollTo(0,0);}
   else if(b.id==="prev"||b.id==="next"){await toutEnregistrer();const L=candsVis(),i=L.findIndex(c=>c.id===S.cand),j=i+(b.id==="next"?1:-1);
     if(j>=0&&j<L.length){S.cand=L[j].id;render();}}
   else if(b.id==="btnPrint"){await toutEnregistrer();$("#pageSize").textContent=`@page{size:${S.vue==="doc5"?"A3 portrait":"A4 landscape"}}`;window.print();}

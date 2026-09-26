@@ -71,6 +71,7 @@ dialog h2{margin:0;font:700 18px var(--display)}
     <div class="sec">Plans d'évaluation</div>
     <button type="button" data-e="plans">Plans (par cohorte)</button>
     <button type="button" data-e="epreuves">Épreuves du plan</button>
+    <button type="button" data-e="affectations">Formateurs par UC</button>
     <div class="sec">Candidats</div>
     <button type="button" data-e="candidats">Candidats</button>
     <button type="button" data-e="validations">UC déjà validées / VAA</button>
@@ -154,9 +155,14 @@ const E={
   epreuves:{t:"Épreuves du plan",table:"uc_epreuves",pk:["id"],order:"ordre,code",filtre:{k:"plan_id",l:"Plan",opts:()=>R.plans.map(p=>[p.id,p.referentiel+" · "+planLib(p.id)])},
     aide:"Épreuves certificatives du plan agréé et capacités intermédiaires évaluées par chacune (document 3).",
     cols:[F("plan_id","Plan",{type:"select",opts:()=>R.plans.map(p=>[p.id,p.referentiel+" · "+planLib(p.id)]),req:1,num:1,aff:planLib,liste:0}),F("code","N° épreuve",{req:1,help:"ex. SE1Ep1"}),F("ordre","Ordre",{type:"number"}),
-      F("responsable","Responsable de l'épreuve",{type:"select",opts:()=>[["","— à désigner —"]].concat(R.pers.map(p=>[p.email,p.nom])),aff:e=>{const p=R.pers.find(x=>x.email===e);return p?p.nom:(e||"—");},help:"voit la classe et saisit les documents 4 et 5, même sans y être inscrit"}),
+      F("responsable","Responsable de l'épreuve",{type:"select",opts:()=>[["","— à désigner —"]].concat(R.pers.map(p=>[p.email,p.nom])),aff:e=>{const p=R.pers.find(x=>x.email===e);return p?p.nom:(e||"—");},help:"voit la cohorte et saisit toutes les capacités de son épreuve"}),
       F("nom","Intitulé de l'épreuve",{req:1,full:1}),F("situation","Intitulé de la situation support",{full:1}),F("nature","Modalités (nature de l'épreuve)",{full:1,help:"ex. Pratique et entretien d'évaluation"}),
       F("_cis","Capacités intermédiaires évaluées",{type:"cis",full:1})]},
+  affectations:{t:"Formateurs affectés aux UC du plan",table:"uc_affectations",pk:["plan_id","uc_id","email"],order:"plan_id,uc_id",filtre:{k:"plan_id",l:"Plan",opts:()=>R.plans.map(p=>[p.id,p.referentiel+" · "+planLib(p.id)])},
+    aide:"Le formateur affecté à une UC voit la cohorte (tous les groupes) et saisit les critères, les capacités intermédiaires et la proposition de cette UC, ainsi que l'appréciation globale des épreuves qui l'évaluent. Les référents de classe voient tout et gèrent les dates et les convocations.",
+    cols:[F("plan_id","Plan",{type:"select",opts:()=>R.plans.map(p=>[p.id,p.referentiel+" · "+planLib(p.id)]),req:1,num:1,aff:planLib,liste:0}),
+      F("uc_id","UC",{type:"select",opts:()=>R.ucs.map(u=>[u.id,u.referentiel+" · "+u.code+" "+u.nom]),req:1,num:1,aff:ucLib}),
+      F("email","Formateur",{type:"select",opts:()=>R.pers.map(p=>[p.email,p.nom]),req:1,aff:e=>{const p=R.pers.find(x=>x.email===e);return p?p.nom:(e||"");}})]},
   candidats:{t:"Candidats",table:"uc_candidats",pk:["id"],order:"cohorte.desc,groupe,ordre,nom",filtre:{k:"referentiel",l:"Référentiel",opts:()=>optRef()},
     aide:"Un candidat appartient à une cohorte et à un groupe (A, B, C…) ; sa classe de l'année s'en déduit.",
     cols:[F("referentiel","Référentiel",{type:"select",opts:()=>optRef(),req:1,liste:0}),F("cohorte","Cohorte",{req:1,help:"ex. 2026-2028",pattern:"^\\d{4}-\\d{4}$"}),F("groupe","Groupe",{help:"A, B, C…"}),
