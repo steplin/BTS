@@ -163,6 +163,7 @@ textarea:focus{background:#fff}
   .dhead{color:#000}
   .grp{display:none}
 }
+.refuc{margin-top:6px;font-size:13px;color:var(--ink-2,#555)}.refuc select{max-width:100%;margin-top:2px}
 </style><style id="pageSize">@page{size:A4 landscape}</style></head><body>
 <main>
   <div class="head">
@@ -342,6 +343,11 @@ const barre=(f,t)=>`<span class="prog"><i><b style="width:${t?Math.round(f/t*100
 
 /* ---------- Vues ---------- */
 const ZONES={tdb:"Tableau de bord UC",saisie:"Saisie UC : documents 4 et 5",coord:"Coordination UC",cal:"Calendrier des épreuves UC"};
+async function fixerRefUC(sel){const uc=+sel.dataset.refuc,pl=S.affPlan.find(a=>a.uc_id===uc),email=sel.value;if(!pl)return;sel.disabled=true;
+  try{await rpc("uc_referent_uc_fixer",{p_plan:pl.plan_id,p_uc:uc,p_email:email||null});
+    S.affPlan.forEach(a=>{if(a.uc_id===uc)a.referent=!!email&&a.email===email;});toast(email?"Référent enregistré : "+nomPers(email):"Référent retiré");}
+  catch(err){toast("Enregistrement impossible : "+(err.message||err));}
+  render();}
 function render(){
   $$("#zones [data-z]").forEach(b=>b.setAttribute("aria-current",String(b.dataset.z===S.zone)));
   $("#titreZ").textContent=ZONES[S.zone];document.title=ZONES[S.zone];
@@ -392,9 +398,13 @@ function renderListe(){
       <button type="button" class="ghost" data-lot="uc">Grille par UC (A4 paysage)</button></p>`;
   const nomsUC=u=>S.affPlan.filter(a=>a.uc_id===u.id).map(a=>nomPers(a.email)),
     epsUC=u=>S.epreuves.filter(e=>cisEpreuve(e.id).some(ci=>ci.uc_id===u.id));
-  const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.resp?`modifiables dans les <a href="/UC/param.html">plans d'évaluation</a>`:"fixés par le responsable pédagogique"}</small></h2>
-    <table class="list"><thead><tr><th>UC</th><th>Formateurs affectés</th><th>Épreuves (responsable)</th></tr></thead><tbody>${
-    S.ucs.map(u=>`<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${esc(nomsUC(u).join(", "))||'<span class="acq non">à affecter</span>'}</td>
+  const peutRef=S.resp||G.some(g=>g.coord),affUC=u=>S.affPlan.filter(a=>a.uc_id===u.id),refUC=u=>(affUC(u).find(a=>a.referent)||{}).email||"";
+  const celRef=u=>{const A=affUC(u),r=refUC(u);if(!A.length)return "—";
+    if(!peutRef)return r?`<b>${esc(nomPers(r))}</b>`:'<span class="acq">à désigner</span>';
+    return `<select data-refuc="${u.id}" aria-label="Formateur référent de ${esc(u.code)}"><option value="">— à désigner —</option>${A.map(a=>`<option value="${esc(a.email)}"${a.email===r?" selected":""}>${esc(nomPers(a.email))}</option>`).join("")}</select>`;};
+  const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.resp?`modifiables dans les <a href="/UC/param.html">plans d'évaluation</a>`:"fixés par le responsable pédagogique"}${peutRef?" · formateur référent choisi ici parmi les formateurs affectés":""}</small></h2>
+    <table class="list"><thead><tr><th>UC</th><th>Formateurs affectés et référent</th><th>Épreuves (responsable)</th></tr></thead><tbody>${
+    S.ucs.map(u=>`<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${esc(nomsUC(u).join(", "))||'<span class="acq non">à affecter</span>'}${affUC(u).length?`<div class="refuc">Référent : ${celRef(u)}</div>`:""}</td>
       <td>${epsUC(u).map(e=>esc(e.code)+" ("+(esc(nomPers(e.responsable))||"—")+")").join("<br>")}</td></tr>`).join("")}</tbody></table>`;
   const nbConv=SS.filter(x=>!x.items.every(it=>it.d.convoc_le)).length;
   const [o,tabs]=ongletsHTML("coord",[["dates","Dates des épreuves"],["conv","Convocations"+(nbConv?` <span class="acq non">${nbConv}</span>`:"")],["aff","Formateurs par UC"],["edi","Éditions de la cohorte"]]);
@@ -696,6 +706,7 @@ document.addEventListener("change",e=>{const cell=e.target.closest(".cell");
   if(e.target.id==="dEval"){const ep=S.epr,c=S.cand;const fake=document.querySelector(`.cell[data-n="epreuve"][data-r="${ep}"]`);if(fake)enregistrer(fake,{date:e.target.value||null});}
   if(e.target.dataset&&e.target.dataset.d)return majDate(e.target);
   if(e.target.dataset&&e.target.dataset.per)return majPeriodes(e.target);
+  if(e.target.dataset&&e.target.dataset.refuc)return fixerRefUC(e.target);
   if(e.target.id==="selClasse")chargerClasse(e.target.value);
   if(e.target.id==="selGrp"){S.grp=e.target.value;majCands();render();}
   if(e.target.id==="selCand"){S.cand=e.target.value;render();}
