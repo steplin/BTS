@@ -101,6 +101,16 @@ button.mini.del{color:var(--danger)}
 .finfo .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .finfo .row input[type=date]{width:auto}
 .finfo .per{display:flex;gap:6px;align-items:center}
+.sem-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.acards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.acard{display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:12px;padding:12px 14px;font-size:13.5px}
+.acard.auto{background:color-mix(in srgb,var(--c) 6%,#fff)}
+.acard.imp{background:#FFF6E5;border-color:#F0DDB5;border-top-color:#D1683F}
+.acard .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--c)}
+.acard.imp .tag{color:#B4561F}
+.acard b{font-size:14.5px}.acard p{margin:0;color:var(--ink-2);white-space:pre-wrap}
+.acard .s{font-size:12px;color:var(--ink-3)}.acard a{font-size:13px;color:var(--accent);font-weight:600}
+.acard .mini{align-self:flex-start;margin-top:4px}
 /* ---- Espaces ---- */
 .espaces{display:flex;gap:4px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:5px}
 .esp{font:600 14px var(--body);background:none;color:var(--ink-2);border-radius:10px;padding:9px 14px;position:relative}
@@ -205,15 +215,6 @@ button.mini.del{color:var(--danger)}
     <div class="banner" id="banner" hidden></div>
     <div class="banner" id="rappels" hidden></div>
     <div class="banner" id="rappelsUC" hidden></div>
-    <section class="semaine" id="semaine" hidden>
-      <div class="sem-h"><h2>Cette semaine</h2><div class="sem-nav"><button type="button" class="ghost" data-sem="-1" aria-label="Semaine précédente">‹</button><span id="semLib"></span><button type="button" class="ghost" data-sem="1" aria-label="Semaine suivante">›</button><button type="button" class="ghost" data-sem="0" id="semAuj">Aujourd'hui</button></div></div>
-      <div class="sem-grid">
-        <div class="sem-col"><h3>Au CFA</h3><div id="semPres"></div></div>
-        <div class="sem-col"><h3>Évaluations prévues</h3><div id="semEval"></div></div>
-        <div class="sem-col"><h3>Infos <button type="button" class="mini" id="btnInfo">+ Ajouter une info</button></h3><form id="fInfo" class="finfo" hidden></form><div id="semInfos"></div></div>
-      </div>
-      <form id="fAlt" class="finfo" hidden></form>
-    </section>
     <nav class="espaces" id="espaces" aria-label="Espaces de la plateforme"></nav>
     <div class="mine" id="mine"></div>
     <div class="tabs" role="group" aria-label="Filtrer par formation" id="tabs"></div>
@@ -298,7 +299,7 @@ async function goHome(s){if(next){location.replace(next);return;}
   if(refus){history.replaceState(null,"","/");const bn=$("#banner");bn.hidden=false;
     bn.textContent=refus==="suspendu"?"Votre compte est suspendu.":"Vous n'avez pas accès à cet outil. Si vous en avez besoin, demandez au responsable pédagogique de vous rattacher à la classe concernée.";}
   if(droits.admin&&!(droits.outils||[]).includes("admin"))droits.outils.push("admin");
-  filtre="all";espace=location.hash.slice(1)||ls2("kep.espace")||"outils";renderDash();show("vHome");rappelsCCF(s);rappelsUC(s);chargerSemaine();}
+  filtre="all";espace=location.hash.slice(1)||ls2("kep.espace")||"actus";renderDash();show("vHome");rappelsCCF(s);rappelsUC(s);chargerSemaine();}
 /* Rappels UC (référents CAPa) : dates à fixer au plus tard 15 jours avant la période agréée, convocations à envoyer */
 async function rappelsUC(s){const box=$("#rappelsUC");box.hidden=true;
   if(!droits||!(droits.outils||[]).includes("uc-coord"))return;
@@ -342,6 +343,7 @@ const FORMS={
   tous:{nom:"Toutes formations",court:"Transversal",niv:"Transversal",c:"#4A5A51",sub:"Outils communs"}};
 /* Espaces de la plateforme */
 const ESPACES=[
+  {id:"actus",nom:"Actualités",i:"calend",c:"#3F6FA8",d:"La vie des classes semaine par semaine : présences au CFA d'après le calendrier d'alternance, évaluations prévues et infos de l'équipe."},
   {id:"outils",nom:"Outils pédagogiques",i:"livret",c:"#2E6A4B",d:"Référentiels des diplômes, livrets d'alternance et outils de préparation des cours."},
   {id:"evaluations",nom:"Évaluations",i:"grille",c:"#D1683F",d:"Unités capitalisables, CCF, grilles, calendriers des épreuves et convocations."},
   {id:"suivi",nom:"Suivi des apprenants",i:"suivi",c:"#3F6FA8",d:"Accompagnement : entretiens, visites en entreprise, alertes et actions à mener."},
@@ -353,17 +355,17 @@ const TOOLS=[
   {esp:"outils",niv:"tous",t:"Référentiels des diplômes",d:"Capacités, critères et indicateurs de chaque diplôme de la filière (source Chlorofil) : consultation, recherche et impression.",i:"fiche",href:"/REF/",code:"referentiels"},
   {esp:"outils",niv:"tous",t:"La fabrique à livret",d:"Export Yparéo en entrée, un livret d'alternance Word par apprenti·e en sortie : les 18 modèles v5 validés, publipostés dans le navigateur.",i:"livret",href:"/livret/",code:"livret"},
   {esp:"outils",niv:"tous",t:"Fiches pédagogiques prévisionnelles",d:"Par formateur : heures de face-à-face et cadrage des UC enseignées d'après le référentiel.",i:"inscr"},
-  {esp:"evaluations",niv:"btsa",t:"Grilles d'évaluation BTS AP",d:"Préparer les classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/",code:"grilles-bts"},
+  {esp:"evaluations",niv:"capa",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille",href:"/UC/",code:"saisie-uc"},
+  {esp:"evaluations",niv:"bpa",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
+  {esp:"evaluations",niv:"bp",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
+  {esp:"evaluations",niv:"btsa",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille",href:"/CCF/",code:"ccf-bts"},
+  {esp:"evaluations",niv:"bprea",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
+  {esp:"evaluations",niv:"cs",t:"Saisie des grilles d'évaluation",d:"Saisie en ligne des grilles officielles de vos épreuves, tableau de bord des résultats et suivi des évaluations de la formation.",i:"grille"},
+  {esp:"evaluations",niv:"btsa",t:"Préparation des grilles Excel",d:"Préparer les classeurs Excel par capacité : onglet Notes et une grille par apprenant, logos et mise en page d'origine.",i:"grille",href:"/BTS/",code:"grilles-bts"},
   // Évaluations
-  {esp:"evaluations",niv:"capa",t:"Évaluations UC : documents 4 et 5",d:"Tableau de bord et résultats, saisie des appréciations, calendrier des épreuves ; pour les référents et le coordinateur : dates, convocations et éditions de la cohorte.",i:"grille",href:"/UC/",code:"saisie-uc"},
   {esp:"evaluations",niv:"capa",t:"Calendrier des épreuves UC",d:"Périodes agréées et dates des épreuves du CAPa par classe.",i:"calend",href:"/UC/?vue=cal",code:"saisie-uc"},
-  {esp:"evaluations",niv:"btsa",t:"Tableau de bord CCF",d:"Vos épreuves certificatives : saisie en ligne des grilles des capacités dont vous êtes intervenant.",i:"suivi",href:"/CCF/",code:"ccf-bts"},
   {esp:"evaluations",niv:"btsa",t:"Coordination BTS AP",d:"Résultats de la promotion, candidats, épreuves et convocations, courriers aux entreprises, documents de fin d'année.",i:"coord",href:"/CCF/?vue=coord",code:"grilles-bts"},
   {esp:"evaluations",niv:"btsa",t:"Calendrier des CCF",d:"Dates, horaires et lieux des CCF par année (BTS 1, BTS 2), repris dans les grilles.",i:"calend",href:"/CCF/?vue=cal",code:"ccf-bts"},
-  {esp:"evaluations",niv:"bpa",t:"Évaluations UC du BPA",d:"Documents 4 et 5 en ligne, comme pour le CAPa, dès que le plan d'évaluation agréé est saisi.",i:"grille"},
-  {esp:"evaluations",niv:"bp",t:"Évaluations UC du BP",d:"Documents 4 et 5 en ligne, comme pour le CAPa, dès que le plan d'évaluation agréé est saisi.",i:"grille"},
-  {esp:"evaluations",niv:"bprea",t:"Évaluations UC du BPREA",d:"Documents 4 et 5 en ligne dès que le plan d'évaluation agréé est saisi.",i:"grille"},
-  {esp:"evaluations",niv:"cs",t:"Évaluations UC du CS",d:"Grilles des trois UC et résultats du groupe, dès que le plan d'évaluation agréé est saisi.",i:"grille"},
   // Suivi des apprenants
   {esp:"suivi",niv:"tous",t:"Toutes mes classes",d:"Vue d'ensemble de vos apprenants avec leur dernier échange, visites en entreprise, alertes et actions en retard ; fiche de suivi imprimable.",i:"suivi",href:"/SUIVI/",code:"suivi"},
   {esp:"suivi",niv:"tous",t:"Actions à mener",d:"Toutes les actions et alertes ouvertes de vos classes, par échéance.",i:"calend",href:"/SUIVI/?o=actions",code:"suivi"},
@@ -384,14 +386,14 @@ Object.entries(REFS).forEach(([k,ref])=>{const c=FORMS[k].court;TOOLS.push(
   {esp:"outils",niv:k,t:"Déroulé pédagogique",d:"Progression des séquences du "+c+" semaine par semaine, reliée au référentiel et au calendrier d'alternance.",i:"calend"},
   {esp:"suivi",niv:k,t:"Suivi des apprenants "+c,d:"Par classe : entretiens et accompagnement, suivi des épreuves, entreprises et visites, actions à mener.",i:"suivi",href:"/SUIVI/?filiere="+k,code:"suivi"});});
 const ls2=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
-let filtre="all",espace="outils";const BADGES={};
+let filtre="all",espace="actus";const BADGES={};
 function navEsp(EV){EV=EV||espacesVus();$("#espaces").innerHTML=EV.map(e=>`<button type="button" class="esp" data-esp="${e.id}" aria-current="${espace===e.id?"page":"false"}" style="--c:${e.c}">${e.nom}${BADGES[e.id]||""}</button>`).join("");}
 function outilsVus(){const d=apercu||droits||{};return new Set(d.outils||[]);}
 function visiblesEsp(esp){
   const d=apercu||droits||{},niv=new Set(d.niveaux||[]),out=outilsVus();
   const adm=d.admin&&!apercu;return TOOLS.filter(t=>t.esp===esp&&(adm||t.niv==="tous"||niv.has(t.niv))&&(t.code?adm||out.has(t.code):true))
     .filter(t=>t.code||esp!=="admin");}
-function espacesVus(){return ESPACES.filter(e=>visiblesEsp(e.id).some(t=>t.href));}
+function espacesVus(){return ESPACES.filter(e=>e.id==="actus"||visiblesEsp(e.id).some(t=>t.href));}
 function tuile(t){const f=FORMS[t.niv],on=!!t.href;const ico=`<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[t.i]||ICONS.fiche}</svg></span>`;
   return on?`<a class="tile" href="${t.href}" style="--c:${f.c}">${ico}<span class="st on">${t.espNom||"Disponible"}</span><b>${t.t}</b><p>${t.d}</p><span class="go">Ouvrir l'outil →</span></a>`
            :`<div class="tile soon" aria-disabled="true" style="--c:${f.c}">${ico}<span class="st soon">À venir${t.espNom?" · "+t.espNom:""}</span><b>${t.t}</b><p>${t.d}</p></div>`;}
@@ -399,6 +401,7 @@ function renderDash(){
   const EV=espacesVus();if(!EV.some(e=>e.id===espace))espace=(EV[0]||{id:"outils"}).id;
   navEsp(EV);
   document.body.dataset.espace=espace;
+  if(espace==="actus"){renderActus();extrasAccueil();return;}
   const T=visiblesEsp(espace);let F=Object.keys(FORMS).filter(k=>T.some(t=>t.niv===k));
   if(espace==="veille")F=[...mesFilieres(),"tous"];
   if(filtre!=="all"&&!F.includes(filtre))filtre="all";
@@ -418,23 +421,36 @@ const lundiDe=d=>{const x=new Date(d);x.setHours(12,0,0,0);const j=x.getDay();x.
 const jfr=(d,o)=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",o||{weekday:"short",day:"numeric",month:"short"});
 const addJ=(d,n)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
 async function chargerSemaine(){const s=await session();if(!s||!droits)return;SEM.lundi=SEM.lundi||lundiDe(new Date());
-  try{SEM.d=await api("/rest/v1/rpc/ma_semaine",{method:"POST",body:{p_lundi:SEM.lundi},token:s.access_token});}catch(e){SEM.d=null;$("#semaine").hidden=true;return;}
+  try{SEM.d=await api("/rest/v1/rpc/ma_semaine",{method:"POST",body:{p_lundi:SEM.lundi},token:s.access_token});}catch(e){SEM.d={classes:[],presents:[],evaluations:[],infos:[]};}
   renderSemaine();}
-function renderSemaine(){const d=SEM.d;if(!d)return;$("#semaine").hidden=false;const l=SEM.lundi,v=addJ(l,4);
-  const cur=lundiDe(new Date())===l;$("#semLib").textContent=(cur?"Semaine du ":"Semaine du ")+jfr(l,{day:"numeric",month:"long"})+" au "+jfr(v,{day:"numeric",month:"long"});$("#semAuj").hidden=cur;
-  const col=n=>(FORMS[n]||FORMS.tous).c;
-  const P=d.presents||[];
-  $("#semPres").innerHTML=(P.length?`<ul>${P.map(x=>`<li style="--c:${col(x.niveau)}"><b>${esc(x.libelle)}</b><span class="s">du ${jfr(x.du)} au ${jfr(x.au)}${x.note?" · "+esc(x.note):""}</span></li>`).join("")}</ul>`
-      :`<p class="sem-vide">${(d.classes||[]).length?"Aucune de vos classes n'est au CFA cette semaine d'après le calendrier d'alternance.":"Aucune classe ne vous est rattachée."}</p>`)
-    +(d.peut_alternance?`<p style="margin:8px 0 0"><button type="button" class="mini" id="btnAlt">Calendrier d'alternance</button></p>`:"");
-  const E=d.evaluations||[];
-  $("#semEval").innerHTML=E.length?`<ul>${E.map(x=>{const c=(d.classes||[]).find(k=>k.code===x.classe)||{};return `<li style="--c:${col(c.niveau)}"><b>${esc(jfr(x.jour))}${x.heure?" · "+esc(x.heure):""}</b> · ${esc(x.libelle)}<span class="s">${esc(x.type)} ${esc(x.code)} — ${esc(x.nom)}</span></li>`;}).join("")}</ul>`
-    :'<p class="sem-vide">Aucune évaluation prévue pour vos classes.</p>';
-  const I=d.infos||[],moi=(droits.email||"").toLowerCase(),resp=droits.admin||(droits.roles||[]).includes("responsable_peda");
-  $("#semInfos").innerHTML=I.length?`<ul>${I.map(x=>`<li class="${x.importante?"imp":""}" style="--c:${x.importante?"#D1683F":"#3F6FA8"}"><b>${esc(x.titre)}</b>${x.lien?` · <a href="${esc(x.lien)}" target="_blank" rel="noopener">lien</a>`:""}
-      <span class="s">${esc(x.auteur_nom||x.auteur)} · ${x.classes.length?esc(x.classes.map(c=>((d.classes||[]).find(k=>k.code===c)||{libelle:c}).libelle).join(", ")):"toutes les classes"}${x.au?" · jusqu'au "+jfr(x.au):""}</span>
-      ${x.texte?`<p>${esc(x.texte)}</p>`:""}${x.auteur===moi||resp?`<button type="button" class="mini del" data-infodel="${x.id}" style="margin-top:4px">Retirer</button>`:""}</li>`).join("")}</ul>`
-    :'<p class="sem-vide">Aucune info pour cette semaine.</p>';}
+function renderSemaine(){if(espace==="actus")renderActus();}
+function infoFil(x,d){const C=d.classes||[];if(x.classes&&x.classes.length)return [...new Set(x.classes.map(c=>(C.find(k=>k.code===c)||{}).niveau).filter(Boolean))];return x.filieres&&x.filieres.length?x.filieres:[];}
+function renderActus(){const d=SEM.d;
+  const F=[...new Set([...mesFilieres(),...((d&&d.classes)||[]).map(c=>c.niveau).filter(n=>FORMS[n])])].filter(k=>k!=="tous");const tabs=[...F,"tous"];
+  if(filtre!=="all"&&!tabs.includes(filtre))filtre="all";
+  $("#tabs").innerHTML=[["all","Toutes les formations","var(--ink-3)"],...tabs.map(k=>[k,FORMS[k].court,FORMS[k].c])].map(([id,n,c])=>`<button type="button" class="tab" aria-pressed="${filtre===id}" data-f="${id}" style="--c:${c}"><span class="sw"></span>${n}</button>`).join("");
+  $("#tabs").hidden=tabs.length<2;
+  const l=SEM.lundi||lundiDe(new Date()),v=addJ(l,4),cur=lundiDe(new Date())===l;
+  let h=`<div class="sem-bar"><div class="sem-nav"><button type="button" class="ghost" data-sem="-1" aria-label="Semaine précédente">‹</button><b>Semaine du ${jfr(l,{day:"numeric",month:"long"})} au ${jfr(v,{day:"numeric",month:"long"})}</b><button type="button" class="ghost" data-sem="1" aria-label="Semaine suivante">›</button>${cur?"":'<button type="button" class="ghost" data-sem="0">Cette semaine</button>'}</div>
+    <div class="sem-nav"><button type="button" id="btnInfo">+ Ajouter une info</button>${d&&d.peut_alternance?'<button type="button" class="ghost" id="btnAlt">Calendrier d\'alternance</button>':""}</div></div>
+    <form id="fInfo" class="finfo" hidden></form><form id="fAlt" class="finfo" hidden></form>`;
+  if(!d){$("#levels").innerHTML=h+'<p class="note" style="text-align:left">Chargement…</p>';return;}
+  const C=d.classes||[],moi=(droits.email||"").toLowerCase(),resp=droits.admin||(droits.roles||[]).includes("responsable_peda");
+  const carteInfo=x=>`<div class="acard${x.importante?" imp":""}"><span class="tag">${x.importante?"Important":"Info"}</span><b>${esc(x.titre)}</b>${x.texte?`<p>${esc(x.texte)}</p>`:""}${x.lien?`<a href="${esc(x.lien)}" target="_blank" rel="noopener">Ouvrir le lien →</a>`:""}
+    <span class="s">${esc(x.auteur_nom||x.auteur)} · ${x.classes.length?esc(x.classes.map(c=>(C.find(k=>k.code===c)||{libelle:c}).libelle).join(", ")):"toutes les classes"}${x.au?" · jusqu'au "+jfr(x.au):""}</span>
+    ${x.auteur===moi||resp?`<button type="button" class="mini del" data-infodel="${x.id}">Retirer</button>`:""}</div>`;
+  const section=(k,cartes,vide)=>{const f=FORMS[k];return `<section class="level" style="--c:${f.c}"><div class="level-h"><h2>${f.nom}</h2><span class="niv">${f.niv}</span><span class="sub">${k==="tous"?"Infos communes à toutes les formations":f.sub}</span></div>
+    <div class="acards">${cartes.length?cartes.join(""):`<p class="note" style="text-align:left;margin:0">${vide}</p>`}</div></section>`;};
+  for(const k of F.filter(k=>filtre==="all"||filtre===k)){
+    const P=(d.presents||[]).filter(x=>x.niveau===k),E=(d.evaluations||[]).filter(x=>(C.find(c=>c.code===x.classe)||{}).niveau===k),I=(d.infos||[]).filter(x=>infoFil(x,d).includes(k));
+    const cartes=[];
+    if(P.length)cartes.push(`<div class="acard auto"><span class="tag">Au CFA cette semaine</span>${P.map(x=>`<b>${esc(x.libelle)}</b><span class="s">du ${jfr(x.du)} au ${jfr(x.au)}${x.note?" · "+esc(x.note):""}</span>`).join("")}</div>`);
+    E.forEach(x=>cartes.push(`<div class="acard auto"><span class="tag">${esc(x.type==="CCF"?"CCF":"Épreuve UC")} · ${esc(jfr(x.jour))}${x.heure?" · "+esc(x.heure):""}</span><b>${esc(x.libelle)} — ${esc(x.code)}</b><p>${esc(x.nom)}</p><span class="s">${esc(x.lieu||"")}</span></div>`));
+    I.forEach(x=>cartes.push(carteInfo(x)));
+    const aC=C.filter(c=>c.niveau===k).length;
+    h+=section(k,cartes,aC?"Aucune classe au CFA, aucune évaluation ni info cette semaine.":"Aucune classe de cette filière ne vous est rattachée.");}
+  if(filtre==="all"||filtre==="tous"){const I=(d.infos||[]).filter(x=>!infoFil(x,d).length);h+=section("tous",I.map(carteInfo),"Aucune info commune à toutes les formations cette semaine.");}
+  $("#levels").innerHTML=h;}
 function formInfo(){const d=SEM.d||{},C=d.classes||[];
   $("#fInfo").innerHTML=`<input name="titre" required placeholder="Titre (ex. Sortie pédagogique CAPa JP 2 jeudi)">
     <textarea name="texte" placeholder="Détails (facultatif)"></textarea>
@@ -456,7 +472,7 @@ async function formAlt(code){const d=SEM.d||{},s=await session();const C=(d.clas
   $("#fAlt").hidden=false;$("#fAlt").scrollIntoView({block:"nearest"});}
 const ligneAlt=p=>`<div class="per"><input type="date" name="du" value="${esc(p.du||"")}"> au <input type="date" name="au" value="${esc(p.au||"")}"><input name="note" placeholder="remarque" value="${esc(p.note||"")}" style="flex:1"><button type="button" class="mini del" data-altdel="1" aria-label="Supprimer la période">×</button></div>`;
 document.addEventListener("click",async e=>{const t=e.target;
-  const sm=t.closest("[data-sem]");if(sm){const n=+sm.dataset.sem;SEM.lundi=n?addJ(SEM.lundi,7*n):lundiDe(new Date());$("#fInfo").hidden=true;chargerSemaine();return;}
+  const sm=t.closest("[data-sem]");if(sm){const n=+sm.dataset.sem;SEM.lundi=n?addJ(SEM.lundi,7*n):lundiDe(new Date());chargerSemaine();return;}
   if(t.id==="btnInfo"){if($("#fInfo").hidden)formInfo();else $("#fInfo").hidden=true;return;}
   if(t.closest("[data-infoclose]")){$("#fInfo").hidden=true;return;}
   const idl=t.closest("[data-infodel]");if(idl){if(idl.dataset.sur!=="1"){idl.dataset.sur="1";idl.textContent="Confirmer";return;}
