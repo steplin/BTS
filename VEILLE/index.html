@@ -148,11 +148,11 @@ const THEMES={"Filière & entreprises":"#2E6A4B","Formation & apprentissage":"#3
 const FIL={capa:["CAPa JP","#6E9A3A"],bpa:["BPA OSP","#3F8A70"],bp:["BP AP","#2E6A4B"],btsa:["BTSA AP","#D1683F"],cs:["CS AG","#8A6A3B"],bprea:["BPREA","#7C8A2A"]};
 const MOTS=[[/\bcapa\b|jardinier paysagiste/i,["capa"]],[/\bbpa\b/i,["bpa"]],[/\bbp\b|brevet professionnel/i,["bp"]],[/\bbtsa?\b|technicien sup/i,["btsa"]],[/arbor|élag|elag|grimp|\barbres?\b/i,["cs"]],[/exploitation agricole|agricult|élevage|\bpac\b|maraîch|installation agricole/i,["bprea"]],[/paysag|espaces? verts?|jardin/i,["capa","bpa","bp","btsa"]]];
 function filieresDe(i){const r=V.ret[cleUrl(i.url)];if(r&&r.filieres)return r.filieres;
-  const f=new Set(i.filieres||[]);const t=(i.titre||"")+" "+(i.resume||"");MOTS.forEach(([re,l])=>{if(re.test(t))l.forEach(x=>f.add(x));});
+  const f=new Set(i.filieres||[]);const t=(i.titre||"")+" "+(i.resume||"");const spec=MOTS.slice(0,-1).filter(([re])=>re.test(t));spec.forEach(([re,l])=>l.forEach(x=>f.add(x)));if(!spec.length&&MOTS[MOTS.length-1][0].test(t))MOTS[MOTS.length-1][1].forEach(x=>f.add(x));
   return Object.keys(FIL).filter(k=>f.has(k));}
 function resumeDe(i){const r=V.ret[cleUrl(i.url)];return r&&r.resume!=null?r.resume:(i.resume||"");}
 const masque=i=>{const r=V.ret[cleUrl(i.url)];return !!(r&&r.masque);};
-const V={ret:{},fil:ls("veille.fil")||"",communs:ls("veille.communs")!==false,editUrl:null,items:[],pins:[],sources:[],etat:[],onglet:"actu",theme:"",resp:false,moi:"",maj:null,edit:null};
+const V={ret:{},fil:(()=>{const f=new URLSearchParams(location.search).get("fil");return f!==null?f:(ls("veille.fil")||"");})(),communs:ls("veille.communs")!==false,editUrl:null,items:[],pins:[],sources:[],etat:[],onglet:"actu",theme:"",resp:false,moi:"",maj:null,edit:null};
 const sans=t=>String(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 const dt=d=>d?new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"";
 const cleUrl=u=>String(u||"").replace(/[?&]utm_[^&#]*/g,"").replace(/#.*$/,"");
