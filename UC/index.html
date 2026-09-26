@@ -195,8 +195,8 @@ textarea:focus{background:#fff}
     <span class="sp"></span>
     <span class="status" id="status" aria-live="polite"></span>
     <button type="button" class="ghost" id="btnPrint" hidden>Imprimer</button>
-    <button type="button" class="ghost" id="btnD5x" hidden title="Document 5 de ce candidat au format Excel">Excel</button>
-    <button type="button" class="ghost" id="btnD5p" hidden title="Document 5 de ce candidat en PDF (produit depuis la grille Excel)">PDF</button>
+    <button type="button" class="ghost" id="btnXl" hidden title="Document de ce candidat au format Excel (toutes les épreuves pour le document 4)">Excel</button>
+    <button type="button" class="ghost" id="btnPdf" hidden title="Document de ce candidat en PDF, mise en page des grilles officielles">PDF</button>
   </div>
 
   <section class="card" id="view"><p class="empty">Chargement…</p></section>
@@ -348,7 +348,7 @@ function render(){
   $$("#zones [data-z]").forEach(b=>b.setAttribute("aria-current",String(b.dataset.z===S.zone)));
   $("#titreZ").textContent=ZONES[S.zone];document.title=ZONES[S.zone];
   const sa=S.zone==="saisie";$("#bar").hidden=S.zone==="cal"||!S.classe;
-  $(".seg").hidden=!sa;$("#navCand").hidden=!sa;$("#navEpr").hidden=!(sa&&S.vue==="doc4");$("#btnPrint").hidden=!(sa&&S.vue==="doc4");$("#btnD5x").hidden=$("#btnD5p").hidden=!(sa&&S.vue==="doc5");
+  $(".seg").hidden=!sa;$("#navCand").hidden=!sa;$("#navEpr").hidden=!(sa&&S.vue==="doc4");$("#btnPrint").hidden=true;$("#btnXl").hidden=$("#btnPdf").hidden=!sa;
   $$(".seg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===S.vue)));
   $("#selCand").value=S.cand||"";$("#selEpr").value=S.epr||"";
   if(S.zone==="cal")return renderCal();
@@ -390,11 +390,13 @@ function renderListe(){
         <td style="text-align:right;white-space:nowrap">${ed?`<button type="button" class="small" data-convs ${k}>Convocations</button> ${faites?`<button type="button" class="ghost small" data-convsno ${k}>Annuler</button>`:`<button type="button" class="ghost small" data-convsok ${k}>Marquer faites</button>`}`:""}</td></tr>`;}).join("")}</tbody></table>`}`;
   const edi=`<h2 class="h2">Préparation des jurys · cohorte ${esc(S.cohorte)} <small>fichiers Excel modifiables et PDF</small></h2>
     <table class="list editions-t"><tbody>
-      <tr><td><b>Documents 5</b><br><small>un par candidat, A3 portrait, présentation EvalUc</small></td><td><button type="button" class="ghost small" data-exp="d5zip">Excel + PDF (.zip)</button> <button type="button" class="ghost small" data-exp="d5pdf">PDF unique de la cohorte</button></td></tr>
+      <tr><td><b>Dossier du jury de validation</b><br><small>documents 4 et 5 de chaque candidat et résultat final, en Excel (xls/) et en PDF (pdf/)</small></td><td><button type="button" class="small" data-exp="jury">Tout le dossier (.zip)</button></td></tr>
+      <tr><td><b>Documents 4</b><br><small>grille d'évaluation de chaque épreuve, un fichier par candidat, A3 portrait</small></td><td><button type="button" class="ghost small" data-exp="d4zip">Excel + PDF (.zip)</button></td></tr>
+      <tr><td><b>Documents 5</b><br><small>tableau récapitulatif par candidat et par UC, A3 portrait</small></td><td><button type="button" class="ghost small" data-exp="d5zip">Excel + PDF (.zip)</button> <button type="button" class="ghost small" data-exp="d5pdf">PDF unique de la cohorte</button></td></tr>
       <tr><td><b>Résultat final</b><br><small>grille de présentation des résultats à la validation, A4 paysage</small></td><td><button type="button" class="ghost small" data-exp="rfx">Excel</button> <button type="button" class="ghost small" data-exp="rfp">PDF</button></td></tr>
-      <tr><td><b>Grille par UC</b><br><small>propositions argumentées de chaque candidat, une feuille par UC</small></td><td><button type="button" class="ghost small" data-exp="gux">Excel</button> <button type="button" class="ghost small" data-exp="gup">PDF</button></td></tr>
+      <tr><td><b>Grille par UC</b><br><small>outil interne : propositions argumentées, une feuille par UC</small></td><td><button type="button" class="ghost small" data-exp="gux">Excel</button> <button type="button" class="ghost small" data-exp="gup">PDF</button></td></tr>
     </tbody></table>
-    <p class="meta">Les PDF sont produits à partir des mêmes grilles que les fichiers Excel. Le fichier Excel reste modifiable avant le jury.</p>`;
+    <p class="meta">Mise en page des grilles officielles (export EvalUc) : en-tête et nom du candidat répétés sur chaque page, polices DejaVu. Les fichiers Excel restent modifiables avant le jury.</p>`;
   const nomsUC=u=>S.affPlan.filter(a=>a.uc_id===u.id).map(a=>nomPers(a.email)),
     epsUC=u=>S.epreuves.filter(e=>cisEpreuve(e.id).some(ci=>ci.uc_id===u.id));
   const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.resp?`modifiables dans les <a href="/UC/param.html">plans d'évaluation</a>`:"fixés par le responsable pédagogique"}</small></h2>
@@ -505,96 +507,130 @@ async function renderCal(){
   }else h+=afix.length?`<table class="list cal">${tete}<tbody>${afix.map(ligne).join("")}</tbody></table>`:`<p class="empty">Toutes les dates sont fixées.</p>`;
   $("#view").innerHTML=h;
 }
-/* ---------- Préparation des jurys : grilles Excel (présentation EvalUc) et PDF produits depuis ces grilles ---------- */
+/* ---------- Préparation des jurys : documents 4 et 5 et résultat final au format des grilles officielles (export EvalUc) ---------- */
 const tousCands=()=>S.cands.slice().sort((a,b)=>(a.groupe||"").localeCompare(b.groupe||"")||(a.ordre-b.ordre)||a.nom.localeCompare(b.nom));
-const VERT="3C7D15",XC={b:true,sz:11,fond:VERT,coul:"FFFFFF",al:"c"},XB={sz:11},XT={b:true,sz:13,bord:false},VIDE={v:"",bord:false};
+const ETAB_DOC="UFA Kerplouz LaSalle - AURAY";
+const VERT="3C7D15",XC={b:true,sz:11,fond:VERT,coul:"FFFFFF",al:"c"},XB={sz:10},VIDE={v:"",bord:false};
 const nomCand=c=>((c.nom||"").toUpperCase()+" "+(c.prenom||"")).trim();
 const vtexte=v=>v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
-const hautDoc=()=>{const P=S.plan||{};return [{cells:[{v:"Diplôme : "+(S.ref.libelle||""),i:true,sz:11,bord:false,cs:3},null,null,{v:"Session : "+(S.cohorte||""),i:true,sz:11,bord:false,al:"c",cs:2},null,{v:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):""),i:true,sz:11,bord:false,al:"r",cs:2},null]}];};
-function feuilleDoc5(c){const P=S.plan||{},n7=[null,null,null,null,null,null];
+const libDip=()=>S.ref.libelle||"",agree=()=>(S.plan||{}).agree_le?frDate(S.plan.agree_le):"";
+const enteteDoc=(boite)=>({g:"Diplôme : "+libDip(),c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+agree(),boite});
+const teteXL=()=>({g:S.classe.libelle,c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+agree()});
+const texteSaisie=(s,oui,non)=>{s=s||{};return s.texte&&s.texte.trim()?s.texte:s.acquis===true?oui:s.acquis===false?non:"";};
+const Z=k=>Array(k).fill(null);
+// Document 4 : une feuille par épreuve (A3 portrait), comme EvalUc « startAllDoc4 »
+function feuillesDoc4(c){const struct=objectifs(),groupe={};
+  const H=struct?["N° UC + OI de rang 1\nThème de l’OI","Critères / OI de rang 2","Indicateurs","Appréciation\n(Résultat au regard des critères)","Appréciation\nGlobale relative à la capacité intermédiaire (OI rang 1)"]
+    :["Capacités intermédiaires","Critères","Indicateurs","Appréciation\n(Résultat au regard des critères)","Appréciation\nGlobale relative à la capacité intermédiaire"];
+  return S.epreuves.map(ep=>{const cis=cisEpreuve(ep.id),se=sai(c.id,"epreuve",ep.id)||{};
+    const ucsL=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code+" "+u.nom).join(", "),cisL=cis.map(ci=>ci.code+" "+ci.nom).join(", ");
+    const info=(lab,val,first)=>({cells:[first?{...XB,v:"Epreuve concernée",rs:6}:null,{...XB,v:lab,cs:2},null,{...XB,v:val,cs:2},null]});
+    const L=[{h:30,cells:[{v:"DOCUMENT 4 : GRILLE D’EVALUATION DE L’EPREUVE PAR CANDIDAT",b:true,sz:13,psz:10.1,bord:false,cs:5},...Z(4)]},
+      {pdf:false,h:22,cells:[{v:"Candidat : "+nomCand(c),b:true,sz:12,fond:"F9F9F9",al:"c",cs:2},null,{v:"Diplôme : "+libDip(),b:true,sz:12,fond:"F9F9F9",al:"c",cs:3},null,null]},
+      info("Date d'épreuve :",se.date_eval?frDate(se.date_eval):"",true),info("N° épreuve :",ep.code+" "+ep.nom),info("Intitulé de la situation support :",ep.situation||""),
+      info("UC concernée (s) :",ucsL),info(struct?"OI concerné(s) :":"OI ou Capacité(s) intermédiaire(s) concerné(s) :",cisL),info("Modalités (Nature de l'épreuve)",ep.nature||"Pratique et entretien d'évaluation"),
+      {h:10,cells:[{...VIDE,cs:5},...Z(4)]},{h:40,cells:H.map(v=>({...XC,v}))}];
+    for(const ci of cis){const u=ucDe(ci),v=validation(c.id,u.id),crs=crsDe(ci),n=Math.max(1,crs.length),sc=sai(c.id,"ci",ci.id);
+      (crs.length?crs:[null]).forEach((cr,i)=>{L.push({cells:[
+        i===0?{...XB,v:u.code+"\n"+ci.code+" "+ci.nom,rs:n}:null,
+        {...XB,v:cr?((struct&&cr.code?cr.code+" ":"")+String(cr.nom||"")):""},
+        {...XB,v:cr?cr.indicateur||"":""},
+        {...XB,v:v?(v.statut==="vaa"?" VAA":" Validés le "+frDate(v.le)):cr?texteSaisie(sai(c.id,"cr",cr.id),"Acquis","Non acquis"):"",al:v?"c":"l"},
+        i===0?{...XB,v:v?" "+vtexte(v):texteSaisie(sc,"Acquis","Non acquis"),rs:n,al:v?"c":"l"}:null]});});}
+    if(!cis.length)L.push({cells:[{...XB,v:"Aucune capacité rattachée à cette épreuve.",cs:5},...Z(4)]});
+    L.push({h:14,cells:[{...VIDE,cs:5},...Z(4)]},{h:25,avecSuivant:true,cells:[{...XC,v:"Appréciation globale relative à l'épreuve",cs:5},...Z(4)]},
+      {h:50,cells:[{...XB,v:texteSaisie(se,"",""),cs:5},...Z(4)]});
+    return {nom:ep.code,papier:"A3",cols:[30,30,44,40,40],lignes:L,repeter:1,repeterDe:10,teteXL:teteXL(),piedXL:{g:S.classe.libelle},
+      pdf:{groupe,entete:enteteDoc([{v:"Candidat: "+nomCand(c),f:.4},{v:"Diplôme : "+libDip(),f:.6}]),pied:ETAB_DOC}};});}
+// Document 5 : tableau récapitulatif (A3 portrait), une ligne par critère, fusions par capacité et par UC
+function feuilleDoc5(c){const P=S.plan||{};
   const H=["Capacité globale de l'UC",objectifs()?"N° OI rang 1 + Thème":"Capacité intermédiaire","N° épreuve","Rappels des critères d'évaluation",
     objectifs()?"Appréciation\nGlobale relative à la capacité intermédiaire (OI rang 1)":"Appréciation\nGlobale relative à la capacité intermédiaire","Proposition argumentée\nsur la validation de la capacité globale","Avis du Jury\ndate"];
-  const L=[{h:30,cells:[{...XT,v:"DOCUMENT 5 : TABLEAU RECAPITULATIF PAR CANDIDAT ET PAR UC",cs:7},...n7]},
-    {h:24,cells:[{v:"Candidat : "+nomCand(c),b:true,sz:12,fond:"F9F9F9",al:"c",cs:3},null,null,{v:"Diplôme : "+(S.ref.libelle||""),b:true,sz:12,fond:"F9F9F9",al:"c",cs:4},null,null,null]},
-    {h:8,cells:[{...VIDE,cs:7},...n7]},
+  const L=[{h:30,cells:[{v:"DOCUMENT 5 : TABLEAU RECAPITULATIF PAR CANDIDAT ET PAR UC",b:true,sz:13,psz:10.1,bord:false,cs:7},...Z(6)]},
+    {pdf:false,h:22,cells:[{v:"Candidat : "+nomCand(c),b:true,sz:12,fond:"F9F9F9",al:"c",cs:3},null,null,{v:"Diplôme : "+libDip(),b:true,sz:12,fond:"F9F9F9",al:"c",cs:4},null,null,null]},
     {h:40,cells:H.map(v=>({...XC,v}))}];
   for(const u of S.ucs){const oe=ci=>{const e=epreuveDe(ci);return e?e.ordre*1000+S.epreuves.indexOf(e):1e9;};
     const cis=S.cis.filter(x=>x.uc_id===u.id).sort((a,b)=>oe(a)-oe(b)||byOrd(a,b)),v=validation(c.id,u.id);
     const blocs=(cis.length?cis:[null]).map(ci=>({ci,crs:ci?crsDe(ci):[]}));const nUC=blocs.reduce((t,x)=>t+Math.max(1,x.crs.length),0);
-    const su=sai(c.id,"uc",u.id)||{},prop=v?vtexte(v):[su.acquis===true?"Proposée valide":su.acquis===false?"Proposée non valide":"",su.texte||""].filter(Boolean).join("\n\n");
+    const su=sai(c.id,"uc",u.id)||{},lab=su.acquis===true?"Proposée valide":su.acquis===false?"Proposée non valide":"";
+    const prop=v?vtexte(v):[lab,su.texte||""].filter(Boolean).join("\n\n\n");
     let premier=true;
-    for(const {ci,crs} of blocs){const n=Math.max(1,crs.length),ep=ci&&epreuveDe(ci),sc=ci?(sai(c.id,"ci",ci.id)||{}):{};
-      const app=!ci?"":v?vtexte(v):[sc.acquis===true?"Acquis":sc.acquis===false?"Non acquis":"",sc.texte||""].filter(Boolean).join("\n");
-      for(let i=0;i<n;i++){const row=[];
-        row.push(premier?{...XB,v:u.code+" "+u.nom,b:true,rs:nUC,va:"t"}:null);
-        row.push(i===0?{...XB,v:ci?ci.code+" "+ci.nom:"",rs:n,va:"t"}:null);
-        row.push(i===0?{...XB,v:ep?ep.code:"",rs:n,al:"c"}:null);
-        row.push({...XB,v:crs[i]?String(crs[i].nom||""):"",sz:10});
-        row.push(i===0?{...XB,v:app,rs:n,va:"t",al:v?"c":"l"}:null);
-        row.push(premier?{...XB,v:prop,rs:nUC,va:"t",al:v?"c":"l"}:null);
-        row.push(premier?{...XB,v:"",rs:nUC,al:"c"}:null);
-        L.push({cells:row});premier=false;}}}
-  const finTab=L.length;L.push({h:20,cells:[{...VIDE,cs:7},...n7]});
-  L.push({h:22,cells:[{v:"Le "+(P.jury_le?frDate(P.jury_le):"_______ / _______ / 20_______"),b:true,sz:11,bord:false,cs:2},null,{v:"Signature du Président-adjoint du jury",sz:11,bord:false,cs:5},null,null,null,null]});
-  return {nom:"Doc 5",papier:"A3",cols:[30,30,14,36,36,36,14],lignes:L,repeter:1,repeterDe:4,finRepeter:finTab,hautPDF:hautDoc(),
-    teteXL:{g:S.classe.libelle,c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):"")},piedXL:{g:ETAB+" · "+nomCand(c)},piedPDF:ETAB+" · "+nomCand(c)};}
-function feuilleResultat(){const P=S.plan||{},U=S.ucs,nc=U.length+3,vide=()=>Array(nc-1).fill(null),C=tousCands();
-  const ligne=(v,o={})=>({h:18,cells:[{v,sz:11,bord:false,cs:nc,...o},...vide()]});
-  const fin=(S.cohorte||"").split("-")[1]||"";
-  const L=[ligne("Nom du centre (ou du site d'évaluation) : "+ETAB,{b:true}),ligne("Date d'agrément de l'épreuve : "+(P.agree_le?frDate(P.agree_le):"")),
-    ligne("Date d'évaluation : "+fin),ligne("Date de validation : "+(P.jury_le?frDate(P.jury_le):"")),ligne(""),
-    {h:24,cells:[{...XT,v:"RESULTAT FINAL "+S.classe.libelle+" · cohorte "+(S.cohorte||""),fond:"FBFBFB",bord:true,al:"c",cs:nc},...vide()]},ligne(""),
-    {h:25,cells:[{...XC,v:"Nom Prénom candidat",rs:2},...U.map(u=>({...XC,v:u.code,rs:2})),{...XC,v:"Résultat final",cs:2},null]},
+    for(const {ci,crs} of blocs){const n=Math.max(1,crs.length),ep=ci&&epreuveDe(ci);
+      const app=!ci?"":v?vtexte(v):texteSaisie(sai(c.id,"ci",ci.id),"Acquis","Non acquis");
+      for(let i=0;i<n;i++){L.push({cells:[
+        premier?{...XB,v:u.code+" "+u.nom,rs:nUC}:null,
+        i===0?{...XB,v:ci?ci.code+" "+ci.nom:"",rs:n}:null,
+        i===0?{...XB,v:ep?ep.code:"",rs:n,al:"c"}:null,
+        {...XB,v:crs[i]?String(crs[i].nom||""):""},
+        i===0?{...XB,v:app,rs:n,al:v?"c":"l"}:null,
+        premier?{...XB,v:prop,rs:nUC,al:v?"c":"l"}:null,
+        premier?{...XB,v:"",rs:nUC,al:"c"}:null]});premier=false;}}}
+  const finTab=L.length;
+  L.push({h:20,cells:[{...VIDE,cs:7},...Z(6)]},{h:20,cells:[{...VIDE,cs:7},...Z(6)]});
+  L.push({h:22,cells:[{v:"Le "+(P.jury_le?frDate(P.jury_le):" _______ / _______ / 20_______"),b:true,sz:11,bord:false,cs:2},null,{v:"Signature du Président-adjoint du jury",sz:11,bord:false,cs:5},null,null,null,null]});
+  return {nom:"Doc 5",papier:"A3",cols:[30,30,14,36,36,36,14],lignes:L,repeter:1,repeterDe:3,teteXL:teteXL(),piedXL:{g:S.classe.libelle},
+    pdf:{entete:enteteDoc([{v:"Candidat: "+nomCand(c),f:.4},{v:"Diplôme : "+libDip(),f:.6}]),pied:ETAB_DOC,finRepeter:finTab}};}
+// Résultat final : grille de présentation des résultats à la validation (A4 paysage)
+function feuilleResultat(){const P=S.plan||{},U=S.ucs,nc=U.length+3,C=tousCands(),fin=(S.cohorte||"").split("-")[1]||"";
+  const ligne=(v,o={})=>({h:18,cells:[{v,sz:10,bord:false,cs:nc,...o},...Z(nc-1)]});
+  const codeCourt=u=>String(u.code).replace(/\s*\(.*\)\s*$/,"");
+  const L=[{pdf:false,h:24,cells:[{v:"GRILLE DE PRESENTATION DES RESULTATS A LA VALIDATION",b:true,sz:13,fond:"F9F9F9",al:"c",cs:nc},...Z(nc-1)]},
+    ligne("Nom du centre (ou du site d'évaluation): "+ETAB_DOC,{b:true}),ligne("Date d'agrément de l'épreuve: "+agree()),
+    ligne("Date d'évaluation: "+fin),ligne("Date de validation: "+(P.jury_le?frDate(P.jury_le):"")),
+    {h:10,cells:[{...VIDE,cs:nc},...Z(nc-1)]},
+    {h:24,avecSuivant:true,cells:[{v:"RESULTAT FINAL "+libDip()+" "+(S.cohorte||""),b:true,sz:13,psz:8.4,fond:"FBFBFB",al:"c",cs:nc},...Z(nc-1)]},
+    {h:25,cells:[{...XC,v:"Nom Prénom candidat",rs:2},...U.map(u=>({...XC,v:codeCourt(u),rs:2})),{...XC,v:"Résultat final",cs:2},null]},
     {h:35,cells:[null,...U.map(()=>null),{...XC,v:"Proposition\nOui/Non"},{...XC,v:"Avis Jury\nA/NA"}]}];
-  let admis=0;
-  for(const c of C){let ok=0,saisies=0;const cells=[{v:" "+nomCand(c),b:true,sz:11,fond:"FBFBFB"}];
+  let admis=0;const N={b:true,al:"c",sz:10,fond:"A9A9A9",coul:"FFFFFF"};
+  for(const c of C){let ok=0,saisies=0;const cells=[{v:" "+nomCand(c),sz:10}];
     for(const u of U){const v=validation(c.id,u.id),su=sai(c.id,"uc",u.id)||{};
       if(v){ok++;saisies++;cells.push({v:vtexte(v),b:true,al:"c",sz:10});}
-      else if(su.acquis===true){ok++;saisies++;cells.push({v:"O",b:true,al:"c",sz:11});}
-      else if(su.acquis===false){saisies++;cells.push({v:"N",b:true,al:"c",sz:11,fond:"A9A9A9",coul:"FFFFFF"});}
+      else if(su.acquis===true){ok++;saisies++;cells.push({v:"O",b:true,al:"c",sz:10});}
+      else if(su.acquis===false){saisies++;cells.push({v:"N",...N});}
       else cells.push({v:"",al:"c"});}
-    const tout=U.length&&ok===U.length;if(U.length&&U.every(u=>validation(c.id,u.id)))admis++;
-    cells.push(tout?{v:"Oui",b:true,al:"c",sz:11}:saisies===U.length&&U.length?{v:"Non",b:true,al:"c",sz:11,fond:"A9A9A9",coul:"FFFFFF"}:{v:"",al:"c"});
+    if(U.length&&ok===U.length)admis++;
+    cells.push(U.length&&ok===U.length?{v:"Oui",b:true,al:"c",sz:10}:U.length&&saisies===U.length?{v:"Non",...N}:{v:"",al:"c"});
     cells.push({v:"",al:"c"});L.push({h:20,cells});}
-  L.push(ligne(""));
-  const pied=(t,n)=>({h:18,cells:[{v:t,b:true,sz:11,bord:false},{v:String(n),sz:11,bord:false,al:"c"},{v:"",bord:false,cs:nc-2},...Array(nc-3).fill(null)]});
-  const finTab=L.length-1;
-  L.push(pied("Nombre de candidats :",C.length),pied("Admis :",admis),pied("Ajourné(s) :",C.length-admis),ligne(""));
-  L.push({cells:[{v:U.map(u=>u.code+" : "+u.nom).join("\n"),sz:9,bord:false,cs:nc},...vide()]});
-  return {nom:"Résultat final",papier:"A4",paysage:true,cols:[42,...U.map(()=>12),16,16],lignes:L,repeter:2,repeterDe:8,finRepeter:finTab,
-    hautPDF:[{cells:[{v:"Diplôme : "+(S.ref.libelle||""),i:true,sz:11,bord:false,cs:1},{v:"Session : "+(S.cohorte||""),i:true,sz:11,bord:false,al:"c",cs:Math.max(1,U.length)},...Array(Math.max(0,U.length-1)).fill(null),{v:"Plan agréé le : "+(P.agree_le?frDate(P.agree_le):""),i:true,sz:11,bord:false,al:"r",cs:2},null]}],
-    teteXL:{g:S.classe.libelle,c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):"")},piedXL:{g:ETAB},piedPDF:ETAB};}
+  const pied=(t,n)=>({h:18,cells:[{v:t,b:true,sz:10,bord:false},{v:String(n),sz:10,bord:false,al:"c"},{v:"",bord:false,cs:nc-2},...Z(nc-3)]});
+  L.push({h:8,cells:[{...VIDE,cs:nc},...Z(nc-1)]},pied("Nombre de candidats:",C.length),pied("Admis:",admis),pied("Ajourné(s):",C.length-admis));
+  return {nom:"Résultat final",papier:"A4",paysage:true,cols:[42,...U.map(()=>12),16,16],lignes:L,repeter:2,repeterDe:8,teteXL:teteXL(),piedXL:{g:S.classe.libelle},
+    pdf:{unite:3.41,police:0.71,entete:enteteDoc([{v:"GRILLE DE PRESENTATION DES RESULTATS A LA VALIDATION",f:1}]),apresBoite:8,pied:ETAB_DOC,repeter:2,repeterDe:7,finRepeter:L.length-5}};}
+// Grille par UC : propositions argumentées (outil interne, hors grilles officielles)
 function etatUC(c,u){const v=validation(c,u.id);if(v)return vtexte(v);const s=sai(c,"uc",u.id)||{};return s.acquis===true?"Validation proposée":s.acquis===false?"Non-validation proposée":"—";}
-function feuillesGrilleUC(){const L0=tousCands(),P=S.plan||{},n=S.ucs.length+2,Z=k=>Array(k).fill(null);
-  const tete={teteXL:{g:S.classe.libelle,c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):"")},piedXL:{g:ETAB},piedPDF:ETAB};
-  const rec={nom:"Récapitulatif",papier:"A4",paysage:true,cols:[34,10,...S.ucs.map(()=>16)],repeter:1,repeterDe:3,...tete,lignes:[
-    {h:26,cells:[{...XT,v:"GRILLE DE PRÉSENTATION DES RÉSULTATS À LA VALIDATION — PROPOSITIONS PAR UC",cs:n},...Z(n-1)]},{h:8,cells:[{...VIDE,cs:n},...Z(n-1)]},
+function feuillesGrilleUC(){const L0=tousCands(),n=S.ucs.length+2;
+  const pdfo={entete:enteteDoc(),pied:ETAB_DOC,repeter:1,repeterDe:3};
+  const rec={nom:"Récapitulatif",papier:"A4",paysage:true,cols:[34,10,...S.ucs.map(()=>16)],repeter:1,repeterDe:3,teteXL:teteXL(),piedXL:{g:S.classe.libelle},pdf:pdfo,lignes:[
+    {h:26,cells:[{v:"PROPOSITIONS PAR UC",b:true,sz:13,bord:false,cs:n},...Z(n-1)]},{h:8,cells:[{...VIDE,cs:n},...Z(n-1)]},
     {h:30,cells:[{...XC,v:"Candidat"},{...XC,v:"Groupe"},...S.ucs.map(u=>({...XC,v:u.code}))]},
-    ...L0.map(c=>({cells:[{v:nomCand(c),b:true,sz:10},{v:c.groupe||"",al:"c"},...S.ucs.map(u=>({v:etatUC(c.id,u),al:"c",sz:9}))]})),
-    {h:8,cells:[{...VIDE,cs:n},...Z(n-1)]},...S.ucs.map(u=>({cells:[{v:u.code+" : "+u.nom,sz:9,bord:false,cs:n},...Z(n-1)]}))]};
-  const parUC=S.ucs.map(u=>({nom:u.code,papier:"A4",paysage:true,cols:[28,10,18,68,22],repeter:1,repeterDe:3,...tete,lignes:[
-    {h:26,cells:[{...XT,v:"GRILLE PAR UC — "+u.code+" "+u.nom,cs:5},...Z(4)]},{h:8,cells:[{...VIDE,cs:5},...Z(4)]},
+    ...L0.map(c=>({cells:[{v:nomCand(c),sz:10},{v:c.groupe||"",al:"c"},...S.ucs.map(u=>({v:etatUC(c.id,u),al:"c",sz:9}))]}))]};
+  const parUC=S.ucs.map(u=>({nom:u.code,papier:"A4",paysage:true,cols:[28,10,18,68,22],repeter:1,repeterDe:3,teteXL:teteXL(),piedXL:{g:S.classe.libelle},pdf:pdfo,lignes:[
+    {h:26,cells:[{v:"GRILLE PAR UC — "+u.code+" "+u.nom,b:true,sz:13,bord:false,cs:5},...Z(4)]},{h:8,cells:[{...VIDE,cs:5},...Z(4)]},
     {h:34,cells:["Candidat","Groupe","Proposition","Proposition argumentée sur la validation de la capacité globale","Avis du jury, date"].map(v=>({...XC,v}))},
-    ...L0.map(c=>{const s=sai(c.id,"uc",u.id)||{};return {cells:[{v:nomCand(c),b:true},{v:c.groupe||"",al:"c"},{v:etatUC(c.id,u),al:"c"},{v:validation(c.id,u.id)?"":s.texte||"",va:"t"},{v:""}]};})]}));
+    ...L0.map(c=>{const s=sai(c.id,"uc",u.id)||{};return {cells:[{v:nomCand(c)},{v:c.groupe||"",al:"c"},{v:etatUC(c.id,u),al:"c"},{v:validation(c.id,u.id)?"":s.texte||""},{v:""}]};})]}));
   return [rec,...parUC];}
 /* exports */
 const suffixeFic=()=>KepDoc.nomFichier(S.classe.libelle+" "+(S.cohorte||""));
-const nomFicCand=c=>KepDoc.nomFichier((c.nom||"").toUpperCase()+"_"+(c.prenom||""))+"_doc5";
+const baseCand=c=>KepDoc.nomFichier((c.nom||"").toUpperCase()+"_"+(c.prenom||""));
 async function exporter(quoi,btn){if(!window.KepDoc){toast("Module d'export indisponible, rechargez la page.");return;}
   const lib=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Préparation…";}
   try{if(!S.cands.length){toast("Aucun candidat dans cette classe.");return;}
-    await toutEnregistrer();const titre=S.classe.libelle+" "+(S.cohorte||"");
-    if(quoi==="d5x"||quoi==="d5p"){const c=S.cands.find(x=>x.id===S.cand);if(!c)return;const F=feuilleDoc5(c);
-      if(quoi==="d5x")await KepDoc.telecharger(nomFicCand(c)+".xlsx",await KepDoc.xlsx([F],{titre:"Document 5 "+nomCand(c)}));
-      else await KepDoc.telecharger(nomFicCand(c)+".pdf",await KepDoc.pdf([F],{titre:"Document 5 "+nomCand(c)}),"application/pdf");}
-    else if(quoi==="d5zip"){const f=[];for(const c of tousCands()){const F=feuilleDoc5(c),t={titre:"Document 5 "+nomCand(c)};
-        f.push(["xlsx/"+nomFicCand(c)+".xlsx",await KepDoc.xlsx([F],t)],["pdf/"+nomFicCand(c)+".pdf",await KepDoc.pdf([F],t)]);}
-      await KepDoc.telecharger("Documents5_"+suffixeFic()+".zip",await KepDoc.zip(f));}
-    else if(quoi==="d5pdf")await KepDoc.telecharger("Documents5_"+suffixeFic()+".pdf",await KepDoc.pdf(tousCands().map(feuilleDoc5),{titre:"Documents 5 "+titre}),"application/pdf");
-    else if(quoi==="rfx")await KepDoc.telecharger("Resultat_final_"+suffixeFic()+".xlsx",await KepDoc.xlsx([feuilleResultat()],{titre:"Résultat final "+titre}));
-    else if(quoi==="rfp")await KepDoc.telecharger("Resultat_final_"+suffixeFic()+".pdf",await KepDoc.pdf([feuilleResultat()],{titre:"Résultat final "+titre}),"application/pdf");
-    else if(quoi==="gux")await KepDoc.telecharger("Grille_par_UC_"+suffixeFic()+".xlsx",await KepDoc.xlsx(feuillesGrilleUC(),{titre:"Grille par UC "+titre}));
-    else if(quoi==="gup")await KepDoc.telecharger("Grille_par_UC_"+suffixeFic()+".pdf",await KepDoc.pdf(feuillesGrilleUC(),{titre:"Grille par UC "+titre}),"application/pdf");}
+    await toutEnregistrer();const titre=S.classe.libelle+" "+(S.cohorte||""),x=KepDoc.xlsx,p=KepDoc.pdf,dl=KepDoc.telecharger,PDF="application/pdf";
+    const un=S.cands.find(c=>c.id===S.cand);
+    if(quoi==="d5x"&&un)await dl(baseCand(un)+"-doc5.xlsx",await x([feuilleDoc5(un)],{titre:"Document 5 "+nomCand(un)}));
+    else if(quoi==="d5p"&&un)await dl(baseCand(un)+"-doc5.pdf",await p([feuilleDoc5(un)],{titre:"Document 5 "+nomCand(un)}),PDF);
+    else if(quoi==="d4x"&&un)await dl(baseCand(un)+"-doc4.xlsx",await x(feuillesDoc4(un),{titre:"Document 4 "+nomCand(un)}));
+    else if(quoi==="d4p"&&un)await dl(baseCand(un)+"-doc4.pdf",await p(feuillesDoc4(un),{titre:"Document 4 "+nomCand(un)}),PDF);
+    else if(quoi==="jury"||quoi==="d5zip"||quoi==="d4zip"){const f=[],avec4=quoi!=="d5zip",avec5=quoi!=="d4zip";
+      for(const c of tousCands()){const b=baseCand(c),t={titre:nomCand(c)};
+        if(avec4){const F4=feuillesDoc4(c);f.push(["xls/doc4/"+b+"-doc4.xlsx",await x(F4,t)],["pdf/doc4/"+b+"-doc4.pdf",await p(F4,t)]);}
+        if(avec5){const F5=feuilleDoc5(c);f.push(["xls/doc5/"+b+"-doc5.xlsx",await x([F5],t)],["pdf/doc5/"+b+"-doc5.pdf",await p([F5],t)]);}}
+      if(quoi==="jury"){const R=feuilleResultat(),t={titre:"Résultat final "+titre};f.push(["xls/"+suffixeFic()+"_Resultat_final.xlsx",await x([R],t)],["pdf/"+suffixeFic()+"_Resultat_final.pdf",await p([R],t)]);}
+      await dl((quoi==="jury"?"Jury_":quoi==="d4zip"?"Documents4_":"Documents5_")+suffixeFic()+".zip",await KepDoc.zip(f));}
+    else if(quoi==="d5pdf")await dl("Documents5_"+suffixeFic()+".pdf",await p(tousCands().map(c=>{const F=feuilleDoc5(c);F.pdf.groupe=c.id;return F;}),{titre:"Documents 5 "+titre}),PDF);
+    else if(quoi==="rfx")await dl(suffixeFic()+"_Resultat_final.xlsx",await x([feuilleResultat()],{titre:"Résultat final "+titre}));
+    else if(quoi==="rfp")await dl(suffixeFic()+"_Resultat_final.pdf",await p([feuilleResultat()],{titre:"Résultat final "+titre}),PDF);
+    else if(quoi==="gux")await dl("Grille_par_UC_"+suffixeFic()+".xlsx",await x(feuillesGrilleUC(),{titre:"Grille par UC "+titre}));
+    else if(quoi==="gup")await dl("Grille_par_UC_"+suffixeFic()+".pdf",await p(feuillesGrilleUC().map(F=>({...F,pdf:{...F.pdf,groupe:"g"}})),{titre:"Grille par UC "+titre}),PDF);}
   catch(e){console.error(e);toast("Export impossible : "+(e.message||e));}
   finally{if(btn){btn.disabled=false;btn.textContent=lib;}}}
 /* ---------- Dates et convocations (référent de la classe) ---------- */
@@ -795,8 +831,8 @@ document.addEventListener("click",async e=>{
   else if(b.hasAttribute("data-convsok"))marquerSession(b.dataset.cl,b.dataset.lundi,true);
   else if(b.hasAttribute("data-convsno"))marquerSession(b.dataset.cl,b.dataset.lundi,false);
   else if(b.dataset.exp)exporter(b.dataset.exp,b);
-  else if(b.id==="btnD5x")exporter("d5x",b);
-  else if(b.id==="btnD5p")exporter("d5p",b);
+  else if(b.id==="btnXl")exporter(S.vue==="doc4"?"d4x":"d5x",b);
+  else if(b.id==="btnPdf")exporter(S.vue==="doc4"?"d4p":"d5p",b);
   else if(b.id==="sugClose")$("#sug").hidden=true;
 });
 async function toutEnregistrer(){await Promise.all($$(".cell").filter(c=>timers.has(kS(c.dataset.c,c.dataset.n,c.dataset.r))).map(c=>enregistrer(c)));}
