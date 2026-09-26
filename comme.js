@@ -8,7 +8,7 @@
   function esc(t){return String(t==null?"":t).replace(/[<>&"]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c];});}
   function bandeau(d){if(document.getElementById("kepComme"))return;
     var b=document.createElement("div");b.id="kepComme";b.setAttribute("role","status");
-    b.style.cssText="position:sticky;top:0;z-index:9999;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center;padding:8px 14px;background:#D1683F;color:#fff;font:600 13px/1.3 system-ui,-apple-system,'Segoe UI',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18)";
+    b.style.cssText="position:sticky;top:0;align-self:start;justify-self:stretch;width:100%;box-sizing:border-box;z-index:9999;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center;padding:8px 14px;background:#D1683F;color:#fff;font:600 13px/1.3 system-ui,-apple-system,'Segoe UI',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.18)";
     b.innerHTML="<span>Vous agissez en tant que <b>"+esc(d.nom||d.comme)+"</b> ("+esc(d.comme)+"). Vos enregistrements sont marqués « par "+esc(d.vrai_nom||d.vrai)+" ».</span>"+
       "<button type=\"button\" style=\"font:600 12.5px system-ui,sans-serif;border:1.5px solid #fff;background:#fff;color:#8C3A1C;border-radius:99px;padding:5px 12px;cursor:pointer\">Revenir à mon compte</button>";
     b.querySelector("button").onclick=function(){this.disabled=true;rpc("quitter_role").then(function(){location.href="/";}).catch(function(e){b.querySelector("span").textContent="Impossible de revenir à votre compte : "+e.message;});};

@@ -34,7 +34,7 @@ a.tool:hover{border-color:var(--accent)}a.tool b{display:block;color:var(--accen
 .rules li::before{content:"○ ";}.rules li.ok{color:var(--accent)}.rules li.ok::before{content:"✓ ";}
 footer{text-align:center;font-size:12px;color:var(--ink-3)}
 /* ---- Tableau de bord des outils ---- */
-body.wide{place-items:start center}
+body.wide{place-items:start center;align-content:start}
 body.wide main{max-width:1120px;gap:22px}
 body.wide .brand{display:none}
 #vHome{display:flex;flex-direction:column;gap:22px}
@@ -381,8 +381,8 @@ const EVAL=[
   ["Paramétrage","Responsable pédagogique","Plans d'évaluation agréés, épreuves et périodes, grilles, formateurs affectés.","fiche"]];
 const EVAL_LIENS={
   capa:[["/UC/?vue=doc4","ev-saisie-uc"],["/UC/?vue=coord&ong=dates","uc-dates"],["/UC/?vue=coord&ong=conv","uc-conv"],["/UC/?vue=tdb","saisie-uc"],["/UC/?vue=coord&ong=edi","uc-conv"],["/UC/param.html","uc-param"]],
-  btsa:[["/CCF/","ev-saisie-bts"],["/CCF/?vue=cal","bts-coord"],["/CCF/?vue=coord&ctab=epr","bts-coord"],["/CCF/?vue=coord&ctab=dash","ccf-bts"],["/CCF/?vue=coord&ctab=imp","bts-coord"],["/BTS/","grilles-bts"]]};
-["capa","bpa","bp","btsa","bprea","cs"].forEach(k=>EVAL.forEach(([t,qui,d,i],n)=>{const l=(EVAL_LIENS[k]||[])[n];TOOLS.push(Object.assign({esp:"evaluations",niv:k,t,qui,d,i},l?{href:l[0],code:l[1]}:{}));}));
+  btsa:[["/CCF/","ev-saisie-bts"],["/CCF/?vue=cal","bts-coord","Coordinateur de filière"],["/CCF/?vue=coord&ctab=epr","bts-coord"],["/CCF/?vue=coord&ctab=dash","ccf-bts"],["/CCF/?vue=coord&ctab=imp","bts-coord"],["/BTS/","grilles-bts","Coordinateur · responsable péda"]]};
+["capa","bpa","bp","btsa","bprea","cs"].forEach(k=>EVAL.forEach(([t,qui,d,i],n)=>{const l=(EVAL_LIENS[k]||[])[n];TOOLS.push(Object.assign({esp:"evaluations",niv:k,t,qui:(l&&l[2])||qui,d,i,role:["ens","ref","coord","equipe","coord","param"][n]},l?{href:l[0],code:l[1]}:{}));}));
 /* Outils par diplôme : référentiel, TSF, déroulé pédagogique, suivi de la filière */
 const REFS={capa:"CAPA-JP",bpa:"BPA-OSP",bp:"BP-AP",btsa:"BTSA-AP",bprea:"BP-REA",cs:"CS-AG"};
 Object.entries(REFS).forEach(([k,ref])=>{const c=FORMS[k].court;TOOLS.push(
@@ -394,10 +394,21 @@ const ls2=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 let filtre="all",espace="actus";const BADGES={};
 function navEsp(EV){EV=EV||espacesVus();$("#espaces").innerHTML=EV.map(e=>`<button type="button" class="esp" data-esp="${e.id}" aria-current="${espace===e.id?"page":"false"}" style="--c:${e.c}">${e.nom}${BADGES[e.id]||""}</button>`).join("");}
 function outilsVus(){const d=apercu||droits||{};return new Set(d.outils||[]);}
+/* Rôle de la personne dans une formation : formateur (ens), référent (ref), coordinateur (coord), responsable (resp) */
+function roleDans(k){const d=apercu||droits||{},r=d.roles||[],resp=r.includes("responsable_peda")||(d.admin&&!apercu);
+  const cl=(d.classes||[]).filter(c=>c.niveau===k),coord=resp||(d.filieres||[]).includes(k)||(apercu&&r.includes("coordinateur_filiere")&&(d.niveaux||[]).includes(k));
+  const ref=resp||cl.some(c=>c.fonction==="referent")||(apercu&&r.includes("referent"));
+  const ens=resp||coord||cl.length>0||(apercu&&r.includes("formateur"));
+  const large=r.some(x=>["secretariat","direction","vie_sco"].includes(x));
+  return {ens,ref,coord,resp,equipe:ens||large};}
+function roleOk(t){if(!t.role)return true;const R=roleDans(t.niv);
+  if(t.role==="param")return R.resp||(t.niv==="btsa"&&R.coord);
+  if(t.role==="ref"&&t.niv==="btsa")return R.coord;
+  return !!R[t.role];}
 function visiblesEsp(esp){
   const d=apercu||droits||{},niv=new Set(d.niveaux||[]),out=outilsVus();
   const adm=d.admin&&!apercu;return TOOLS.filter(t=>t.esp===esp&&(adm||t.niv==="tous"||niv.has(t.niv))&&(t.code?adm||out.has(t.code):true))
-    .filter(t=>t.code||esp!=="admin");}
+    .filter(t=>t.code||esp!=="admin").filter(t=>t.code||roleOk(t));}
 function espacesVus(){return ESPACES.filter(e=>e.id==="actus"||visiblesEsp(e.id).length);}
 function tuile(t){const f=FORMS[t.niv],on=!!t.href;const ico=`<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[t.i]||ICONS.fiche}</svg></span>`;
   return on?`<a class="tile" href="${t.href}" style="--c:${f.c}">${ico}<span class="st on">${t.espNom||"Disponible"}</span><b>${t.t}</b>${t.qui?`<span class="qui">${t.qui}</span>`:""}<p>${t.d}</p><span class="go">Ouvrir l'outil →</span></a>`
