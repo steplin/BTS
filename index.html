@@ -76,6 +76,31 @@ a.tile:hover{border-color:var(--c);box-shadow:0 6px 18px rgba(24,36,30,.08);tran
 .apercu .info{flex-basis:100%;color:#8A3F1C}
 .banner{background:#FFF6E5;border:1px solid #F0DDB5;color:#7A5410;border-radius:10px;padding:12px 14px;font-size:13.5px}
 a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radius:999px;padding:6px 12px;text-decoration:none}
+/* ---- Cette semaine ---- */
+.semaine{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.sem-h{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.sem-h h2{font:700 19px/1.2 var(--display);margin:0}
+.sem-nav{display:flex;gap:6px;align-items:center;font-size:13.5px;color:var(--ink-2)}
+.sem-nav button{padding:4px 10px;font-size:13px}
+.sem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.sem-col h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin:0 0 6px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.sem-col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sem-col li{border:1px solid var(--line);border-left:4px solid var(--c,var(--line));border-radius:9px;padding:7px 10px;font-size:13.5px}
+.sem-col li b{font-weight:600}.sem-col li .s{display:block;font-size:12px;color:var(--ink-3)}
+.sem-col li.imp{background:#FFF6E5;border-color:#F0DDB5}
+.sem-col li p{margin:3px 0 0;font-size:13px;color:var(--ink-2);white-space:pre-wrap}
+.sem-vide{font-size:13px;color:var(--ink-3);margin:0}
+button.mini{font:600 12px var(--body);padding:3px 9px;border-radius:8px;background:var(--surface);color:var(--accent);border:1px solid var(--line);text-transform:none;letter-spacing:0}
+button.mini.del{color:var(--danger)}
+.finfo{display:flex;flex-direction:column;gap:7px;background:#F8FAF7;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.finfo input,.finfo textarea,.finfo select{font:13.5px var(--body);padding:6px 8px}
+.finfo textarea{min-height:60px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.finfo .ck{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--ink-2)}
+.finfo .ck label{display:flex;gap:4px;align-items:center;font-size:12.5px;font-weight:400}
+.finfo .ck input{width:auto}
+.finfo .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.finfo .row input[type=date]{width:auto}
+.finfo .per{display:flex;gap:6px;align-items:center}
 /* ---- Espaces ---- */
 .espaces{display:flex;gap:4px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:5px}
 .esp{font:600 14px var(--body);background:none;color:var(--ink-2);border-radius:10px;padding:9px 14px;position:relative}
@@ -180,6 +205,15 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
     <div class="banner" id="banner" hidden></div>
     <div class="banner" id="rappels" hidden></div>
     <div class="banner" id="rappelsUC" hidden></div>
+    <section class="semaine" id="semaine" hidden>
+      <div class="sem-h"><h2>Cette semaine</h2><div class="sem-nav"><button type="button" class="ghost" data-sem="-1" aria-label="Semaine précédente">‹</button><span id="semLib"></span><button type="button" class="ghost" data-sem="1" aria-label="Semaine suivante">›</button><button type="button" class="ghost" data-sem="0" id="semAuj">Aujourd'hui</button></div></div>
+      <div class="sem-grid">
+        <div class="sem-col"><h3>Au CFA</h3><div id="semPres"></div></div>
+        <div class="sem-col"><h3>Évaluations prévues</h3><div id="semEval"></div></div>
+        <div class="sem-col"><h3>Infos <button type="button" class="mini" id="btnInfo">+ Ajouter une info</button></h3><form id="fInfo" class="finfo" hidden></form><div id="semInfos"></div></div>
+      </div>
+      <form id="fAlt" class="finfo" hidden></form>
+    </section>
     <nav class="espaces" id="espaces" aria-label="Espaces de la plateforme"></nav>
     <div class="mine" id="mine"></div>
     <div class="tabs" role="group" aria-label="Filtrer par formation" id="tabs"></div>
@@ -191,7 +225,7 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
 </main>
 <script>
 const SB="https://olqclfsywasktwirswpb.supabase.co", KEY="sb_publishable_Qry6l1DGbG9IkLtGT7CF4w_OyP4rI8x", SKEY="kep.session";
-const $=s=>document.querySelector(s);
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const params=new URLSearchParams(location.search);
 const next=(()=>{const n=params.get("next")||"";return /^\/[A-Za-z0-9\/_\-.]*$/.test(n)&&!n.startsWith("//")?n:"";})();
 const ls={get(){try{return JSON.parse(localStorage.getItem(SKEY)||"null");}catch(e){return null;}},set(v){try{v?localStorage.setItem(SKEY,JSON.stringify(v)):localStorage.removeItem(SKEY);}catch(e){}}};
@@ -264,7 +298,7 @@ async function goHome(s){if(next){location.replace(next);return;}
   if(refus){history.replaceState(null,"","/");const bn=$("#banner");bn.hidden=false;
     bn.textContent=refus==="suspendu"?"Votre compte est suspendu.":"Vous n'avez pas accès à cet outil. Si vous en avez besoin, demandez au responsable pédagogique de vous rattacher à la classe concernée.";}
   if(droits.admin&&!(droits.outils||[]).includes("admin"))droits.outils.push("admin");
-  filtre="all";espace=location.hash.slice(1)||ls2("kep.espace")||"outils";renderDash();show("vHome");rappelsCCF(s);rappelsUC(s);}
+  filtre="all";espace=location.hash.slice(1)||ls2("kep.espace")||"outils";renderDash();show("vHome");rappelsCCF(s);rappelsUC(s);chargerSemaine();}
 /* Rappels UC (référents CAPa) : dates à fixer au plus tard 15 jours avant la période agréée, convocations à envoyer */
 async function rappelsUC(s){const box=$("#rappelsUC");box.hidden=true;
   if(!droits||!(droits.outils||[]).includes("uc-coord"))return;
@@ -378,6 +412,73 @@ function renderDash(){
   extrasAccueil();
 }
 /* Accueil : chiffres utiles et dernières actualités */
+/* ---------- Cette semaine ---------- */
+const SEM={lundi:null,d:null};
+const lundiDe=d=>{const x=new Date(d);x.setHours(12,0,0,0);const j=x.getDay();x.setDate(x.getDate()+(j===6?2:j===0?1:-(j-1)));return x.toISOString().slice(0,10);};  // le week-end : semaine suivante
+const jfr=(d,o)=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",o||{weekday:"short",day:"numeric",month:"short"});
+const addJ=(d,n)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
+async function chargerSemaine(){const s=await session();if(!s||!droits)return;SEM.lundi=SEM.lundi||lundiDe(new Date());
+  try{SEM.d=await api("/rest/v1/rpc/ma_semaine",{method:"POST",body:{p_lundi:SEM.lundi},token:s.access_token});}catch(e){SEM.d=null;$("#semaine").hidden=true;return;}
+  renderSemaine();}
+function renderSemaine(){const d=SEM.d;if(!d)return;$("#semaine").hidden=false;const l=SEM.lundi,v=addJ(l,4);
+  const cur=lundiDe(new Date())===l;$("#semLib").textContent=(cur?"Semaine du ":"Semaine du ")+jfr(l,{day:"numeric",month:"long"})+" au "+jfr(v,{day:"numeric",month:"long"});$("#semAuj").hidden=cur;
+  const col=n=>(FORMS[n]||FORMS.tous).c;
+  const P=d.presents||[];
+  $("#semPres").innerHTML=(P.length?`<ul>${P.map(x=>`<li style="--c:${col(x.niveau)}"><b>${esc(x.libelle)}</b><span class="s">du ${jfr(x.du)} au ${jfr(x.au)}${x.note?" · "+esc(x.note):""}</span></li>`).join("")}</ul>`
+      :`<p class="sem-vide">${(d.classes||[]).length?"Aucune de vos classes n'est au CFA cette semaine d'après le calendrier d'alternance.":"Aucune classe ne vous est rattachée."}</p>`)
+    +(d.peut_alternance?`<p style="margin:8px 0 0"><button type="button" class="mini" id="btnAlt">Calendrier d'alternance</button></p>`:"");
+  const E=d.evaluations||[];
+  $("#semEval").innerHTML=E.length?`<ul>${E.map(x=>{const c=(d.classes||[]).find(k=>k.code===x.classe)||{};return `<li style="--c:${col(c.niveau)}"><b>${esc(jfr(x.jour))}${x.heure?" · "+esc(x.heure):""}</b> · ${esc(x.libelle)}<span class="s">${esc(x.type)} ${esc(x.code)} — ${esc(x.nom)}</span></li>`;}).join("")}</ul>`
+    :'<p class="sem-vide">Aucune évaluation prévue pour vos classes.</p>';
+  const I=d.infos||[],moi=(droits.email||"").toLowerCase(),resp=droits.admin||(droits.roles||[]).includes("responsable_peda");
+  $("#semInfos").innerHTML=I.length?`<ul>${I.map(x=>`<li class="${x.importante?"imp":""}" style="--c:${x.importante?"#D1683F":"#3F6FA8"}"><b>${esc(x.titre)}</b>${x.lien?` · <a href="${esc(x.lien)}" target="_blank" rel="noopener">lien</a>`:""}
+      <span class="s">${esc(x.auteur_nom||x.auteur)} · ${x.classes.length?esc(x.classes.map(c=>((d.classes||[]).find(k=>k.code===c)||{libelle:c}).libelle).join(", ")):"toutes les classes"}${x.au?" · jusqu'au "+jfr(x.au):""}</span>
+      ${x.texte?`<p>${esc(x.texte)}</p>`:""}${x.auteur===moi||resp?`<button type="button" class="mini del" data-infodel="${x.id}" style="margin-top:4px">Retirer</button>`:""}</li>`).join("")}</ul>`
+    :'<p class="sem-vide">Aucune info pour cette semaine.</p>';}
+function formInfo(){const d=SEM.d||{},C=d.classes||[];
+  $("#fInfo").innerHTML=`<input name="titre" required placeholder="Titre (ex. Sortie pédagogique CAPa JP 2 jeudi)">
+    <textarea name="texte" placeholder="Détails (facultatif)"></textarea>
+    <input name="lien" type="url" placeholder="Lien (facultatif)">
+    <div class="ck"><span>Pour :</span>${C.map(c=>`<label><input type="checkbox" name="classes" value="${esc(c.code)}"> ${esc(c.libelle)}</label>`).join("")}<span class="s" style="flex-basis:100%;color:var(--ink-3)">Aucune case cochée = visible par tout le personnel</span></div>
+    <div class="row"><label style="font-size:12.5px">Du <input type="date" name="du" value="${SEM.lundi>lundiDe(new Date())?SEM.lundi:new Date().toISOString().slice(0,10)}"></label><label style="font-size:12.5px">au <input type="date" name="au" value="${addJ(SEM.lundi,4)}"></label>
+      <label style="font-size:12.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" name="importante" style="width:auto"> importante</label></div>
+    <div class="row"><button type="submit" class="mini">Publier</button><button type="button" class="mini" data-infoclose="1">Annuler</button></div>`;
+  $("#fInfo").hidden=false;$("#fInfo").titre.focus();}
+async function formAlt(code){const d=SEM.d||{},s=await session();const C=(d.classes||[]).filter(c=>c.referent||droits.admin||(droits.roles||[]).some(r=>["responsable_peda","secretariat"].includes(r)));
+  if(!C.length)return;code=code||C[0].code;let P=[];
+  try{P=await api("/rest/v1/alternance?classe=eq."+encodeURIComponent(code)+"&order=du",{token:s.access_token})||[];}catch(e){}
+  $("#fAlt").innerHTML=`<div class="row"><b>Calendrier d'alternance</b><select name="classe">${C.map(c=>`<option value="${esc(c.code)}"${c.code===code?" selected":""}>${esc(c.libelle)}</option>`).join("")}</select>
+      <span class="s" style="font-size:12px;color:var(--ink-3)">semaines de présence au CFA</span></div>
+    <div id="altRows">${(P.length?P:[{du:"",au:""}]).map(ligneAlt).join("")}</div>
+    <div class="row"><button type="button" class="mini" data-altadd="1">+ Une période</button>
+      <details style="font-size:12.5px"><summary style="cursor:pointer;color:var(--accent)">Coller des dates</summary><textarea name="coller" placeholder="Une période par ligne : 28/09/2026 02/10/2026" style="margin-top:4px;width:100%"></textarea><button type="button" class="mini" data-altcoller="1">Ajouter ces périodes</button></details></div>
+    <div class="row"><button type="submit" class="mini">Enregistrer</button><button type="button" class="mini" data-altclose="1">Fermer</button></div>`;
+  $("#fAlt").hidden=false;$("#fAlt").scrollIntoView({block:"nearest"});}
+const ligneAlt=p=>`<div class="per"><input type="date" name="du" value="${esc(p.du||"")}"> au <input type="date" name="au" value="${esc(p.au||"")}"><input name="note" placeholder="remarque" value="${esc(p.note||"")}" style="flex:1"><button type="button" class="mini del" data-altdel="1" aria-label="Supprimer la période">×</button></div>`;
+document.addEventListener("click",async e=>{const t=e.target;
+  const sm=t.closest("[data-sem]");if(sm){const n=+sm.dataset.sem;SEM.lundi=n?addJ(SEM.lundi,7*n):lundiDe(new Date());$("#fInfo").hidden=true;chargerSemaine();return;}
+  if(t.id==="btnInfo"){if($("#fInfo").hidden)formInfo();else $("#fInfo").hidden=true;return;}
+  if(t.closest("[data-infoclose]")){$("#fInfo").hidden=true;return;}
+  const idl=t.closest("[data-infodel]");if(idl){if(idl.dataset.sur!=="1"){idl.dataset.sur="1";idl.textContent="Confirmer";return;}
+    const s=await session();try{await api("/rest/v1/infos?id=eq."+idl.dataset.infodel,{method:"DELETE",token:s.access_token});chargerSemaine();}catch(err){alertSem(err.message);}return;}
+  if(t.id==="btnAlt"){formAlt();return;}
+  if(t.closest("[data-altclose]")){$("#fAlt").hidden=true;return;}
+  if(t.closest("[data-altadd]")){$("#altRows").insertAdjacentHTML("beforeend",ligneAlt({}));return;}
+  if(t.closest("[data-altdel]")){t.closest(".per").remove();return;}
+  if(t.closest("[data-altcoller]")){const iso=x=>{const m=x.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`:"";};
+    $("#fAlt").coller.value.split("\n").forEach(l=>{const d=l.match(/\d{1,2}\/\d{1,2}\/\d{4}/g);if(d)$("#altRows").insertAdjacentHTML("beforeend",ligneAlt({du:iso(d[0]),au:iso(d[1]||d[0])}));});
+    $("#fAlt").coller.value="";$$(".per").forEach(r=>{if(!r.querySelector("[name=du]").value)r.remove();});return;}
+});
+function alertSem(m){const b=$("#banner");b.hidden=false;b.textContent=m;}
+document.addEventListener("change",e=>{if(e.target.closest("#fAlt")&&e.target.name==="classe")formAlt(e.target.value);});
+document.addEventListener("submit",async e=>{const f=e.target;
+  if(f.id==="fInfo"){e.preventDefault();const fd=new FormData(f),s=await session();
+    const body={titre:fd.get("titre").trim(),texte:fd.get("texte").trim(),lien:fd.get("lien").trim(),classes:fd.getAll("classes"),du:fd.get("du")||undefined,au:fd.get("au")||null,importante:!!fd.get("importante"),auteur:(droits.email||"").toLowerCase(),auteur_nom:((droits.prenom||"")+" "+(droits.nom||"")).trim()};
+    if(!body.titre)return;f.querySelector("button[type=submit]").disabled=true;
+    try{await api("/rest/v1/infos",{method:"POST",body,token:s.access_token});f.hidden=true;chargerSemaine();}catch(err){alertSem("Info non publiée : "+err.message);f.querySelector("button[type=submit]").disabled=false;}}
+  if(f.id==="fAlt"){e.preventDefault();const s=await session(),per=[...f.querySelectorAll(".per")].map(r=>({du:r.querySelector("[name=du]").value,au:r.querySelector("[name=au]").value,note:r.querySelector("[name=note]").value})).filter(p=>p.du);
+    try{await api("/rest/v1/rpc/alternance_fixer",{method:"POST",body:{p_classe:f.classe.value,p_periodes:per},token:s.access_token});f.hidden=true;chargerSemaine();}catch(err){alertSem("Calendrier non enregistré : "+err.message);}}
+});
 let EXTRAS=null,VEILLE_D=null;
 const MOTS=[[/\bcapa\b|jardinier paysagiste/i,["capa"]],[/\bbpa\b/i,["bpa"]],[/\bbp\b|brevet professionnel/i,["bp"]],[/\bbtsa?\b|technicien sup/i,["btsa"]],[/arbor|élag|elag|grimp|\barbres?\b/i,["cs"]],[/exploitation agricole|agricult|élevage|\bpac\b|maraîch|installation agricole/i,["bprea"]],[/paysag|espaces? verts?|jardin/i,["capa","bpa","bp","btsa"]]];
 const cleUrl=u=>String(u||"").replace(/[?&]utm_[^&#]*/g,"").replace(/#.*$/,"");
