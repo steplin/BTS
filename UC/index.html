@@ -280,13 +280,15 @@ async function chargerClasse(code){
       api(`/rest/v1/uc_epreuves?plan_id=eq.${pl}&order=ordre,code`),
       api(`/rest/v1/uc_candidats?referentiel=eq.${encodeURIComponent(ref)}&cohorte=eq.${encodeURIComponent(coh)}&order=groupe,ordre,nom,prenom`),
       api(`/rest/v1/uc_plans?id=eq.${pl}`),
-      api(`/rest/v1/uc_dates?classe=in.(${G.map(g=>encodeURIComponent(g.code)).join(",")})`),
+      Promise.resolve([]),
       S.pers?Promise.resolve(S.pers):rpc("uc_personnel").catch(()=>[])]);
     [S.droits,S.affPlan]=await Promise.all([rpc("uc_mes_droits_plan",{p_plan:pl}),api(`/rest/v1/uc_affectations?plan_id=eq.${pl}`)]);S.droits=S.droits||{};
     S.ref=refs[0]||{};S.plan=plans[0]||{};S.dates=dates;S.pers=pers;S.cohorte=coh;S.ucs=ucs;S.epreuves=eps;S.cands=cands;
     const ucIds=ucs.map(u=>u.id).join(",")||"0",epIds=eps.map(e=>e.id).join(",")||"0",cIds=cands.map(c=>c.id).join(",");
     S.cis=await api(`/rest/v1/uc_cis?uc_id=in.(${ucIds})&order=ordre,code`);
     const ciIds=S.cis.map(c=>c.id).join(",")||"0";
+    // Dates rattachées à la cohorte (épreuves du plan) et au groupe : elles suivent le passage de 1re en 2e année
+    S.dates=await api(`/rest/v1/uc_dates?epreuve_id=in.(${epIds})`);
     const [crs,epc,val,sai]=await Promise.all([
       api(`/rest/v1/uc_crs?ci_id=in.(${ciIds})&order=ordre,id`),
       api(`/rest/v1/uc_epreuve_cis?epreuve_id=in.(${epIds})`),
@@ -354,7 +356,7 @@ function render(){
   S.vue==="doc4"?renderDoc4():renderDoc5();
 }
 const nomPers=e=>{const p=(S.pers||[]).find(x=>x.email===e);return p?p.nom:(e||"");};
-const dateDe=(ep,cl)=>S.dates.find(d=>d.epreuve_id===ep&&d.classe===cl)||{};
+const dateDe=(ep,cl)=>S.dates.find(d=>d.epreuve_id===ep&&(d.groupe||"")===lettreDe(cl))||{};
 function avancementEpreuve(ep,cands){let f=0,t=0;const cis=cisEpreuve(ep.id);
   for(const c of cands){for(const ci of cis){if(validation(c.id,ci.uc_id))continue;for(const cr of crsDe(ci)){t++;if(rempli(c.id,"cr",cr.id))f++;}t++;if(rempli(c.id,"ci",ci.id))f++;}t++;if(rempli(c.id,"epreuve",ep.id))f++;}
   return [f,t];}
@@ -467,7 +469,7 @@ function renderTdb(){
       t+=`</tbody></table>`;}
     const proch=S.dates.filter(d=>d.jour&&d.jour>=auj&&eps.some(e=>e.id===d.epreuve_id)).sort((a,b)=>(a.jour+a.heure).localeCompare(b.jour+b.heure)).slice(0,6);
     if(proch.length)t+=`<h2 class="h2" style="margin-top:22px">Prochaines épreuves</h2><ul>${proch.map(d=>{const e=S.epreuves.find(x=>x.id===d.epreuve_id);
-      return `<li><b>${esc(frDate(d.jour))}</b> ${esc((d.heure||"08:15").replace(":","h"))} · ${esc(e.code)} ${esc(e.nom)} · ${esc(d.classe)} · ${esc(d.lieu||"")}</li>`;}).join("")}</ul>`;
+      return `<li><b>${esc(frDate(d.jour))}</b> ${esc((d.heure||"08:15").replace(":","h"))} · ${esc(e.code)} ${esc(e.nom)} · groupe ${esc(d.groupe||"")} · ${esc(d.lieu||"")}</li>`;}).join("")}</ul>`;
   }else if(S.tdb==="uc"){
     const ucs=S.ucs.filter(u=>peut("uc",u.id));
     t=!ucs.length?`<p class="empty">Aucune UC à proposer pour vous dans ce plan.</p>`:`<table class="list"><thead><tr><th>UC</th><th>Propositions rédigées</th><th></th></tr></thead><tbody>${
@@ -528,13 +530,13 @@ function majDate(inp){const ep=+inp.dataset.ep,cl=inp.dataset.cl,k=ep+"|"+cl;cle
     if(v.jour&&!dansPeriode(e,v.jour)){statut("Date hors des périodes agréées pour "+e.code+" : "+periodes(e).map(p=>frDate(p.du)+" – "+frDate(p.au)).join(", "),true);return;}
     statut("Enregistrement…");
     try{await rpc("uc_fixer_date",{p_epreuve:ep,p_classe:cl,p_jour:v.jour||null,p_heure:v.heure||"08:15",p_duree:+v.duree||0,p_lieu:v.lieu||""});
-      const d=S.dates.find(x=>x.epreuve_id===ep&&x.classe===cl);const n={epreuve_id:ep,classe:cl,jour:v.jour||null,heure:v.heure||"08:15",duree:+v.duree||0,lieu:v.lieu||"UFA Kerplouz LaSalle Auray"};
+      const d=S.dates.find(x=>x.epreuve_id===ep&&(x.groupe||"")===lettreDe(cl));const n={epreuve_id:ep,classe:cl,groupe:lettreDe(cl),jour:v.jour||null,heure:v.heure||"08:15",duree:+v.duree||0,lieu:v.lieu||"UFA Kerplouz LaSalle Auray"};
       d?Object.assign(d,n):S.dates.push(n);S.cal=null;
       statut(v.jour&&v.jour<ajout(AUJ(),15)?"Enregistré — attention : moins de 15 jours avant l'épreuve":"Enregistré",v.jour&&v.jour<ajout(AUJ(),15));
       if(inp.dataset.d==="jour")renderListe();}
     catch(e){statut("Non enregistré : "+e.message.replace(/^PERIODE : /,""),true);}},700));}
 async function marquer(ep,cl,faites){const r=await rpc("uc_convocations",{p_epreuve:ep,p_classe:cl,p_faites:faites});
-  const d=S.dates.find(x=>x.epreuve_id===ep&&x.classe===cl);if(d)d.convoc_le=r.convoc_le;else S.dates.push({epreuve_id:ep,classe:cl,convoc_le:r.convoc_le});}
+  const d=S.dates.find(x=>x.epreuve_id===ep&&(x.groupe||"")===lettreDe(cl));if(d)d.convoc_le=r.convoc_le;else S.dates.push({epreuve_id:ep,classe:cl,groupe:lettreDe(cl),convoc_le:r.convoc_le});}
 async function marquerSession(cl,lundi,faites){const x=sessions(S.classe.groupes).find(y=>y.g.code===cl&&y.lundi===lundi);if(!x)return;
   try{for(const it of x.items)await marquer(it.e.id,cl,faites);S.cal=null;renderListe();}catch(e){toast(e.message);}}
 const hPassage=(h,i,du)=>{const [a,b]=(h||"08:15").split(":").map(Number),t=a*60+b+i*(+du||0);return String(Math.floor(t/60)).padStart(2,"0")+"h"+String(t%60).padStart(2,"0");};
