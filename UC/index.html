@@ -48,7 +48,8 @@ table{border-collapse:collapse;width:100%}
 .doc td{border:1px solid #C9D3C6;padding:8px;vertical-align:top;font-size:13px}
 .doc td.ci{background:#F8FAF7}
 .doc td.ci b{display:block}
-.doc .ind{color:var(--ink-2)}
+.doc .ind{color:var(--ink-2);white-space:pre-line}
+.doc .crt{font-weight:600}
 .cell{display:flex;flex-direction:column;gap:4px}
 textarea{font:13px/1.45 var(--body);color:var(--ink);background:#FCFDFB;border:1px solid var(--line);border-radius:7px;padding:6px 8px;width:100%;min-height:62px;resize:vertical}
 textarea:focus{background:#fff}
@@ -85,6 +86,7 @@ textarea:focus{background:#fff}
   .print-only{display:block;white-space:pre-wrap}
   .doc th,.doc td{border-color:#000}
   .doc tr{break-inside:avoid}
+  .d5 th,.d5 td{padding:3px 5px!important;font-size:9pt!important;line-height:1.3}
   .ptitle{display:block!important;text-align:center;font-weight:700;border:1px solid #000;padding:5px;margin:4px 0 8px}
 }
 .dhead{width:100%;font-size:12px;font-style:italic;color:var(--ink-2);margin-bottom:6px}
@@ -252,6 +254,7 @@ function majCands(){const L=candsVis(),plusieurs=S.classe.groupes.length>1&&!S.g
 const ucDe=ci=>S.ucs.find(u=>u.id===ci.uc_id)||{};
 const cisEpreuve=ep=>S.epCis.filter(x=>x.epreuve_id===ep).map(x=>S.cis.find(c=>c.id===x.ci_id)).filter(Boolean)
   .sort((a,b)=>byOrd(ucDe(a),ucDe(b))||byOrd(a,b));
+const crHtml=r=>{const [t,...d]=String(r.nom||"").split("\n");return `<span class="crt">${esc(t)}</span>${d.length?"<br>"+esc(d.join(" ")):""}`;};
 const crsDe=ci=>S.crs.filter(r=>r.ci_id===ci.id).sort(byOrd);
 const epreuveDe=ci=>S.epreuves.find(e=>S.epCis.some(x=>x.epreuve_id===e.id&&x.ci_id===ci.id));
 const validation=(cand,uc)=>S.valid.find(v=>v.candidat===cand&&v.uc_id===uc);
@@ -309,18 +312,18 @@ function renderListe(){
       <td style="text-align:right;white-space:nowrap"><button type="button" class="ghost small" data-go="doc4" data-c="${c.id}">Document 4</button> <button type="button" class="ghost small" data-go="doc5" data-c="${c.id}">Document 5</button></td></tr>`;}).join("")
   }</tbody></table>`;
   const edi=`<h2 class="h2">Éditions de la cohorte ${esc(S.cohorte)} <small>impression ou « Enregistrer au format PDF »</small></h2>
-    <p class="editions"><button type="button" class="ghost" data-lot="doc5">Tous les documents 5 (A3 paysage)</button>
+    <p class="editions"><button type="button" class="ghost" data-lot="doc5">Tous les documents 5 (A3 portrait)</button>
       <button type="button" class="ghost" data-lot="uc">Grille par UC (A4 paysage)</button></p>`;
   $("#view").innerHTML=edi+ep+cand;
 }
 /* ---------- Éditions de la cohorte (PDF via l'impression du navigateur) ---------- */
-function imprimerLot(html,taille){$("#lot").innerHTML=html;$("#pageSize").textContent=`@page{size:${taille} landscape}`;
+function imprimerLot(html,taille){$("#lot").innerHTML=html;$("#pageSize").textContent=`@page{size:${taille}}`;
   document.body.classList.add("print-lot");window.print();document.body.classList.remove("print-lot");}
 const tousCands=()=>S.cands.slice().sort((a,b)=>(a.groupe||"").localeCompare(b.groupe||"")||(a.ordre-b.ordre)||a.nom.localeCompare(b.nom));
-// Tous les documents 5 de la cohorte : un par candidat, A3 paysage recto (exigence du guide DRAAF)
+// Tous les documents 5 de la cohorte : un par candidat, A3 portrait recto, comme le plan agréé (exigence du guide DRAAF)
 function lotDoc5(){const garde=S.cand,vue=S.vue;let html="";
   for(const c of tousCands()){S.cand=c.id;renderDoc5();html+=`<section class="lot">${$("#view").innerHTML}</section>`;}
-  S.cand=garde;S.vue=vue;render();imprimerLot(html,"A3");}
+  S.cand=garde;S.vue=vue;render();imprimerLot(html,"A3 portrait");}
 // Grille par UC : récapitulatif candidats × UC, puis une page par UC avec la proposition argumentée de chaque candidat
 function etatUC(c,u){const v=validation(c,u.id);if(v)return v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le);
   const s=sai(c,"uc",u.id)||{};return s.acquis===true?"Validation proposée":s.acquis===false?"Non-validation proposée":"—";}
@@ -335,7 +338,7 @@ function grilleUC(){const L=tousCands(),P=S.plan||{};
     html+=`<section class="lot">${tete("GRILLE PAR UC — "+u.code+" "+u.nom)}
       <table class="gtab" style="margin-top:8px"><thead><tr><th style="width:16%">Candidat</th><th style="width:7%">Groupe</th><th style="width:14%">Proposition</th><th>Proposition argumentée sur la validation de la capacité globale</th><th style="width:15%">Avis du jury, date</th></tr></thead><tbody>${
         L.map(c=>{const s=sai(c.id,"uc",u.id)||{};return `<tr><td>${esc(c.nom+" "+c.prenom)}</td><td>${esc(c.groupe)}</td><td>${esc(etatUC(c.id,u))}</td><td style="white-space:pre-wrap">${esc(validation(c.id,u.id)?"":s.texte||"")}</td><td></td></tr>`;}).join("")}</tbody></table></section>`;}
-  imprimerLot(html,"A4");}
+  imprimerLot(html,"A4 landscape");}
 /* ---------- Dates et convocations (référent de la classe) ---------- */
 const tDate=new Map();
 function majDate(inp){const ep=+inp.dataset.ep,cl=inp.dataset.cl,k=ep+"|"+cl;clearTimeout(tDate.get(k));
@@ -403,8 +406,8 @@ function renderDoc4(){
     const vtxt=v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
     (crs.length?crs:[null]).forEach((cr,i)=>{
       rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(ci.code)} ${esc(ci.nom)}</td>`:""}
-        <td data-l="${esc(H[1])}">${cr?esc((objectifs()?cr.code+" ":"")+cr.nom):""}</td><td class="ind" data-l="${esc(H[2])}">${cr?esc(cr.indicateur):""}</td>
-        <td data-l="${esc(H[3])}">${v?`<span class="valide">${esc(vtxt)}</span>`:cr?champ(c,"cr",cr.id,{aria:"Appréciation : "+cr.nom}):""}</td>
+        <td data-l="${esc(H[1])}">${cr?(objectifs()&&cr.code?esc(cr.code)+" ":"")+crHtml(cr):""}</td><td class="ind" data-l="${esc(H[2])}">${cr?esc(cr.indicateur):""}</td>
+        <td data-l="${esc(H[3])}">${v?`<span class="valide">${esc(vtxt)}</span>`:cr?champ(c,"cr",cr.id,{aria:"Appréciation : "+String(cr.nom).split("\n")[0]}):""}</td>
         ${i===0?`<td rowspan="${n}" data-l="${esc(H[4])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,{aria:"Appréciation globale "+ci.code,acquis:ACQ_CI})}</td>`:""}</tr>`;});
   }
   const ucsL=[...new Map(cis.map(ci=>[ucDe(ci).id,ucDe(ci)])).values()].map(u=>u.code+" "+u.nom).join(" ; "),cisL=cis.map(ci=>ci.code+" "+ci.nom).join(" ; ");
@@ -416,7 +419,7 @@ function renderDoc4(){
       <tr><td>UC concernée(s) :</td><td>${esc(ucsL)}</td></tr>
       <tr><td>${objectifs()?"OI":"OI ou capacité(s) intermédiaire(s)"} concerné(s) :</td><td>${esc(cisL)}</td></tr>
       <tr><td>Modalités (nature de l'épreuve) :</td><td>${esc(ep.nature||"Pratique et entretien d'évaluation")}</td></tr></table>
-    <table class="doc"><colgroup><col style="width:19%"><col style="width:17%"><col style="width:17%"><col style="width:24%"><col style="width:23%"></colgroup>
+    <table class="doc"><colgroup><col style="width:14%"><col style="width:18%"><col style="width:26%"><col style="width:22%"><col style="width:20%"></colgroup>
     <thead><tr>${H.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows||`<tr><td colspan="5">Aucune capacité rattachée à cette épreuve.</td></tr>`}</tbody></table>
     <div class="tot"><h3>Appréciation globale relative à l'épreuve</h3>${champ(c,"epreuve",ep.id,{aria:"Appréciation globale de l'épreuve"})}</div>`;
 }
@@ -431,8 +434,8 @@ function renderDoc5(){
     const vtxt=v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
     (cis.length?cis:[null]).forEach((ci,i)=>{const ep=ci&&epreuveDe(ci);
       rows+=`<tr>${i===0?`<td class="ci" rowspan="${n}" data-l="${esc(H[0])}"><b>${esc(u.code)}</b>${esc(u.nom)}</td>`:""}
-        <td data-l="${esc(H[1])}">${ci?esc(ci.code+" "+ci.nom):""}</td><td data-l="${esc(H[2])}">${ep?esc(ep.code+" "+ep.nom):""}</td>
-        <td class="ind" data-l="${esc(H[3])}">${ci?crsDe(ci).map(r=>esc(r.nom)).join("<br>"):""}</td>
+        <td data-l="${esc(H[1])}">${ci?esc(ci.code+" "+ci.nom):""}</td><td data-l="${esc(H[2])}">${ep?`<span title="${esc(ep.nom)}">${esc(ep.code)}</span>`:""}</td>
+        <td class="ind" data-l="${esc(H[3])}">${ci?crsDe(ci).map(crHtml).join("<br>"):""}</td>
         <td data-l="${esc(H[4])}">${!ci?"":v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"ci",ci.id,{aria:"Appréciation "+ci.code,acquis:ACQ_CI})}</td>
         ${i===0?`<td rowspan="${n}" data-l="${esc(H[5])}">${v?`<span class="valide">${esc(vtxt)}</span>`:champ(c,"uc",u.id,{aria:"Proposition "+u.code,ph:"Proposition argumentée",acquis:ACQ_UC,imprimer:IMP_UC})}</td>
                   <td rowspan="${n}" data-l="${esc(H[6])}"></td>`:""}</tr>`;});
@@ -441,7 +444,7 @@ function renderDoc5(){
   $("#view").innerHTML=entete("DOCUMENT 5 : TABLEAU RÉCAPITULATIF PAR CANDIDAT ET PAR UC")+`
     <table class="dinfo"><tr><td>Nom du candidat : <b>${esc((cc.nom||"")+" "+(cc.prenom||""))}</b></td><td>Cohorte : ${esc(S.cohorte||"")}</td>
       <td>Date de la présentation au jury : ${P.jury_le?esc(frDate(P.jury_le)):"__/__/____"}</td></tr></table>
-    <table class="doc"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:9%"><col style="width:15%"><col style="width:20%"><col style="width:20%"><col style="width:10%"></colgroup>
+    <table class="doc d5"><colgroup><col style="width:11%"><col style="width:13%"><col style="width:5%"><col style="width:27%"><col style="width:18%"><col style="width:18%"><col style="width:8%"></colgroup>
     <thead><tr>${H.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -492,7 +495,7 @@ document.addEventListener("click",async e=>{
   else if(b.dataset.go){await toutEnregistrer();S.cand=b.dataset.c;S.vue=b.dataset.go;render();window.scrollTo(0,0);}
   else if(b.id==="prev"||b.id==="next"){await toutEnregistrer();const L=candsVis(),i=L.findIndex(c=>c.id===S.cand),j=i+(b.id==="next"?1:-1);
     if(j>=0&&j<L.length){S.cand=L[j].id;render();}}
-  else if(b.id==="btnPrint"){await toutEnregistrer();$("#pageSize").textContent=`@page{size:${S.vue==="doc5"?"A3":"A4"} landscape}`;window.print();}
+  else if(b.id==="btnPrint"){await toutEnregistrer();$("#pageSize").textContent=`@page{size:${S.vue==="doc5"?"A3 portrait":"A4 landscape"}}`;window.print();}
   else if(b.hasAttribute("data-sug"))suggestions(b.closest(".cell"));
   else if(b.hasAttribute("data-conv"))convocations(+b.dataset.ep,b.dataset.cl);
   else if(b.dataset.lot){await toutEnregistrer();b.dataset.lot==="doc5"?lotDoc5():grilleUC();}
