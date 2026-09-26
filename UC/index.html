@@ -196,6 +196,8 @@ textarea:focus{background:#fff}
     <span class="sp"></span>
     <span class="status" id="status" aria-live="polite"></span>
     <button type="button" class="ghost" id="btnPrint" hidden>Imprimer</button>
+    <button type="button" class="ghost" id="btnD5x" hidden title="Document 5 de ce candidat au format Excel">Excel</button>
+    <button type="button" class="ghost" id="btnD5p" hidden title="Document 5 de ce candidat en PDF (produit depuis la grille Excel)">PDF</button>
   </div>
 
   <section class="card" id="view"><p class="empty">Chargement…</p></section>
@@ -352,7 +354,7 @@ function render(){
   $$("#zones [data-z]").forEach(b=>b.setAttribute("aria-current",String(b.dataset.z===S.zone)));
   $("#titreZ").textContent=ZONES[S.zone];document.title=ZONES[S.zone];
   const sa=S.zone==="saisie";$("#bar").hidden=S.zone==="cal"||!S.classe;
-  $(".seg").hidden=!sa;$("#navCand").hidden=!sa;$("#navEpr").hidden=!(sa&&S.vue==="doc4");$("#btnPrint").hidden=!sa;
+  $(".seg").hidden=!sa;$("#navCand").hidden=!sa;$("#navEpr").hidden=!(sa&&S.vue==="doc4");$("#btnPrint").hidden=!(sa&&S.vue==="doc4");$("#btnD5x").hidden=$("#btnD5p").hidden=!(sa&&S.vue==="doc5");
   $$(".seg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===S.vue)));
   $("#selCand").value=S.cand||"";$("#selEpr").value=S.epr||"";
   if(S.zone==="cal")return renderCal();
@@ -393,9 +395,13 @@ function renderListe(){
         <td>${x.items.map(it=>`<b>${esc(it.e.code)}</b> ${esc(new Date(it.d.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}))} ${esc((it.d.heure||"08:15").replace(":","h"))}`).join("<br>")}</td>
         <td>${faites?`<span class="acq oui">faites</span>`:`<span class="acq${lim<=auj?" non":""}">à envoyer avant le ${esc(frDate(lim))}</span>`}</td>
         <td style="text-align:right;white-space:nowrap">${ed?`<button type="button" class="small" data-convs ${k}>Convocations</button> ${faites?`<button type="button" class="ghost small" data-convsno ${k}>Annuler</button>`:`<button type="button" class="ghost small" data-convsok ${k}>Marquer faites</button>`}`:""}</td></tr>`;}).join("")}</tbody></table>`}`;
-  const edi=`<h2 class="h2">Éditions de la cohorte ${esc(S.cohorte)} <small>impression ou « Enregistrer au format PDF »</small></h2>
-    <p class="editions"><button type="button" class="ghost" data-lot="doc5">Tous les documents 5 (A3 portrait)</button>
-      <button type="button" class="ghost" data-lot="uc">Grille par UC (A4 paysage)</button></p>`;
+  const edi=`<h2 class="h2">Préparation des jurys · cohorte ${esc(S.cohorte)} <small>fichiers Excel modifiables et PDF</small></h2>
+    <table class="list editions-t"><tbody>
+      <tr><td><b>Documents 5</b><br><small>un par candidat, A3 portrait, présentation EvalUc</small></td><td><button type="button" class="ghost small" data-exp="d5zip">Excel + PDF (.zip)</button> <button type="button" class="ghost small" data-exp="d5pdf">PDF unique de la cohorte</button></td></tr>
+      <tr><td><b>Résultat final</b><br><small>grille de présentation des résultats à la validation, A4 paysage</small></td><td><button type="button" class="ghost small" data-exp="rfx">Excel</button> <button type="button" class="ghost small" data-exp="rfp">PDF</button></td></tr>
+      <tr><td><b>Grille par UC</b><br><small>propositions argumentées de chaque candidat, une feuille par UC</small></td><td><button type="button" class="ghost small" data-exp="gux">Excel</button> <button type="button" class="ghost small" data-exp="gup">PDF</button></td></tr>
+    </tbody></table>
+    <p class="meta">Les PDF sont produits à partir des mêmes grilles que les fichiers Excel. Le fichier Excel reste modifiable avant le jury.</p>`;
   const nomsUC=u=>S.affPlan.filter(a=>a.uc_id===u.id).map(a=>nomPers(a.email)),
     epsUC=u=>S.epreuves.filter(e=>cisEpreuve(e.id).some(ci=>ci.uc_id===u.id));
   const peutRef=S.resp||G.some(g=>g.coord),affUC=u=>S.affPlan.filter(a=>a.uc_id===u.id),refUC=u=>(affUC(u).find(a=>a.referent)||{}).email||"";
@@ -510,29 +516,97 @@ async function renderCal(){
   }else h+=afix.length?`<table class="list cal">${tete}<tbody>${afix.map(ligne).join("")}</tbody></table>`:`<p class="empty">Toutes les dates sont fixées.</p>`;
   $("#view").innerHTML=h;
 }
-/* ---------- Éditions de la cohorte (PDF via l'impression du navigateur) ---------- */
-function imprimerLot(html,taille){$("#lot").innerHTML=html;$("#pageSize").textContent=`@page{size:${taille}}`;
-  document.body.classList.add("print-lot");window.print();document.body.classList.remove("print-lot");}
+/* ---------- Préparation des jurys : grilles Excel (présentation EvalUc) et PDF produits depuis ces grilles ---------- */
 const tousCands=()=>S.cands.slice().sort((a,b)=>(a.groupe||"").localeCompare(b.groupe||"")||(a.ordre-b.ordre)||a.nom.localeCompare(b.nom));
-// Tous les documents 5 de la cohorte : un par candidat, A3 portrait recto, comme le plan agréé (exigence du guide DRAAF)
-function lotDoc5(){const garde=S.cand,vue=S.vue;let html="";
-  for(const c of tousCands()){S.cand=c.id;renderDoc5();html+=`<section class="lot">${$("#view").innerHTML}</section>`;}
-  S.cand=garde;S.vue=vue;render();imprimerLot(html,"A3 portrait");}
-// Grille par UC : récapitulatif candidats × UC, puis une page par UC avec la proposition argumentée de chaque candidat
-function etatUC(c,u){const v=validation(c,u.id);if(v)return v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le);
-  const s=sai(c,"uc",u.id)||{};return s.acquis===true?"Validation proposée":s.acquis===false?"Non-validation proposée":"—";}
-function grilleUC(){const L=tousCands(),P=S.plan||{};
-  const tete=t=>`<table class="dhead"><tr><td>Diplôme : ${esc(S.ref.libelle||"")}</td><td style="text-align:center">Cohorte : ${esc(S.cohorte||"")}</td>
-      <td style="text-align:right">Plan d'évaluation agréé le : ${P.agree_le?esc(frDate(P.agree_le)):"__/__/____"} · Jury : ${P.jury_le?esc(frDate(P.jury_le)):"__/__/____"}</td></tr></table><div class="dtitre">${esc(t)}</div>`;
-  let html=`<section class="lot">${tete("GRILLE DE PRÉSENTATION DES RÉSULTATS À LA VALIDATION — PROPOSITIONS PAR UC")}
-    <table class="gtab" style="margin-top:8px"><thead><tr><th style="width:22%">Candidat</th><th style="width:6%">Groupe</th>${S.ucs.map(u=>`<th>${esc(u.code)}</th>`).join("")}</tr></thead><tbody>${
-      L.map(c=>`<tr><td>${esc(c.nom+" "+c.prenom)}</td><td>${esc(c.groupe)}</td>${S.ucs.map(u=>`<td class="c">${esc(etatUC(c.id,u))}</td>`).join("")}</tr>`).join("")}</tbody></table>
-    <p style="font-size:9pt">${S.ucs.map(u=>esc(u.code+" : "+u.nom)).join(" · ")}</p></section>`;
-  for(const u of S.ucs){
-    html+=`<section class="lot">${tete("GRILLE PAR UC — "+u.code+" "+u.nom)}
-      <table class="gtab" style="margin-top:8px"><thead><tr><th style="width:16%">Candidat</th><th style="width:7%">Groupe</th><th style="width:14%">Proposition</th><th>Proposition argumentée sur la validation de la capacité globale</th><th style="width:15%">Avis du jury, date</th></tr></thead><tbody>${
-        L.map(c=>{const s=sai(c.id,"uc",u.id)||{};return `<tr><td>${esc(c.nom+" "+c.prenom)}</td><td>${esc(c.groupe)}</td><td>${esc(etatUC(c.id,u))}</td><td style="white-space:pre-wrap">${esc(validation(c.id,u.id)?"":s.texte||"")}</td><td></td></tr>`;}).join("")}</tbody></table></section>`;}
-  imprimerLot(html,"A4 landscape");}
+const VERT="3C7D15",XC={b:true,sz:11,fond:VERT,coul:"FFFFFF",al:"c"},XB={sz:11},XT={b:true,sz:13,bord:false},VIDE={v:"",bord:false};
+const nomCand=c=>((c.nom||"").toUpperCase()+" "+(c.prenom||"")).trim();
+const vtexte=v=>v?(v.statut==="vaa"?"VAA":"Validée le "+frDate(v.le)):"";
+const hautDoc=()=>{const P=S.plan||{};return [{cells:[{v:"Diplôme : "+(S.ref.libelle||""),i:true,sz:11,bord:false,cs:3},null,null,{v:"Session : "+(S.cohorte||""),i:true,sz:11,bord:false,al:"c",cs:2},null,{v:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):""),i:true,sz:11,bord:false,al:"r",cs:2},null]}];};
+function feuilleDoc5(c){const P=S.plan||{},n7=[null,null,null,null,null,null];
+  const H=["Capacité globale de l'UC",objectifs()?"N° OI rang 1 + Thème":"Capacité intermédiaire","N° épreuve","Rappels des critères d'évaluation",
+    objectifs()?"Appréciation\nGlobale relative à la capacité intermédiaire (OI rang 1)":"Appréciation\nGlobale relative à la capacité intermédiaire","Proposition argumentée\nsur la validation de la capacité globale","Avis du Jury\ndate"];
+  const L=[{h:30,cells:[{...XT,v:"DOCUMENT 5 : TABLEAU RECAPITULATIF PAR CANDIDAT ET PAR UC",cs:7},...n7]},
+    {h:24,cells:[{v:"Candidat : "+nomCand(c),b:true,sz:12,fond:"F9F9F9",al:"c",cs:3},null,null,{v:"Diplôme : "+(S.ref.libelle||""),b:true,sz:12,fond:"F9F9F9",al:"c",cs:4},null,null,null]},
+    {h:8,cells:[{...VIDE,cs:7},...n7]},
+    {h:40,cells:H.map(v=>({...XC,v}))}];
+  for(const u of S.ucs){const oe=ci=>{const e=epreuveDe(ci);return e?e.ordre*1000+S.epreuves.indexOf(e):1e9;};
+    const cis=S.cis.filter(x=>x.uc_id===u.id).sort((a,b)=>oe(a)-oe(b)||byOrd(a,b)),v=validation(c.id,u.id);
+    const blocs=(cis.length?cis:[null]).map(ci=>({ci,crs:ci?crsDe(ci):[]}));const nUC=blocs.reduce((t,x)=>t+Math.max(1,x.crs.length),0);
+    const su=sai(c.id,"uc",u.id)||{},prop=v?vtexte(v):[su.acquis===true?"Proposée valide":su.acquis===false?"Proposée non valide":"",su.texte||""].filter(Boolean).join("\n\n");
+    let premier=true;
+    for(const {ci,crs} of blocs){const n=Math.max(1,crs.length),ep=ci&&epreuveDe(ci),sc=ci?(sai(c.id,"ci",ci.id)||{}):{};
+      const app=!ci?"":v?vtexte(v):[sc.acquis===true?"Acquis":sc.acquis===false?"Non acquis":"",sc.texte||""].filter(Boolean).join("\n");
+      for(let i=0;i<n;i++){const row=[];
+        row.push(premier?{...XB,v:u.code+" "+u.nom,b:true,rs:nUC,va:"t"}:null);
+        row.push(i===0?{...XB,v:ci?ci.code+" "+ci.nom:"",rs:n,va:"t"}:null);
+        row.push(i===0?{...XB,v:ep?ep.code:"",rs:n,al:"c"}:null);
+        row.push({...XB,v:crs[i]?String(crs[i].nom||""):"",sz:10});
+        row.push(i===0?{...XB,v:app,rs:n,va:"t",al:v?"c":"l"}:null);
+        row.push(premier?{...XB,v:prop,rs:nUC,va:"t",al:v?"c":"l"}:null);
+        row.push(premier?{...XB,v:"",rs:nUC,al:"c"}:null);
+        L.push({cells:row});premier=false;}}}
+  const finTab=L.length;L.push({h:20,cells:[{...VIDE,cs:7},...n7]});
+  L.push({h:22,cells:[{v:"Le "+(P.jury_le?frDate(P.jury_le):"_______ / _______ / 20_______"),b:true,sz:11,bord:false,cs:2},null,{v:"Signature du Président-adjoint du jury",sz:11,bord:false,cs:5},null,null,null,null]});
+  return {nom:"Doc 5",papier:"A3",cols:[30,30,14,36,36,36,14],lignes:L,repeter:1,repeterDe:4,finRepeter:finTab,hautPDF:hautDoc(),
+    teteXL:{g:S.classe.libelle,c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):"")},piedXL:{g:ETAB+" · "+nomCand(c)},piedPDF:ETAB+" · "+nomCand(c)};}
+function feuilleResultat(){const P=S.plan||{},U=S.ucs,nc=U.length+3,vide=()=>Array(nc-1).fill(null),C=tousCands();
+  const ligne=(v,o={})=>({h:18,cells:[{v,sz:11,bord:false,cs:nc,...o},...vide()]});
+  const fin=(S.cohorte||"").split("-")[1]||"";
+  const L=[ligne("Nom du centre (ou du site d'évaluation) : "+ETAB,{b:true}),ligne("Date d'agrément de l'épreuve : "+(P.agree_le?frDate(P.agree_le):"")),
+    ligne("Date d'évaluation : "+fin),ligne("Date de validation : "+(P.jury_le?frDate(P.jury_le):"")),ligne(""),
+    {h:24,cells:[{...XT,v:"RESULTAT FINAL "+S.classe.libelle+" · cohorte "+(S.cohorte||""),fond:"FBFBFB",bord:true,al:"c",cs:nc},...vide()]},ligne(""),
+    {h:25,cells:[{...XC,v:"Nom Prénom candidat",rs:2},...U.map(u=>({...XC,v:u.code,rs:2})),{...XC,v:"Résultat final",cs:2},null]},
+    {h:35,cells:[null,...U.map(()=>null),{...XC,v:"Proposition\nOui/Non"},{...XC,v:"Avis Jury\nA/NA"}]}];
+  let admis=0;
+  for(const c of C){let ok=0,saisies=0;const cells=[{v:" "+nomCand(c),b:true,sz:11,fond:"FBFBFB"}];
+    for(const u of U){const v=validation(c.id,u.id),su=sai(c.id,"uc",u.id)||{};
+      if(v){ok++;saisies++;cells.push({v:vtexte(v),b:true,al:"c",sz:10});}
+      else if(su.acquis===true){ok++;saisies++;cells.push({v:"O",b:true,al:"c",sz:11});}
+      else if(su.acquis===false){saisies++;cells.push({v:"N",b:true,al:"c",sz:11,fond:"A9A9A9",coul:"FFFFFF"});}
+      else cells.push({v:"",al:"c"});}
+    const tout=U.length&&ok===U.length;if(U.length&&U.every(u=>validation(c.id,u.id)))admis++;
+    cells.push(tout?{v:"Oui",b:true,al:"c",sz:11}:saisies===U.length&&U.length?{v:"Non",b:true,al:"c",sz:11,fond:"A9A9A9",coul:"FFFFFF"}:{v:"",al:"c"});
+    cells.push({v:"",al:"c"});L.push({h:20,cells});}
+  L.push(ligne(""));
+  const pied=(t,n)=>({h:18,cells:[{v:t,b:true,sz:11,bord:false},{v:String(n),sz:11,bord:false,al:"c"},{v:"",bord:false,cs:nc-2},...Array(nc-3).fill(null)]});
+  const finTab=L.length-1;
+  L.push(pied("Nombre de candidats :",C.length),pied("Admis :",admis),pied("Ajourné(s) :",C.length-admis),ligne(""));
+  L.push({cells:[{v:U.map(u=>u.code+" : "+u.nom).join("\n"),sz:9,bord:false,cs:nc},...vide()]});
+  return {nom:"Résultat final",papier:"A4",paysage:true,cols:[42,...U.map(()=>12),16,16],lignes:L,repeter:2,repeterDe:8,finRepeter:finTab,
+    hautPDF:[{cells:[{v:"Diplôme : "+(S.ref.libelle||""),i:true,sz:11,bord:false,cs:1},{v:"Session : "+(S.cohorte||""),i:true,sz:11,bord:false,al:"c",cs:Math.max(1,U.length)},...Array(Math.max(0,U.length-1)).fill(null),{v:"Plan agréé le : "+(P.agree_le?frDate(P.agree_le):""),i:true,sz:11,bord:false,al:"r",cs:2},null]}],
+    teteXL:{g:S.classe.libelle,c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):"")},piedXL:{g:ETAB},piedPDF:ETAB};}
+function etatUC(c,u){const v=validation(c,u.id);if(v)return vtexte(v);const s=sai(c,"uc",u.id)||{};return s.acquis===true?"Validation proposée":s.acquis===false?"Non-validation proposée":"—";}
+function feuillesGrilleUC(){const L0=tousCands(),P=S.plan||{},n=S.ucs.length+2,Z=k=>Array(k).fill(null);
+  const tete={teteXL:{g:S.classe.libelle,c:"Session : "+(S.cohorte||""),d:"Plan d'évaluation agréé le : "+(P.agree_le?frDate(P.agree_le):"")},piedXL:{g:ETAB},piedPDF:ETAB};
+  const rec={nom:"Récapitulatif",papier:"A4",paysage:true,cols:[34,10,...S.ucs.map(()=>16)],repeter:1,repeterDe:3,...tete,lignes:[
+    {h:26,cells:[{...XT,v:"GRILLE DE PRÉSENTATION DES RÉSULTATS À LA VALIDATION — PROPOSITIONS PAR UC",cs:n},...Z(n-1)]},{h:8,cells:[{...VIDE,cs:n},...Z(n-1)]},
+    {h:30,cells:[{...XC,v:"Candidat"},{...XC,v:"Groupe"},...S.ucs.map(u=>({...XC,v:u.code}))]},
+    ...L0.map(c=>({cells:[{v:nomCand(c),b:true,sz:10},{v:c.groupe||"",al:"c"},...S.ucs.map(u=>({v:etatUC(c.id,u),al:"c",sz:9}))]})),
+    {h:8,cells:[{...VIDE,cs:n},...Z(n-1)]},...S.ucs.map(u=>({cells:[{v:u.code+" : "+u.nom,sz:9,bord:false,cs:n},...Z(n-1)]}))]};
+  const parUC=S.ucs.map(u=>({nom:u.code,papier:"A4",paysage:true,cols:[28,10,18,68,22],repeter:1,repeterDe:3,...tete,lignes:[
+    {h:26,cells:[{...XT,v:"GRILLE PAR UC — "+u.code+" "+u.nom,cs:5},...Z(4)]},{h:8,cells:[{...VIDE,cs:5},...Z(4)]},
+    {h:34,cells:["Candidat","Groupe","Proposition","Proposition argumentée sur la validation de la capacité globale","Avis du jury, date"].map(v=>({...XC,v}))},
+    ...L0.map(c=>{const s=sai(c.id,"uc",u.id)||{};return {cells:[{v:nomCand(c),b:true},{v:c.groupe||"",al:"c"},{v:etatUC(c.id,u),al:"c"},{v:validation(c.id,u.id)?"":s.texte||"",va:"t"},{v:""}]};})]}));
+  return [rec,...parUC];}
+/* exports */
+const suffixeFic=()=>KepDoc.nomFichier(S.classe.libelle+" "+(S.cohorte||""));
+const nomFicCand=c=>KepDoc.nomFichier((c.nom||"").toUpperCase()+"_"+(c.prenom||""))+"_doc5";
+async function exporter(quoi,btn){if(!window.KepDoc){toast("Module d'export indisponible, rechargez la page.");return;}
+  const lib=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="Préparation…";}
+  try{await toutEnregistrer();const titre=S.classe.libelle+" "+(S.cohorte||"");
+    if(quoi==="d5x"||quoi==="d5p"){const c=S.cands.find(x=>x.id===S.cand);if(!c)return;const F=feuilleDoc5(c);
+      if(quoi==="d5x")await KepDoc.telecharger(nomFicCand(c)+".xlsx",await KepDoc.xlsx([F],{titre:"Document 5 "+nomCand(c)}));
+      else await KepDoc.telecharger(nomFicCand(c)+".pdf",await KepDoc.pdf([F],{titre:"Document 5 "+nomCand(c)}),"application/pdf");}
+    else if(quoi==="d5zip"){const f=[];for(const c of tousCands()){const F=feuilleDoc5(c),t={titre:"Document 5 "+nomCand(c)};
+        f.push(["xlsx/"+nomFicCand(c)+".xlsx",await KepDoc.xlsx([F],t)],["pdf/"+nomFicCand(c)+".pdf",await KepDoc.pdf([F],t)]);}
+      await KepDoc.telecharger("Documents5_"+suffixeFic()+".zip",await KepDoc.zip(f));}
+    else if(quoi==="d5pdf")await KepDoc.telecharger("Documents5_"+suffixeFic()+".pdf",await KepDoc.pdf(tousCands().map(feuilleDoc5),{titre:"Documents 5 "+titre}),"application/pdf");
+    else if(quoi==="rfx")await KepDoc.telecharger("Resultat_final_"+suffixeFic()+".xlsx",await KepDoc.xlsx([feuilleResultat()],{titre:"Résultat final "+titre}));
+    else if(quoi==="rfp")await KepDoc.telecharger("Resultat_final_"+suffixeFic()+".pdf",await KepDoc.pdf([feuilleResultat()],{titre:"Résultat final "+titre}),"application/pdf");
+    else if(quoi==="gux")await KepDoc.telecharger("Grille_par_UC_"+suffixeFic()+".xlsx",await KepDoc.xlsx(feuillesGrilleUC(),{titre:"Grille par UC "+titre}));
+    else if(quoi==="gup")await KepDoc.telecharger("Grille_par_UC_"+suffixeFic()+".pdf",await KepDoc.pdf(feuillesGrilleUC(),{titre:"Grille par UC "+titre}),"application/pdf");}
+  catch(e){console.error(e);toast("Export impossible : "+(e.message||e));}
+  finally{if(btn){btn.disabled=false;btn.textContent=lib;}}}
 /* ---------- Dates et convocations (référent de la classe) ---------- */
 const tDate=new Map();
 function majDate(inp){const ep=+inp.dataset.ep,cl=inp.dataset.cl,k=ep+"|"+cl;clearTimeout(tDate.get(k));
@@ -731,7 +805,9 @@ document.addEventListener("click",async e=>{
   else if(b.hasAttribute("data-convs"))convocationsSession(b.dataset.cl,b.dataset.lundi);
   else if(b.hasAttribute("data-convsok"))marquerSession(b.dataset.cl,b.dataset.lundi,true);
   else if(b.hasAttribute("data-convsno"))marquerSession(b.dataset.cl,b.dataset.lundi,false);
-  else if(b.dataset.lot){await toutEnregistrer();b.dataset.lot==="doc5"?lotDoc5():grilleUC();}
+  else if(b.dataset.exp)exporter(b.dataset.exp,b);
+  else if(b.id==="btnD5x")exporter("d5x",b);
+  else if(b.id==="btnD5p")exporter("d5p",b);
   else if(b.id==="sugClose")$("#sug").hidden=true;
 });
 async function toutEnregistrer(){await Promise.all($$(".cell").filter(c=>timers.has(kS(c.dataset.c,c.dataset.n,c.dataset.r))).map(c=>enregistrer(c)));}
@@ -754,5 +830,6 @@ async function suggestions(cell){
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#sug").hidden=true;});
 init();
 </script>
+<script src="/lib/kepdoc.js" defer></script>
 <script src="/comme.js" defer></script>
 </body></html>
