@@ -156,6 +156,7 @@ a.admin{font:600 12.5px var(--body);background:var(--ink);color:#fff;border-radi
     </div>
     <div class="banner" id="banner" hidden></div>
     <div class="banner" id="rappels" hidden></div>
+    <div class="banner" id="rappelsUC" hidden></div>
     <div class="mine" id="mine"></div>
     <div class="tabs" role="group" aria-label="Filtrer par formation" id="tabs"></div>
     <div id="levels" style="display:flex;flex-direction:column;gap:26px"></div>
@@ -238,7 +239,14 @@ async function goHome(s){if(next){location.replace(next);return;}
   const refus=params.get("refus");
   if(refus){history.replaceState(null,"","/");const bn=$("#banner");bn.hidden=false;
     bn.textContent=refus==="suspendu"?"Votre compte est suspendu.":"Vous n'avez pas accès à cet outil. Si vous en avez besoin, demandez au responsable pédagogique de vous rattacher à la classe concernée.";}
-  filtre="all";renderDash();show("vHome");rappelsCCF(s);}
+  filtre="all";renderDash();show("vHome");rappelsCCF(s);rappelsUC(s);}
+/* Rappels UC (référents CAPa) : dates à fixer au plus tard 15 jours avant la période agréée, convocations à envoyer */
+async function rappelsUC(s){const box=$("#rappelsUC");box.hidden=true;
+  if(!droits||!(droits.outils||[]).includes("uc-coord"))return;
+  let r;try{r=await api("/rest/v1/rpc/uc_rappels",{method:"POST",body:{},token:s.access_token})||[];}catch(e){return;}
+  if(!r.length)return;const jr=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+  box.innerHTML=`<b>Rappel épreuves UC (CAPa)</b><ul style="margin:6px 0 8px;padding-left:18px">`+r.map(x=>`<li>${esc(x.code)} · ${esc(x.libelle)} · ${x.quoi==="date"?"date à fixer avant le "+esc(jr(x.echeance))+" (période agréée à partir du "+esc(jr(x.jour))+")":"épreuve le "+esc(jr(x.jour))+" : convocations à envoyer avant le "+esc(jr(x.echeance))}</li>`).join("")+`</ul><a href="/UC/?vue=coord">Ouvrir la coordination UC →</a>`;
+  box.hidden=false;}
 /* Rappels CCF : convocations à faire pour les épreuves des 15 prochains jours (coordinateur BTS et référent de la classe) */
 async function rappelsCCF(s){const box=$("#rappels");box.hidden=true;
   if(!droits||!(droits.admin||(droits.outils||[]).includes("ccf-bts")))return;
