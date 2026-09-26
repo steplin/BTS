@@ -125,7 +125,7 @@ dialog .count{font-size:13px;color:var(--ink-2)}
 @media (max-width:640px){th,td{padding:9px 10px}h1{font-size:25px}}
 </style></head><body>
 <main>
-  <div class="top"><a href="/">← Outils pédagogiques</a><span id="me"></span></div>
+  <div class="top"><a href="/#admin">← Accueil</a><span id="me"></span></div>
   <div><span class="eyebrow">Kerplouz LaSalle · Réservé à l'administrateur</span><h1>Administration</h1></div>
   <div class="msg err" id="err" hidden></div>
 
@@ -133,6 +133,8 @@ dialog .count{font-size:13px;color:var(--ink-2)}
     <button class="tab" role="tab" data-tab="perso" aria-selected="true">Personnel<span class="n" id="nPerso"></span></button>
     <button class="tab" role="tab" data-tab="classes" aria-selected="false">Classes<span class="n" id="nClasses"></span></button>
     <button class="tab" role="tab" data-tab="outils" aria-selected="false">Droits des outils</button>
+    <button class="tab" role="tab" data-tab="apprenants" aria-selected="false">Apprenants<span class="n" id="nApp"></span></button>
+    <button class="tab" role="tab" data-tab="rgpd" aria-selected="false">RGPD</button>
     <span class="sp"></span>
     <button type="button" class="ghost" id="btnPrint">Fiches de connexion</button>
   </div>
@@ -185,6 +187,45 @@ dialog .count{font-size:13px;color:var(--ink-2)}
         <thead><tr><th>Outil</th><th>Formation</th><th>Rôles autorisés</th><th>Qui y a accès</th></tr></thead>
         <tbody id="tOutils"></tbody>
       </table></div>
+    </div>
+  </section>
+  <!-- Apprenants -->
+  <section id="p-apprenants" hidden>
+    <div class="card">
+      <p class="help">Tous les apprenants de la plateforme, par formation. Ceux du CAPa (outil UC) et du BTSA (grilles CCF) se gèrent dans leurs outils ; ceux des autres formations (BPA, BP, CS, BPREA, CQP) s'ajoutent ici. La <b>classe suit la cohorte</b> : un apprenant entré en 2026 en BP AP est en BPAP1 en 2026-2027 puis en BPAP2 à partir du 1er septembre 2027. <b>Pendant le développement, n'ajoutez que des apprenants fictifs</b> : les vraies données nominatives attendent l'accord de la direction et du DPO.</p>
+      <div class="bar">
+        <select id="apFil" aria-label="Filtrer par formation"><option value="">Toutes les formations</option></select>
+        <input type="search" id="apQ" placeholder="Rechercher un nom" aria-label="Rechercher un apprenant">
+      </div>
+      <div class="bar">
+        <select id="apPre" aria-label="Formation d'entrée"></select>
+        <input id="apGrp" placeholder="Groupe (A, B…)" aria-label="Groupe" style="width:120px">
+        <input id="apCoh" placeholder="Cohorte 2026-2028" aria-label="Cohorte" style="width:150px">
+        <input id="apNom" placeholder="NOM" aria-label="Nom" style="width:140px">
+        <input id="apPrenom" placeholder="Prénom" aria-label="Prénom" style="width:120px">
+        <input id="apEnt" placeholder="Entreprise" aria-label="Entreprise" style="width:170px">
+        <input id="apTut" placeholder="Tuteur" aria-label="Tuteur" style="width:140px">
+        <label class="switch"><input type="checkbox" id="apFictif" checked> fictif</label>
+        <button type="button" id="btnApp">Ajouter</button>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Apprenant·e</th><th>Classe cette année</th><th>Cohorte</th><th>Entreprise · tuteur</th><th>Gérée dans</th><th></th></tr></thead>
+        <tbody id="tApp"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- RGPD -->
+  <section id="p-rgpd" hidden>
+    <div class="card">
+      <p class="help"><b>Durée de conservation : 5 ans après la fin de la formation.</b> La fin de formation est fixée au 31 août de la dernière année de la cohorte (cohorte 2026-2028 → 31/08/2028 → suppression à partir du 31/08/2033). La suppression efface l'apprenant et tout ce qui s'y rattache : appréciations et résultats UC, grilles CCF, historiques des saisies, notes de suivi. Elle est définitive. Le journal ne garde que la date, la cohorte et le nombre d'apprenants supprimés, sans aucun nom.</p>
+      <div class="bar"><span id="rgpdAuto"></span><span class="sp"></span><button type="button" class="danger" id="btnPurge" disabled>Supprimer maintenant les apprenants échus</button></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Données</th><th>Cohorte</th><th>Apprenants</th><th>Fin de formation</th><th>Suppression prévue</th><th>État</th></tr></thead>
+        <tbody id="tRgpd"></tbody>
+      </table></div>
+      <div class="bar" style="border-top:1px solid var(--line);border-bottom:0"><b style="font-size:13.5px">Journal des suppressions</b></div>
+      <div class="scroll"><table><thead><tr><th>Date</th><th>Par</th><th>Données</th><th>Cohorte</th><th>Apprenants supprimés</th></tr></thead><tbody id="tJournal"></tbody></table></div>
     </div>
   </section>
 </main>
@@ -316,7 +357,7 @@ function rendre(){
 
 /* ---------- événements ---------- */
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
-  ["perso","classes","outils"].forEach(k=>$("#p-"+k).hidden=k!==t.dataset.tab);});
+  ["perso","classes","outils","apprenants","rgpd"].forEach(k=>$("#p-"+k).hidden=k!==t.dataset.tab);if(location.hash.slice(1)!==t.dataset.tab)history.replaceState(null,"","#"+t.dataset.tab);if(t.dataset.tab==="apprenants")chargerApp();if(t.dataset.tab==="rgpd")chargerRgpd();});
 $("#q").oninput=rendre;$("#fRole").onchange=rendre;$("#fClasse").onchange=rendre;
 $("#fRole").innerHTML+=Object.entries(ROLES_OUTIL).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")+'<option value="__admin">Administrateurs</option><option value="__compte">Sans compte (code à remettre)</option>';
 $("#aRole").innerHTML=Object.entries(ROLES).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
@@ -439,6 +480,45 @@ $("#fFiches").addEventListener("change",e=>{if(e.target.id==="dlgClasse")$("#fFi
 $("#dlgCancel").onclick=()=>$("#dlgFiches").close();
 $("#fFiches").addEventListener("submit",e=>{e.preventDefault();const mep=new FormData($("#fFiches")).get("mep");const l=listeDialog();$("#dlgFiches").close();imprimerFiches(l,mep);});
 
+/* ---------- Apprenants ---------- */
+const SRC={uc:"Évaluations UC",bts:"Grilles CCF BTS",autre:"Ici"};
+let apps=[];
+async function chargerApp(){try{apps=await api("/rest/v1/rpc/suivi_liste",{method:"POST",body:{}})||[];
+    const autres=await api("/rest/v1/apprenants?select=id,prefixe,suffixe,groupe");const A=Object.fromEntries((autres||[]).map(a=>[a.id,a]));apps.forEach(a=>a.brut=A[a.id]);}
+  catch(e){toast(frErr(e),true);apps=[];}
+  const pre=[...new Set(classes.filter(c=>!/^CAPaJP|^BTSAAP/.test(c.code)).map(c=>{const m=c.code.match(/^([A-Za-z]+?)(\d?)(an)?(-[A-Z])?$/);return m?JSON.stringify([m[1],m[3]||"",c.niveau]):null;}).filter(Boolean))].map(x=>JSON.parse(x));
+  $("#apPre").innerHTML=pre.map(([p,suf,n])=>`<option value="${esc(p+"|"+suf)}">${esc(p)}${suf?" (en 1 an)":""} · ${esc(NIVEAUX[n]||n)}</option>`).join("");
+  if(!$("#apCoh").value){const y=new Date().getMonth()>=8?new Date().getFullYear():new Date().getFullYear()-1;$("#apCoh").value=y+"-"+(y+2);}
+  const f=$("#apFil").value;$("#apFil").innerHTML='<option value="">Toutes les formations</option>'+[...new Set(apps.map(a=>a.niveau))].map(n=>`<option value="${n}"${n===f?" selected":""}>${esc(NIVEAUX[n]||n)}</option>`).join("");
+  rendreApp();}
+function rendreApp(){const f=$("#apFil").value,q=$("#apQ").value.trim().toLowerCase();
+  const L=apps.filter(a=>(!f||a.niveau===f)&&(!q||(a.nom+" "+a.prenom).toLowerCase().includes(q)));$("#nApp").textContent=apps.length;
+  $("#tApp").innerHTML=L.map(a=>`<tr><td><b>${esc(a.nom)}</b> ${esc(a.prenom)}${a.fictif?' <span class="sub" style="display:inline">· fictif</span>':""}</td><td>${esc(a.libelle)}</td><td>${esc(a.cohorte)}</td>
+    <td>${esc(a.entreprise)||"—"}${a.tuteur?`<span class="sub">${esc(a.tuteur)}</span>`:""}</td><td>${SRC[a.source]}</td>
+    <td>${a.source==="autre"?`<button type="button" class="danger small" data-appdel="${a.id}">Supprimer</button>`:""}</td></tr>`).join("")||'<tr><td colspan="6" class="sub" style="text-align:center;padding:20px">Aucun apprenant.</td></tr>';}
+$("#apFil").onchange=rendreApp;$("#apQ").oninput=rendreApp;
+$("#btnApp").onclick=async()=>{const [prefixe,suffixe]=$("#apPre").value.split("|"),cohorte=$("#apCoh").value.trim(),nom=$("#apNom").value.trim().toUpperCase();
+  if(!/^\d{4}-\d{4}$/.test(cohorte)){toast("Cohorte au format 2026-2028.",true);return;}if(!nom){toast("Le nom est obligatoire.",true);return;}
+  try{await api("/rest/v1/apprenants",{method:"POST",prefer:"return=minimal",body:{prefixe,suffixe,groupe:$("#apGrp").value.trim().toUpperCase(),cohorte,nom,prenom:$("#apPrenom").value.trim(),entreprise:$("#apEnt").value.trim(),tuteur:$("#apTut").value.trim(),fictif:$("#apFictif").checked}});
+    ["apNom","apPrenom","apEnt","apTut"].forEach(k=>$("#"+k).value="");toast("Apprenant ajouté");chargerApp();}catch(e){toast(frErr(e),true);}};
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-appdel]");if(!b)return;
+  if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent="Confirmer";return;}
+  try{await api("/rest/v1/apprenants?id=eq."+b.dataset.appdel,{method:"DELETE",prefer:"return=minimal"});toast("Apprenant supprimé");chargerApp();}catch(err){toast(frErr(err),true);}});
+
+/* ---------- RGPD ---------- */
+const jrF=d=>d?new Date(d+(d.length===10?"T12:00:00":"")).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}):"";
+async function chargerRgpd(){let E=[],J=[],auto=false;
+  try{[E,J,auto]=await Promise.all([api("/rest/v1/rpc/rgpd_echeances",{method:"POST",body:{}}),api("/rest/v1/rgpd_journal?order=le.desc&limit=50"),api("/rest/v1/rpc/rgpd_auto",{method:"POST",body:{}}).catch(()=>false)]);}
+  catch(e){toast(frErr(e),true);}
+  $("#rgpdAuto").innerHTML=auto?'<b style="color:var(--accent)">✓ Suppression automatique activée</b> <span class="sub" style="display:inline">chaque 1er septembre à 3 h</span>':'<b style="color:var(--danger)">Suppression automatique non activée</b> <span class="sub" style="display:inline">(extension pg_cron absente) : utilisez le bouton chaque rentrée</span>';
+  const ech=(E||[]).filter(x=>x.echue),n=ech.reduce((s,x)=>s+x.nb,0);
+  const bp=$("#btnPurge");bp.disabled=!n;bp.classList.remove("sure");bp.textContent=n?`Supprimer maintenant ${n} apprenant${n>1?"s":""} échu${n>1?"s":""}`:"Aucun apprenant à supprimer";
+  $("#tRgpd").innerHTML=(E||[]).map(x=>`<tr><td>${SRC[x.source]==="Ici"?"Autres formations":SRC[x.source]}</td><td>${esc(x.cohorte)}</td><td>${x.nb}${x.fictifs?` <span class="sub" style="display:inline">dont ${x.fictifs} fictif${x.fictifs>1?"s":""}</span>`:""}</td><td>${jrF(x.fin)}</td><td>${jrF(x.suppression)}</td>
+    <td>${x.echue?'<b style="color:var(--danger)">à supprimer</b>':"conservé"}</td></tr>`).join("")||'<tr><td colspan="6" class="sub" style="text-align:center;padding:20px">Aucun apprenant.</td></tr>';
+  $("#tJournal").innerHTML=(J||[]).map(j=>`<tr><td>${new Date(j.le).toLocaleString("fr-FR")}</td><td>${esc(j.par)}</td><td>${SRC[j.source]==="Ici"?"Autres formations":SRC[j.source]}</td><td>${esc(j.cohorte)}</td><td>${j.nb}</td></tr>`).join("")||'<tr><td colspan="5" class="sub" style="text-align:center;padding:16px">Aucune suppression pour l\'instant.</td></tr>';}
+$("#btnPurge").onclick=async()=>{const b=$("#btnPurge");if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent="Confirmer : suppression définitive";return;}
+  b.disabled=true;try{const r=await api("/rest/v1/rpc/rgpd_purger",{method:"POST",body:{}});toast((r&&r.supprimes||0)+" apprenant(s) supprimé(s)");}catch(e){toast(frErr(e),true);}chargerRgpd();};
+
 /* ---------- démarrage ---------- */
 (async()=>{
   session=ls.get();
@@ -446,7 +526,8 @@ $("#fFiches").addEventListener("submit",e=>{e.preventDefault();const mep=new For
   try{const d=await raw("/rest/v1/rpc/mes_droits",{method:"POST",body:{}});
     if(!d||!d.admin){location.replace("/?refus=droit");return;}
     moi=d.email;$("#me").textContent=(d.prenom?d.prenom+" "+d.nom+" · ":"")+d.email;
-    await charger();rendre();}
+    await charger();rendre();
+    const h=location.hash.slice(1);const tb=document.querySelector(`.tab[data-tab="${h}"]`);if(tb)tb.click();}
   catch(e){const m=$("#err");m.hidden=false;m.textContent="Chargement impossible : "+frErr(e);}
 })();
 </script>
