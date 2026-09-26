@@ -163,7 +163,6 @@ textarea:focus{background:#fff}
   .dhead{color:#000}
   .grp{display:none}
 }
-.refuc{margin-top:6px;font-size:13px;color:var(--ink-2,#555)}.refuc select{max-width:100%;margin-top:2px}
 </style><style id="pageSize">@page{size:A4 landscape}</style></head><body>
 <main>
   <div class="head">
@@ -322,7 +321,7 @@ const epreuveDe=ci=>S.epreuves.find(e=>S.epCis.some(x=>x.epreuve_id===e.id&&x.ci
 const validation=(cand,uc)=>S.valid.find(v=>v.candidat===cand&&v.uc_id===uc);
 const sai=(c,n,r)=>S.saisies.get(kS(c,n,r));
 const rempli=(c,n,r)=>{const s=sai(c,n,r);return !!(s&&(s.texte.trim()||(n==="cr"&&s.acquis!=null)));};
-// Droit d'écrire (même règle que uc_ecrire côté base) : UC affectée au formateur, ou épreuve dont il est responsable
+// Droit d'écrire (même règle que uc_ecrire côté base) : UC affectée au formateur
 function peut(n,r){const D=S.droits||{};if(D.admin)return true;const U=D.ucs||[],E=D.epreuves||[];
   const respCI=ci=>S.epCis.some(x=>x.ci_id===ci&&E.includes(x.epreuve_id));
   if(n==="epreuve")return E.includes(r)||S.epCis.some(x=>x.epreuve_id===r&&U.includes((S.cis.find(c=>c.id===x.ci_id)||{}).uc_id));
@@ -345,11 +344,6 @@ const barre=(f,t)=>`<span class="prog"><i><b style="width:${t?Math.round(f/t*100
 
 /* ---------- Vues ---------- */
 const ZONES={tdb:"Tableau de bord UC",saisie:"Saisie UC : documents 4 et 5",coord:"Coordination UC",cal:"Calendrier des épreuves UC"};
-async function fixerRefUC(sel){const uc=+sel.dataset.refuc,pl=S.affPlan.find(a=>a.uc_id===uc),email=sel.value;if(!pl)return;sel.disabled=true;
-  try{await rpc("uc_referent_uc_fixer",{p_plan:pl.plan_id,p_uc:uc,p_email:email||null});
-    S.affPlan.forEach(a=>{if(a.uc_id===uc)a.referent=!!email&&a.email===email;});toast(email?"Référent enregistré : "+nomPers(email):"Référent retiré");}
-  catch(err){toast("Enregistrement impossible : "+(err.message||err));}
-  render();}
 function render(){
   $$("#zones [data-z]").forEach(b=>b.setAttribute("aria-current",String(b.dataset.z===S.zone)));
   $("#titreZ").textContent=ZONES[S.zone];document.title=ZONES[S.zone];
@@ -373,11 +367,10 @@ function renderListe(){
   const L=candsVis(),grpCol=S.classe.groupes.length>1;
   const G=S.grp?S.classe.groupes.filter(g=>g.lettre===S.grp):S.classe.groupes,perEdit=S.resp||S.classe.groupes.some(g=>g.referent);
   let ep=`<h2 class="h2">Épreuves du plan${S.plan.agree_le?" agréé le "+esc(frDate(S.plan.agree_le)):""} <small>cohorte ${esc(S.cohorte)} · le référent pose les périodes prévisionnelles puis la date réelle, au plus tard 15 jours avant</small></h2>
-    <table class="list dash"><thead><tr><th>Épreuve</th><th>Périodes agréées</th><th>Responsable</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Heure</th><th>Min./cand.</th><th>Lieu</th><th>Saisies</th></tr></thead><tbody>`;
+    <table class="list dash"><thead><tr><th>Épreuve</th><th>Périodes agréées</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Heure</th><th>Min./cand.</th><th>Lieu</th><th>Saisies</th></tr></thead><tbody>`;
   for(const e of S.epreuves)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,t]=avancementEpreuve(e,cg),ed=g.referent;
     const k=`data-ep="${e.id}" data-cl="${esc(g.code)}"`;
-    ep+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td><td rowspan="${G.length}" class="per">${perEdit?perInputs(e):perTxt(e)||'<span class="meta">non renseignées</span>'}</td>
-        <td rowspan="${G.length}">${esc(nomPers(e.responsable))||"—"}</td>`:""}
+    ep+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td><td rowspan="${G.length}" class="per">${perEdit?perInputs(e):perTxt(e)||'<span class="meta">non renseignées</span>'}</td>`:""}
       ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}
       <td>${ed?`<input type="date" ${k} data-d="jour" value="${esc(d.jour||"")}" aria-label="Date ${esc(e.code)}">`:esc(frDate(d.jour))||"—"}<div>${echeance(e,d)}</div></td>
       <td>${ed?`<input type="time" ${k} data-d="heure" value="${esc(d.heure||"08:15")}" aria-label="Heure ${esc(e.code)}">`:esc((d.heure||"08:15").replace(":","h"))}</td>
@@ -404,14 +397,10 @@ function renderListe(){
     <p class="meta">Les PDF sont produits à partir des mêmes grilles que les fichiers Excel. Le fichier Excel reste modifiable avant le jury.</p>`;
   const nomsUC=u=>S.affPlan.filter(a=>a.uc_id===u.id).map(a=>nomPers(a.email)),
     epsUC=u=>S.epreuves.filter(e=>cisEpreuve(e.id).some(ci=>ci.uc_id===u.id));
-  const peutRef=S.resp||G.some(g=>g.coord),affUC=u=>S.affPlan.filter(a=>a.uc_id===u.id),refUC=u=>(affUC(u).find(a=>a.referent)||{}).email||"";
-  const celRef=u=>{const A=affUC(u),r=refUC(u);if(!A.length)return "—";
-    if(!peutRef)return r?`<b>${esc(nomPers(r))}</b>`:'<span class="acq">à désigner</span>';
-    return `<select data-refuc="${u.id}" aria-label="Formateur référent de ${esc(u.code)}"><option value="">— à désigner —</option>${A.map(a=>`<option value="${esc(a.email)}"${a.email===r?" selected":""}>${esc(nomPers(a.email))}</option>`).join("")}</select>`;};
-  const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.resp?`modifiables dans les <a href="/UC/param.html">plans d'évaluation</a>`:"fixés par le responsable pédagogique"}${peutRef?" · formateur référent choisi ici parmi les formateurs affectés":""}</small></h2>
-    <table class="list"><thead><tr><th>UC</th><th>Formateurs affectés et référent</th><th>Épreuves (responsable)</th></tr></thead><tbody>${
-    S.ucs.map(u=>`<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${esc(nomsUC(u).join(", "))||'<span class="acq non">à affecter</span>'}${affUC(u).length?`<div class="refuc">Référent : ${celRef(u)}</div>`:""}</td>
-      <td>${epsUC(u).map(e=>esc(e.code)+" ("+(esc(nomPers(e.responsable))||"—")+")").join("<br>")}</td></tr>`).join("")}</tbody></table>`;
+  const aff=`<h2 class="h2">Formateurs affectés aux UC <small>${S.resp?`modifiables dans les <a href="/UC/param.html">plans d'évaluation</a>`:"fixés par le responsable pédagogique"}</small></h2>
+    <table class="list"><thead><tr><th>UC</th><th>Formateurs affectés</th><th>Épreuves</th></tr></thead><tbody>${
+    S.ucs.map(u=>`<tr><td><b>${esc(u.code)}</b> ${esc(u.nom)}</td><td>${esc(nomsUC(u).join(", "))||'<span class="acq non">à affecter</span>'}</td>
+      <td>${epsUC(u).map(e=>esc(e.code)).join("<br>")}</td></tr>`).join("")}</tbody></table>`;
   const nbConv=SS.filter(x=>!x.items.every(it=>it.d.convoc_le)).length;
   const [o,tabs]=ongletsHTML("coord",[["dates","Dates des épreuves"],["conv","Convocations"+(nbConv?` <span class="acq non">${nbConv}</span>`:"")],["aff","Formateurs par UC"],["edi","Éditions de la cohorte"]]);
   const strip=h=>h.replace(/^\s*<h2 class="h2">[\s\S]*?<\/h2>/,m=>m.includes("<small>")?`<p class="meta" style="margin:0 0 10px">${m.match(/<small>([\s\S]*?)<\/small>/)[1]}</p>`:"");
@@ -479,7 +468,7 @@ function renderTdb(){
     if(!eps.length)t+=`<p class="empty">Aucune épreuve à saisir pour vous dans ce plan.</p>`;
     else{t+=`<table class="list"><thead><tr><th>Épreuve</th><th>Capacités à saisir</th>${G.length>1?"<th>Groupe</th>":""}<th>Date</th><th>Mes saisies</th><th></th></tr></thead><tbody>`;
       for(const e of eps)G.forEach((g,i)=>{const d=dateDe(e.id,g.code),cg=S.cands.filter(c=>c.groupe===g.lettre),[f,n]=avMes(e,cg);
-        t+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}${D.epreuves&&D.epreuves.includes(e.id)?' <span class="acq oui">responsable</span>':""}</td>
+        t+=`<tr>${i===0?`<td rowspan="${G.length}"><b>${esc(e.code)}</b> ${esc(e.nom)}</td>
           <td rowspan="${G.length}">${esc(cisEpreuve(e.id).filter(ci=>peut("ci",ci.id)).map(ci=>ci.code).join(", "))}</td>`:""}
           ${G.length>1?`<td>${esc(g.lettre)}</td>`:""}<td>${d.jour?esc(frDate(d.jour))+" "+esc((d.heure||"08:15").replace(":","h")):'<span class="meta">à fixer</span>'}</td>
           <td>${barre(f,n)}</td><td style="text-align:right"><button type="button" class="small" data-saisir="${e.id}" data-g="${esc(g.lettre)}">Saisir</button></td></tr>`;});
@@ -506,9 +495,9 @@ async function renderCal(){
   const fix=X.filter(x=>x.jour),afix=X.filter(x=>!x.jour),mois=new Map();
   for(const x of fix){const k=x.jour.slice(0,7);if(!mois.has(k))mois.set(k,[]);mois.get(k).push(x);}
   const ligne=x=>`<tr><td class="j">${x.jour?esc(new Date(x.jour+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}))+" · "+esc((x.heure||"08:15").replace(":","h")):"—"}</td>
-    <td>${esc(x.libelle)}</td><td><b>${esc(x.code)}</b> ${esc(x.nom)}</td><td>${esc(x.responsable||"—")}</td><td>${esc(x.lieu)}</td>
+    <td>${esc(x.libelle)}</td><td><b>${esc(x.code)}</b> ${esc(x.nom)}</td><td>${esc(x.lieu)}</td>
     <td>${x.convoc_le?'<span class="acq oui">convocations faites</span>':x.jour?'<span class="acq">convocations à faire</span>':""}</td></tr>`;
-  const tete=`<colgroup><col style="width:16%"><col style="width:11%"><col style="width:33%"><col style="width:13%"><col style="width:15%"><col style="width:12%"></colgroup><thead><tr><th>Date</th><th>Classe</th><th>Épreuve</th><th>Responsable</th><th>Lieu</th><th>Convocations</th></tr></thead>`;
+  const tete=`<colgroup><col style="width:16%"><col style="width:12%"><col style="width:42%"><col style="width:17%"><col style="width:13%"></colgroup><thead><tr><th>Date</th><th>Classe</th><th>Épreuve</th><th>Lieu</th><th>Convocations</th></tr></thead>`;
   const [o,tabs]=ongletsHTML("cal",[["fix","Dates fixées ("+fix.length+")"],["afix","Dates à fixer ("+afix.length+")"]]);
   let h=tabs+`<p class="meta" style="margin:0 0 6px">Dates fixées par les référents de classe dans « Coordination ».</p>`;
   if(o==="fix"){if(!fix.length)h+=`<p class="empty">Aucune date fixée pour l'instant.</p>`;
@@ -638,7 +627,7 @@ function convocationsSession(cl,lundi){const x=sessions(S.classe.groupes).find(y
     <p>Madame, Monsieur,</p>
     <p>Vous êtes convoqué·e aux épreuves certificatives suivantes, lors de la session de formation au CFA ${x.items[0].d.jour===fin?"du "+esc(jL(fin)):"du "+esc(jL(x.items[0].d.jour))+" au "+esc(jL(fin))} (cohorte ${esc(S.cohorte)}, groupe ${esc(g.lettre||g.code)}) :</p>
     <table class="ctab ctab5"><tr><th>Date</th><th>Heure de passage</th><th>Épreuve</th><th>UC</th><th>Lieu</th><th>Modalités</th></tr>
-      ${x.items.map(it=>`<tr><td>${esc(jL(it.d.jour))}</td><td>${esc(hPassage(it.d.heure,i,it.d.duree))}</td><td><b>${esc(it.e.code)}</b> ${esc(it.e.nom)}${it.e.responsable?`<br><small>Responsable : ${esc(nomPers(it.e.responsable))}</small>`:""}</td>
+      ${x.items.map(it=>`<tr><td>${esc(jL(it.d.jour))}</td><td>${esc(hPassage(it.d.heure,i,it.d.duree))}</td><td><b>${esc(it.e.code)}</b> ${esc(it.e.nom)}</td>
         <td>${esc(ucsDe(it.e))}</td><td>${esc(it.d.lieu||"UFA Kerplouz LaSalle Auray")}</td><td>${esc(it.e.nature||"")}</td></tr>`).join("")}</table>
     <p>Merci de vous présenter 10 minutes avant l'heure indiquée, muni·e de la présente convocation. Toute absence doit être justifiée auprès du centre de formation.</p>
     <p>Nous vous prions d'agréer nos salutations distinguées.</p>
@@ -663,7 +652,7 @@ function champ(c,n,r,opts={}){
       <option value="">${esc(opts.acquis.vide)}</option><option value="1" ${s.acquis===true?"selected":""}>${esc(opts.acquis.oui)}</option><option value="0" ${s.acquis===false?"selected":""}>${esc(opts.acquis.non)}</option></select>`
     :opts.acquis&&s.acquis!=null?`<span class="acq ${s.acquis?"oui":"non"}">${esc(s.acquis?opts.acquis.oui:opts.acquis.non)}</span>`:"";
   return `<div class="cell${ok?"":" ro"}" data-c="${c}" data-n="${n}" data-r="${r}"${imp?` data-po="${esc(imp.oui)}" data-pn="${esc(imp.non)}"`:""}>
-    <textarea id="${id}" readonly aria-label="${esc(opts.aria||"Appréciation")}" placeholder="${ok&&!bloc?"« Modifier » pour saisir":""}"${ok?"":` title="Saisie réservée aux formateurs affectés à cette UC et au responsable de l'épreuve"`}>${esc(s.texte||"")}</textarea>
+    <textarea id="${id}" readonly aria-label="${esc(opts.aria||"Appréciation")}" placeholder="${ok&&!bloc?"« Modifier » pour saisir":""}"${ok?"":` title="Saisie réservée aux formateurs affectés à cette UC"`}>${esc(s.texte||"")}</textarea>
     <div class="print-only">${imp&&s.acquis!=null?esc(s.acquis?imp.oui:imp.non)+"\n":""}${esc(s.texte||"")}</div>
     <div class="meta">${acq}${ok?`<button type="button" class="edit" data-edit${bloc?" disabled":""} title="${esc(bloc)}">Modifier</button><button type="button" data-sug hidden>Appréciations déjà utilisées</button>`:""}<span data-m>${s.maj_nom?"par "+esc(s.maj_nom)+", "+frDH(s.maj_le):""}</span><span class="bloc" data-bloc>${esc(bloc)}</span></div></div>`;
 }
@@ -781,7 +770,6 @@ document.addEventListener("change",e=>{const cell=e.target.closest(".cell");
   if(e.target.id==="dEval"){const ep=S.epr,c=S.cand;const fake=document.querySelector(`.cell[data-n="epreuve"][data-r="${ep}"]`);if(fake)enregistrer(fake,{date:e.target.value||null});}
   if(e.target.dataset&&e.target.dataset.d)return majDate(e.target);
   if(e.target.dataset&&e.target.dataset.per)return majPeriodes(e.target);
-  if(e.target.dataset&&e.target.dataset.refuc)return fixerRefUC(e.target);
   if(e.target.id==="selClasse")chargerClasse(e.target.value);
   if(e.target.id==="selGrp"){S.grp=e.target.value;majCands();render();}
   if(e.target.id==="selCand"){S.cand=e.target.value;render();}
